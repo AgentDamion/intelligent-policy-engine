@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>aicomplyr.io - Intelligent Compliance System</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo-bar">
+                    <div class="logo-bg">
+                        <img src="logo-hummingbird.png" alt="aicomplyr.io logo" class="hummingbird-logo" />
+                    </div>
+                    <h1 class="brand-name">aicomplyr.io</h1>
+                </div>
+                <p class="tagline">Intelligent Compliance & Policy Management</p>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Input Section -->
+            <section class="input-section">
+                <div class="card">
+                    <h2><i class="fas fa-comment-dots"></i> Submit Request</h2>
+                    <div class="input-group">
+                        <textarea 
+                            id="userInput" 
+                            placeholder="Describe your request... (e.g., 'Need to use ChatGPT for Monday's presentation!!!')"
+                            rows="3"
+                        ></textarea>
+                        <button id="submitBtn" class="btn-primary">
+                            <i class="fas fa-play"></i>
+                            Analyze Request
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Loading State -->
+            <section id="loadingSection" class="loading-section hidden">
+                <div class="card">
+                    <div class="loading-content">
+                        <div class="spinner"></div>
+                        <h3>Analyzing Request...</h3>
+                        <p>Context Agent and Policy Agent are evaluating your request</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section id="resultsSection" class="results-section hidden">
+                <!-- Context Analysis -->
+                <div class="card context-card">
+                    <div class="card-header">
+                        <h2><i class="fas fa-brain"></i> Context Analysis</h2>
+                        <div class="agent-badge context-badge">Context Agent</div>
+                    </div>
+                    
+                    <div class="context-grid">
+                        <!-- Urgency Analysis -->
+                        <div class="analysis-item">
+                            <h3><i class="fas fa-exclamation-triangle"></i> Urgency Detection</h3>
+                            <div class="urgency-display">
+                                <div class="urgency-meter">
+                                    <div class="urgency-bar" id="urgencyBar"></div>
+                                </div>
+                                <div class="urgency-details">
+                                    <span class="urgency-level" id="urgencyLevel">High</span>
+                                    <span class="emotional-state" id="emotionalState">Stressed</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Context Inference -->
+                        <div class="analysis-item">
+                            <h3><i class="fas fa-lightbulb"></i> Context Inference</h3>
+                            <div class="context-inference">
+                                <div class="inference-type">
+                                    <span class="type-label">Type:</span>
+                                    <span class="type-value" id="contextType">Client Presentation</span>
+                                </div>
+                                <div class="confidence-meter">
+                                    <span class="confidence-label">Confidence:</span>
+                                    <div class="confidence-bar">
+                                        <div class="confidence-fill" id="confidenceFill"></div>
+                                    </div>
+                                    <span class="confidence-value" id="confidenceValue">70%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Smart Question -->
+                        <div class="analysis-item full-width">
+                            <h3><i class="fas fa-question-circle"></i> Intelligent Clarification</h3>
+                            <div class="clarification-box">
+                                <p id="clarificationQuestion">Is this for the Johnson & Co. quarterly review we've been prepping?</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Policy Decision -->
+                <div class="card policy-card">
+                    <div class="card-header">
+                        <h2><i class="fas fa-gavel"></i> Policy Decision</h2>
+                        <div class="agent-badge policy-badge">Policy Agent</div>
+                    </div>
+
+                    <div class="policy-grid">
+                        <!-- Decision Status -->
+                        <div class="decision-status">
+                            <div class="status-indicator" id="statusIndicator">
+                                <i class="fas fa-check-circle"></i>
+                                <span id="decisionStatus">APPROVED</span>
+                            </div>
+                            <div class="decision-type" id="decisionType">Conditional Approval</div>
+                        </div>
+
+                        <!-- Risk Assessment -->
+                        <div class="risk-assessment">
+                            <h3><i class="fas fa-chart-line"></i> Risk Assessment</h3>
+                            <div class="risk-meter">
+                                <div class="risk-bar">
+                                    <div class="risk-fill" id="riskFill"></div>
+                                </div>
+                                <div class="risk-details">
+                                    <span class="risk-level" id="riskLevel">Medium</span>
+                                    <span class="risk-score" id="riskScore">75%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Guardrails -->
+                        <div class="guardrails-section">
+                            <h3><i class="fas fa-shield-alt"></i> Guardrails & Conditions</h3>
+                            <div class="guardrails-grid" id="guardrailsGrid">
+                                <!-- Dynamically populated -->
+                            </div>
+                        </div>
+
+                        <!-- Monitoring -->
+                        <div class="monitoring-section">
+                            <h3><i class="fas fa-eye"></i> Monitoring & Oversight</h3>
+                            <div class="monitoring-grid" id="monitoringGrid">
+                                <!-- Dynamically populated -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Negotiation Outcome -->
+                <div class="card negotiation-card">
+                    <div class="card-header">
+                        <h2><i class="fas fa-handshake"></i> Negotiation Outcome</h2>
+                        <div class="agent-badge negotiation-badge">Negotiation Agent</div>
+                    </div>
+                    <div class="negotiation-grid">
+                        <div class="negotiation-section">
+                            <h3><i class="fas fa-users"></i> Competitive Relationships</h3>
+                            <div id="negotiationCompetitors"></div>
+                        </div>
+                        <div class="negotiation-section">
+                            <h3><i class="fas fa-exclamation-circle"></i> Policy Conflicts</h3>
+                            <div id="negotiationConflicts"></div>
+                        </div>
+                        <div class="negotiation-section">
+                            <h3><i class="fas fa-balance-scale"></i> Compromise Solution</h3>
+                            <div id="negotiationSolution"></div>
+                        </div>
+                        <div class="negotiation-section">
+                            <h3><i class="fas fa-arrow-up"></i> Escalation</h3>
+                            <div id="negotiationEscalation"></div>
+                        </div>
+                        <div class="negotiation-section">
+                            <h3><i class="fas fa-user-shield"></i> Client-Specific Requirements</h3>
+                            <div id="negotiationClientRequirements"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Next Steps -->
+                <div class="card next-steps-card">
+                    <div class="card-header">
+                        <h2><i class="fas fa-route"></i> Next Steps</h2>
+                    </div>
+                    <div class="next-steps-list" id="nextStepsList">
+                        <!-- Dynamically populated -->
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; 2024 aicomplyr.io - Intelligent Compliance Solutions</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
