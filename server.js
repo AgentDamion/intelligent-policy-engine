@@ -18,6 +18,7 @@ app.use(cors({
     'http://127.0.0.1:5173',
     'http://127.0.0.1:8080',
     'https://lovable.dev',
+    'https://preview--aicomplyr-hummingbird-ui.lovable.app',
     'https://9e15-67-83-217-24.ngrok-free.app',
     'https://aicomplyr-hummingbird-ui-production.up.railway.app'
   ],
