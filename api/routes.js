@@ -25,4 +25,22 @@ router.get('/audit', (req, res) => {
     });
 });
 
+// Agency endpoints
+router.get('/agency/:agencyId/clients', (req, res) => {
+    const { agencyId } = req.params;
+    
+    // Sample client data for testing
+    const sampleClients = [
+        { id: 1, name: 'Pfizer Inc.', status: 'active', policies: 3 },
+        { id: 2, name: 'Novartis AG', status: 'active', policies: 2 },
+        { id: 3, name: 'JPMorgan Chase', status: 'pending', policies: 1 }
+    ];
+    
+    res.json({
+        agency: agencyId,
+        clients: sampleClients,
+        total: sampleClients.length
+    });
+});
+
 module.exports = router;
