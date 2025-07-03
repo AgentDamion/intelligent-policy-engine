@@ -9,6 +9,8 @@
  * 4. Visual conflict mapping and recommendations
  */
 
+const { analyzeWithAI } = require('./ai-service');
+
 class ConflictDetectionAgent {
     constructor() {
         this.conflictTypes = {
@@ -52,15 +54,15 @@ class ConflictDetectionAgent {
      * Main entry point - analyzes multiple policies for conflicts
      * Borrows structure from PolicyAgent.evaluateRequest()
      */
-    analyzeConflicts(policiesData) {
+    async analyzeConflicts(policiesData) {
         console.log('⚡ Conflict Detection Agent Analyzing Policies...\n');
-        
+
         // 1. Parse and structure policy data (similar to extractRequestContext)
         const structuredPolicies = this.parsePolicyDocuments(policiesData);
         
         // 2. Identify conflicts (similar to calculateRiskScore)
-        const conflictAssessment = this.identifyConflicts(structuredPolicies);
-        
+        const conflictAssessment = await this.identifyConflicts(structuredPolicies);        
+
         // 3. Determine resolution strategy (similar to determineApprovalLevel)
         const resolutionStrategy = this.determineResolutionStrategy(conflictAssessment);
         
@@ -104,17 +106,17 @@ class ConflictDetectionAgent {
      * Identify conflicts between policies
      * Borrows logic from PolicyAgent.calculateRiskScore()
      */
-    identifyConflicts(structuredPolicies) {
+    async identifyConflicts(structuredPolicies) {  // Add async
         const conflicts = [];
         let totalSeverity = 0;
-
+    
         // Compare each policy pair
         for (let i = 0; i < structuredPolicies.length; i++) {
             for (let j = i + 1; j < structuredPolicies.length; j++) {
                 const policyA = structuredPolicies[i];
                 const policyB = structuredPolicies[j];
                 
-                const pairConflicts = this.comparePolicyPair(policyA, policyB);
+                const pairConflicts = await this.comparePolicyPair(policyA, policyB);  // Add await
                 conflicts.push(...pairConflicts);
                 
                 totalSeverity += pairConflicts.reduce((sum, conflict) => sum + conflict.severity, 0);
@@ -134,61 +136,97 @@ class ConflictDetectionAgent {
      * Compare two policies and find conflicts
      * New method specific to conflict detection
      */
-    comparePolicyPair(policyA, policyB) {
+    async comparePolicyPair(policyA, policyB) {
         const conflicts = [];
-
-        // Check for direct contradictions
+    
+        // First, use AI to analyze the policies
+        const aiPrompt = `Analyze these two policies for conflicts:
+        
+        Policy A (${policyA.name}): ${policyA.content}
+        
+        Policy B (${policyB.name}): ${policyB.content}
+        
+        Identify:
+        1. Direct contradictions
+        2. Overlapping requirements with different processes
+        3. Timeline conflicts
+        4. Scope ambiguities
+        
+        For each conflict found, rate severity as low, medium, or high.`;
+    
+        try {
+            const aiAnalysis = await analyzeWithAI(aiPrompt);
+            console.log('AI Analysis:', aiAnalysis);
+            
+            // Use AI insights to enhance conflict detection
+            // The AI response will help identify conflicts we might miss with pattern matching
+        } catch (error) {
+            console.error('AI analysis failed, falling back to pattern matching:', error);
+        }
+    
+        // Keep your existing pattern-based detection as fallback
         const contradictions = this.findContradictions(policyA, policyB);
         conflicts.push(...contradictions);
-
-        // Check for requirement overlaps
+    
         const overlaps = this.findRequirementOverlaps(policyA, policyB);
         conflicts.push(...overlaps);
-
-        // Check for timeline conflicts
+    
         const timelineConflicts = this.findTimelineConflicts(policyA, policyB);
         conflicts.push(...timelineConflicts);
-
-        // Check for scope ambiguities
+    
         const ambiguities = this.findScopeAmbiguities(policyA, policyB);
         conflicts.push(...ambiguities);
-
+    
         return conflicts;
     }
 
     /**
-     * Find direct contradictions between policies
-     */
-    findContradictions(policyA, policyB) {
-        const contradictions = [];
-        
-        // Simple keyword-based contradiction detection
-        const contradictionPatterns = [
-            { pattern: /must|required|mandatory/, opposite: /prohibited|forbidden|not allowed/ },
-            { pattern: /approve|allow|permit/, opposite: /deny|reject|prohibit/ },
-            { pattern: /\d+\s*day/, opposite: /immediate|instant|same\s*day/ }
-        ];
-
-        contradictionPatterns.forEach(({ pattern, opposite }) => {
-            const aHasPattern = pattern.test(policyA.content);
-            const bHasOpposite = opposite.test(policyB.content);
-            const bHasPattern = pattern.test(policyB.content);
-            const aHasOpposite = opposite.test(policyA.content);
-
-            if ((aHasPattern && bHasOpposite) || (bHasPattern && aHasOpposite)) {
-                contradictions.push({
-                    type: 'direct_contradiction',
-                    severity: this.conflictTypes.direct_contradiction.severity_weight,
-                    policies: [policyA.id, policyB.id],
-                    description: `Direct contradiction found between ${policyA.name} and ${policyB.name}`,
-                    location: 'content_analysis',
-                    impact: 'high'
-                });
-            }
-        });
-
-        return contradictions;
+ * Find direct contradictions between policies
+ */
+async findContradictions(policyA, policyB) {
+    const contradictions = [];
+    
+    // Add AI analysis for deeper contradiction detection
+    const aiPrompt = `Are there any direct contradictions between these statements?
+    Statement 1: ${policyA.content.substring(0, 500)}
+    Statement 2: ${policyB.content.substring(0, 500)}
+    
+    Respond with: YES (explain) or NO`;
+    
+    try {
+        const aiResult = await analyzeWithAI(aiPrompt);
+        // Process AI response and add to contradictions if found
+    } catch (error) {
+        // Fall back to pattern matching
     }
+    
+    // Simple keyword-based contradiction detection
+    const contradictionPatterns = [
+        { pattern: /must|required|mandatory/, opposite: /prohibited|forbidden|not allowed/ },
+        { pattern: /approve|allow|permit/, opposite: /deny|reject|prohibit/ },
+        { pattern: /\d+\s*day/, opposite: /immediate|instant|same\s*day/ }
+    ];
+
+    contradictionPatterns.forEach(({ pattern, opposite }) => {
+        const aHasPattern = pattern.test(policyA.content);
+        const bHasOpposite = opposite.test(policyB.content);
+        const bHasPattern = pattern.test(policyB.content);
+        const aHasOpposite = opposite.test(policyA.content);
+
+        if ((aHasPattern && bHasOpposite) || (bHasPattern && aHasOpposite)) {
+            contradictions.push({
+                type: 'direct_contradiction',
+                severity: this.conflictTypes.direct_contradiction.severity_weight,
+                policies: [policyA.id, policyB.id],
+                description: `Direct contradiction found between ${policyA.name} and ${policyB.name}`,
+                location: 'content_analysis',
+                impact: 'high'
+            });
+        }
+    });
+
+    return contradictions;
+}  // This closing brace was missing
 
     /**
      * Find requirement overlaps
