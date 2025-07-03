@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
 
+// Import the conflict detection agent
+const { ConflictDetectionAgent } = require('../agents/conflict-detection-agent.js');
+
 // Basic health check
 router.get('/health', (req, res) => {
     res.json({ 
@@ -8,6 +11,37 @@ router.get('/health', (req, res) => {
         message: 'Policy engine is running',
         timestamp: new Date()
     });
+});
+
+// NEW: Conflict detection endpoint
+router.post('/analyze-conflicts', async (req, res) => {
+    try {
+        const { policies } = req.body;
+        
+        // Validate input
+        if (!policies || !Array.isArray(policies) || policies.length < 2) {
+            return res.status(400).json({ 
+                error: 'At least 2 policies required for conflict analysis',
+                received: policies ? policies.length : 0
+            });
+        }
+
+        // Run conflict analysis
+        const agent = new ConflictDetectionAgent();
+        const conflictReport = agent.analyzeConflicts(policies);
+        
+        res.json({
+            success: true,
+            data: conflictReport
+        });
+        
+    } catch (error) {
+        console.error('Conflict analysis error:', error);
+        res.status(500).json({ 
+            error: 'Failed to analyze policy conflicts',
+            details: error.message 
+        });
+    }
 });
 
 // Placeholder endpoints
