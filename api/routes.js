@@ -89,44 +89,6 @@ router.post('/analyze-conflicts', async (req, res) => {
     }
 });
 
-// AUDIT AGENT ENDPOINTS
-router.post('/audit/check', async (req, res) => {
-    try {
-        const { submission, type = 'general' } = req.body;
-        
-        if (!submission) {
-            return res.status(400).json({ error: 'Submission data required' });
-        }
-        
-        const agent = new AuditAgent();
-        const auditResult = await agent.checkSubmission(submission, type);
-        
-        // Log the activity
-        logAgentActivity('Audit Agent', 'Submission Check', {
-            type: type,
-            status: auditResult.status || 'completed',
-            issuesFound: auditResult.issues?.length || 0
-        });
-        
-        res.json({
-            success: true,
-            data: {
-                status: auditResult.status || 'reviewed',
-                confidence: auditResult.confidence || 0.85,
-                issues: auditResult.issues || [],
-                recommendations: auditResult.recommendations || [],
-                explanation: auditResult.explanation || 'Audit completed successfully'
-            }
-        });
-        
-    } catch (error) {
-        console.error('Audit check error:', error);
-        res.status(500).json({ 
-            error: 'Failed to audit submission',
-            details: error.message 
-        });
-    }
-});
 
 // POLICY AGENT ENDPOINTS
 router.post('/policy/analyze', async (req, res) => {
