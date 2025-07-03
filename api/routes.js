@@ -12,6 +12,15 @@ const { ContextAgent } = require('../agents/context-agent.js');
 const agentActivities = [];
 const overrides = [];
 
+// NEW STORAGE ADDED FOR DASHBOARD
+let policies = [];  // For storing created policies
+let agencies = [    // Sample agencies
+  { id: '1', name: 'Ogilvy Health', complianceRate: 92 },
+  { id: '2', name: 'McCann Health', complianceRate: 88 },
+  { id: '3', name: 'Havas Health', complianceRate: 95 }
+];
+let submissions = [];  // For storing submissions
+
 // Helper function to log agent activities
 function logAgentActivity(agentName, action, details) {
     const activity = {
@@ -266,38 +275,91 @@ router.get('/agent/overrides', (req, res) => {
     });
 });
 
-// EXISTING ENDPOINTS (Enhanced)
+// DASHBOARD ENDPOINTS (NEW AND UPDATED)
 
-// Get all policies (enhanced from placeholder)
+// Get all policies (UPDATED - now returns real policies)
 router.get('/policies', (req, res) => {
-    const clientId = req.headers['x-client-id'] || req.query.clientId;
-    
-    // Sample policies for testing
-    const samplePolicies = [
-        { 
-            id: 1, 
-            name: 'GDPR Compliance Policy', 
-            status: 'active', 
-            lastUpdated: new Date('2024-01-15') 
-        },
-        { 
-            id: 2, 
-            name: 'AI Usage Guidelines', 
-            status: 'active', 
-            lastUpdated: new Date('2024-01-20') 
-        },
-        { 
-            id: 3, 
-            name: 'Data Retention Policy', 
-            status: 'draft', 
-            lastUpdated: new Date('2024-01-25') 
-        }
-    ];
-    
     res.json({
-        clientId: clientId,
-        policies: samplePolicies,
-        total: samplePolicies.length
+        success: true,
+        policies: policies
+    });
+});
+
+// CREATE new policy (NEW)
+router.post('/policies', (req, res) => {
+    const newPolicy = {
+        id: Date.now().toString(),
+        title: req.body.title,
+        description: req.body.description,
+        createdAt: new Date(),
+        status: 'active'
+    };
+    
+    policies.push(newPolicy);
+    
+    // Log this activity
+    logAgentActivity('Policy Manager', 'Policy Created', {
+        policyId: newPolicy.id,
+        title: newPolicy.title
+    });
+    
+    res.json({ 
+        success: true, 
+        policy: newPolicy 
+    });
+});
+
+// GET all agencies (NEW)
+router.get('/agencies', (req, res) => {
+    res.json({ 
+        success: true,
+        agencies: agencies 
+    });
+});
+
+// GET all submissions (NEW)
+router.get('/submissions', (req, res) => {
+    res.json({ 
+        success: true,
+        submissions: submissions 
+    });
+});
+
+// GET policy inbox for agency (NEW)
+router.get('/agency/:agencyId/policies/inbox', (req, res) => {
+    // Return the latest policies as notifications
+    const notifications = policies.slice(-3).map(policy => ({
+        id: policy.id,
+        type: 'new_policy',
+        title: `New Policy: ${policy.title}`,
+        message: policy.description,
+        timestamp: policy.createdAt,
+        read: false
+    }));
+    
+    res.json({ 
+        success: true,
+        notifications: notifications 
+    });
+});
+
+// GET enterprise stats (NEW)
+router.get('/enterprise/stats', (req, res) => {
+    const stats = {
+        totalAgencies: agencies.length,
+        activePolicies: policies.length,
+        pendingSubmissions: submissions.filter(s => s.status === 'pending').length,
+        averageComplianceRate: Math.round(
+            agencies.reduce((sum, a) => sum + a.complianceRate, 0) / agencies.length
+        ),
+        // Add more stats from agent activities
+        totalAgentActivities: agentActivities.length,
+        totalOverrides: overrides.length
+    };
+    
+    res.json({ 
+        success: true,
+        stats: stats 
     });
 });
 
