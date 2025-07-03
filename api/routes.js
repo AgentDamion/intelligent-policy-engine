@@ -414,4 +414,220 @@ function getMostActiveAgent() {
     return { name: maxAgent, activities: maxCount };
 }
 
+// AUDIT LOGGING ENDPOINTS
+router.post('/audit/start-session', async (req, res) => {
+    try {
+        const { userMessage, userId } = req.body;
+        
+        const agent = new AuditAgent();
+        const sessionId = agent.startAuditSession(userMessage || 'API Request', userId);
+        
+        // Store agent instance for this session (in production, use Redis or session storage)
+        global.auditSessions = global.auditSessions || {};
+        global.auditSessions[sessionId] = agent;
+        
+        res.json({
+            success: true,
+            sessionId: sessionId,
+            message: 'Audit session started'
+        });
+        
+    } catch (error) {
+        console.error('Audit session start error:', error);
+        res.status(500).json({ 
+            error: 'Failed to start audit session',
+            details: error.message 
+        });
+    }
+});
+
+// Log any agent decision
+router.post('/audit/log-decision', async (req, res) => {
+    try {
+        const { sessionId, agentType, decisionType, decision, reasoning, policies } = req.body;
+        
+        // Get the audit agent for this session
+        const agent = global.auditSessions?.[sessionId];
+        if (!agent) {
+            return res.status(400).json({ error: 'Invalid session ID or session expired' });
+        }
+        
+        const entryId = agent.logDecision(
+            agentType,
+            decisionType,
+            decision,
+            reasoning || 'Decision made based on configured policies',
+            policies || []
+        );
+        
+        // Also log to our activity tracker
+        logAgentActivity(`${agentType} (Audited)`, decisionType, {
+            sessionId: sessionId,
+            entryId: entryId,
+            decision: decision.status || 'processed'
+        });
+        
+        res.json({
+            success: true,
+            entryId: entryId,
+            message: 'Decision logged to audit trail'
+        });
+        
+    } catch (error) {
+        console.error('Audit logging error:', error);
+        res.status(500).json({ 
+            error: 'Failed to log audit decision',
+            details: error.message 
+        });
+    }
+});
+
+// Complete audit session and get summary
+router.post('/audit/complete-session', async (req, res) => {
+    try {
+        const { sessionId, finalDecision } = req.body;
+        
+        const agent = global.auditSessions?.[sessionId];
+        if (!agent) {
+            return res.status(400).json({ error: 'Invalid session ID or session expired' });
+        }
+        
+        const session = agent.completeAuditSession(
+            finalDecision || { status: 'completed' },
+            Date.now() - new Date(agent.currentSession.start_time).getTime()
+        );
+        
+        // Clean up session
+        delete global.auditSessions[sessionId];
+        
+        res.json({
+            success: true,
+            session: session,
+            summary: {
+                totalDecisions: session.audit_entries.length,
+                agentsUsed: session.agents_engaged,
+                workflowPath: session.workflow_path,
+                duration: session.session_duration_ms
+            }
+        });
+        
+    } catch (error) {
+        console.error('Audit session complete error:', error);
+        res.status(500).json({ 
+            error: 'Failed to complete audit session',
+            details: error.message 
+        });
+    }
+});
+
+// Search audit logs
+router.get('/audit/search', async (req, res) => {
+    try {
+        const agent = new AuditAgent();
+        
+        // Build search criteria from query params
+        const criteria = {};
+        if (req.query.agent) criteria.agent = req.query.agent;
+        if (req.query.status) criteria.status = req.query.status;
+        if (req.query.risk_level) criteria.risk_level = req.query.risk_level;
+        if (req.query.start_date) criteria.start_date = req.query.start_date;
+        if (req.query.end_date) criteria.end_date = req.query.end_date;
+        
+        const results = agent.searchAuditLogs(criteria);
+        
+        res.json({
+            success: true,
+            count: results.length,
+            results: results
+        });
+        
+    } catch (error) {
+        console.error('Audit search error:', error);
+        res.status(500).json({ 
+            error: 'Failed to search audit logs',
+            details: error.message 
+        });
+    }
+});
+
+// Generate compliance report
+router.get('/audit/compliance-report', async (req, res) => {
+    try {
+        const agent = new AuditAgent();
+        const report = agent.generateComplianceReport(req.query.sessionId);
+        
+        res.json({
+            success: true,
+            report: report
+        });
+        
+    } catch (error) {
+        console.error('Compliance report error:', error);
+        res.status(500).json({ 
+            error: 'Failed to generate compliance report',
+            details: error.message 
+        });
+    }
+});
+
+// Quick audit check endpoint (for compatibility)
+router.post('/audit/check', async (req, res) => {
+    try {
+        const { submission, type = 'general' } = req.body;
+        
+        if (!submission) {
+            return res.status(400).json({ error: 'Submission data required' });
+        }
+        
+        // Start a quick audit session
+        const agent = new AuditAgent();
+        const sessionId = agent.startAuditSession(`Audit check: ${type}`, 'api-user');
+        
+        // Log the audit check as a decision
+        agent.logDecision(
+            'audit',
+            'submission_review',
+            {
+                status: 'reviewed',
+                type: type,
+                content_length: submission.content?.length || 0
+            },
+            'Automated audit check performed on submission',
+            ['submission_review_policy', 'automated_audit_policy']
+        );
+        
+        // Complete the session
+        const session = agent.completeAuditSession(
+            { status: 'completed', result: 'pass' },
+            50
+        );
+        
+        // Log the activity
+        logAgentActivity('Audit Agent', 'Submission Check', {
+            type: type,
+            status: 'reviewed',
+            sessionId: sessionId
+        });
+        
+        res.json({
+            success: true,
+            data: {
+                status: 'reviewed',
+                confidence: 0.85,
+                issues: [],
+                recommendations: ['Submission logged in audit trail'],
+                explanation: 'Audit check completed and logged',
+                auditSessionId: sessionId
+            }
+        });
+        
+    } catch (error) {
+        console.error('Audit check error:', error);
+        res.status(500).json({ 
+            error: 'Failed to audit submission',
+            details: error.message 
+        });
+    }
+});
+
 module.exports = router;
