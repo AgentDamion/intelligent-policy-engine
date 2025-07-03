@@ -165,7 +165,7 @@ class ConflictDetectionAgent {
         }
     
         // Keep your existing pattern-based detection as fallback
-        const contradictions = this.findContradictions(policyA, policyB);
+        const contradictions = await this.findContradictions(policyA, policyB);  // ADD await
         conflicts.push(...contradictions);
     
         const overlaps = this.findRequirementOverlaps(policyA, policyB);
