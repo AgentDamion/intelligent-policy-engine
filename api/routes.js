@@ -14,11 +14,32 @@ const overrides = [];
 
 // NEW STORAGE ADDED FOR DASHBOARD
 let policies = [];  // For storing created policies
-let agencies = [    // Sample agencies
-  { id: '1', name: 'Ogilvy Health', complianceRate: 92 },
-  { id: '2', name: 'McCann Health', complianceRate: 88 },
-  { id: '3', name: 'Havas Health', complianceRate: 95 }
-];
+let agencies = [
+    { 
+      id: '1', 
+      name: 'Ogilvy Health', 
+      compliance: 92,  // Changed from complianceRate
+      violations: 0,
+      lastAudit: '2 days ago',
+      status: 'active'
+    },
+    { 
+      id: '2', 
+      name: 'McCann Health', 
+      compliance: 88,  // Changed from complianceRate
+      violations: 1,
+      lastAudit: '1 week ago',
+      status: 'warning'
+    },
+    { 
+      id: '3', 
+      name: 'Havas Health', 
+      compliance: 95,  // Changed from complianceRate
+      violations: 0,
+      lastAudit: '3 days ago',
+      status: 'active'
+    }
+  ];
 let submissions = [];  // For storing submissions
 
 // Helper function to log agent activities
@@ -343,14 +364,14 @@ router.get('/agency/:agencyId/policies/inbox', (req, res) => {
     });
 });
 
-// GET enterprise stats (NEW)
+// GET enterprise stats (FIXED - only one version now)
 router.get('/enterprise/stats', (req, res) => {
     const stats = {
         totalAgencies: agencies.length,
         activePolicies: policies.length,
         pendingSubmissions: submissions.filter(s => s.status === 'pending').length,
         averageComplianceRate: Math.round(
-            agencies.reduce((sum, a) => sum + a.complianceRate, 0) / agencies.length
+            agencies.reduce((sum, a) => sum + a.compliance, 0) / agencies.length
         ),
         // Add more stats from agent activities
         totalAgentActivities: agentActivities.length,
