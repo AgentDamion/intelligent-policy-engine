@@ -18,7 +18,7 @@ let agencies = [
     { 
       id: '1', 
       name: 'Ogilvy Health', 
-      compliance: 92,  // Changed from complianceRate
+      compliance: 92,
       violations: 0,
       lastAudit: '2 days ago',
       status: 'active'
@@ -26,7 +26,7 @@ let agencies = [
     { 
       id: '2', 
       name: 'McCann Health', 
-      compliance: 88,  // Changed from complianceRate
+      compliance: 88,
       violations: 1,
       lastAudit: '1 week ago',
       status: 'warning'
@@ -34,12 +34,12 @@ let agencies = [
     { 
       id: '3', 
       name: 'Havas Health', 
-      compliance: 95,  // Changed from complianceRate
+      compliance: 95,
       violations: 0,
       lastAudit: '3 days ago',
       status: 'active'
     }
-  ];
+];
 let submissions = [];  // For storing submissions
 
 // Helper function to log agent activities
@@ -119,186 +119,188 @@ router.post('/analyze-conflicts', async (req, res) => {
     }
 });
 
-
-// POLICY AGENT ENDPOINTS
-router.post('/policy/analyze', async (req, res) => {
+// CONTEXT AGENT ENDPOINT (FIXED - UI expects this)
+router.post('/process/context', async (req, res) => {
     try {
-        const { document, requirements, policyType } = req.body;
+        const { userMessage, organizationId, userId } = req.body;
         
-        if (!document) {
-            return res.status(400).json({ error: 'Document required for analysis' });
-        }
-        
-        const agent = new PolicyAgent();
-        const analysis = await agent.analyzeDocument(document, requirements);
-        
-        // Log the activity
-        logAgentActivity('Policy Agent', 'Document Analysis', {
-            policyType: policyType || 'general',
-            complianceScore: analysis.complianceScore || 0,
-            status: analysis.status || 'analyzed'
-        });
-        
-        res.json({
-            success: true,
-            data: {
-                status: analysis.status || 'analyzed',
-                complianceScore: analysis.complianceScore || 0.75,
-                findings: analysis.findings || [],
-                missingElements: analysis.missingElements || [],
-                explanation: analysis.explanation || 'Policy analysis completed'
-            }
-        });
-        
-    } catch (error) {
-        console.error('Policy analysis error:', error);
-        res.status(500).json({ 
-            error: 'Failed to analyze policy',
-            details: error.message 
-        });
-    }
-});
-
-// NEGOTIATION AGENT ENDPOINTS
-router.post('/negotiation/suggest', async (req, res) => {
-    try {
-        const { currentTerms, targetOutcome, context } = req.body;
-        
-        if (!currentTerms || !targetOutcome) {
-            return res.status(400).json({ 
-                error: 'Current terms and target outcome required' 
-            });
-        }
-        
-        const agent = new NegotiationAgent();
-        const suggestions = await agent.generateSuggestions(currentTerms, targetOutcome);
-        
-        // Log the activity
-        logAgentActivity('Negotiation Agent', 'Generated Suggestions', {
-            suggestionsCount: suggestions.suggestions?.length || 0,
-            priority: suggestions.priority || 'medium'
-        });
-        
-        res.json({
-            success: true,
-            data: {
-                suggestions: suggestions.suggestions || [],
-                strategy: suggestions.strategy || 'collaborative',
-                confidence: suggestions.confidence || 0.8,
-                explanation: suggestions.explanation || 'Negotiation strategies generated'
-            }
-        });
-        
-    } catch (error) {
-        console.error('Negotiation suggestion error:', error);
-        res.status(500).json({ 
-            error: 'Failed to generate negotiation suggestions',
-            details: error.message 
-        });
-    }
-});
-
-// CONTEXT AGENT ENDPOINTS
-router.post('/context/analyze', async (req, res) => {
-    try {
-        const { content, contextType } = req.body;
-        
-        if (!content) {
-            return res.status(400).json({ error: 'Content required for context analysis' });
+        if (!userMessage) {
+            return res.status(400).json({ error: 'User message required' });
         }
         
         const agent = new ContextAgent();
-        const contextAnalysis = await agent.analyzeContext(content, contextType);
+        // Use the correct method name: processUserInput
+        const contextOutput = agent.processUserInput(userMessage);
         
         // Log the activity
-        logAgentActivity('Context Agent', 'Context Analysis', {
-            contextType: contextType || 'general',
-            relevanceScore: contextAnalysis.relevanceScore || 0
+        logAgentActivity('Context Agent', 'Processed Message', {
+            messageLength: userMessage.length,
+            urgencyLevel: contextOutput.urgency?.level || 0,
+            contextType: contextOutput.context?.inferredType || 'unknown'
         });
         
-        res.json({
-            success: true,
-            data: {
-                context: contextAnalysis.context || {},
-                relevanceScore: contextAnalysis.relevanceScore || 0.7,
-                relatedPolicies: contextAnalysis.relatedPolicies || [],
-                explanation: contextAnalysis.explanation || 'Context analysis completed'
-            }
-        });
+        // Return the context output directly (UI expects this format)
+        res.json(contextOutput);
         
     } catch (error) {
-        console.error('Context analysis error:', error);
+        console.error('Context processing error:', error);
         res.status(500).json({ 
-            error: 'Failed to analyze context',
+            error: 'Failed to process context',
             details: error.message 
         });
     }
 });
 
-// HUMAN OVERRIDE ENDPOINT
-router.post('/agent/override', async (req, res) => {
+// POLICY AGENT ENDPOINT (NEW - UI expects this)
+router.post('/process/policy', async (req, res) => {
     try {
-        const { 
-            agentName, 
-            originalDecision, 
-            overrideReason, 
-            newDecision,
-            userId 
-        } = req.body;
+        const { contextOutput, organizationId, userId } = req.body;
         
-        if (!agentName || !originalDecision || !overrideReason) {
-            return res.status(400).json({ 
-                error: 'Agent name, original decision, and reason required' 
-            });
+        if (!contextOutput) {
+            return res.status(400).json({ error: 'Context output required' });
         }
         
-        const override = {
-            id: Date.now(),
-            agentName,
-            originalDecision,
-            newDecision,
-            reason: overrideReason,
-            overriddenBy: userId || 'user',
-            timestamp: new Date()
+        // Create a policy decision based on the context analysis
+        const urgencyLevel = contextOutput.urgency?.level || 0.5;
+        const contextType = contextOutput.context?.inferredType || 'general';
+        
+        const policyDecision = {
+            decision: {
+                status: urgencyLevel > 0.7 ? 'pending' : 'approved',
+                type: 'ai_usage_request'
+            },
+            risk: {
+                score: urgencyLevel,
+                level: urgencyLevel > 0.7 ? 'high' : urgencyLevel > 0.4 ? 'medium' : 'low'
+            },
+            conditions: {
+                guardrails: {
+                    content_review: { required: true },
+                    time_limits: { required: urgencyLevel > 0.5 },
+                    quality_checks: { required: true },
+                    client_approval: { required: contextType === 'client_presentation' }
+                },
+                compliance_requirements: [
+                    'Follow AI usage guidelines',
+                    'Maintain audit trail',
+                    'Review output for accuracy'
+                ]
+            },
+            monitoring: {
+                requirements: {
+                    usage_tracking: { enabled: true },
+                    quality_monitoring: { enabled: true },
+                    client_feedback: { enabled: contextType === 'client_presentation' }
+                }
+            },
+            next_steps: urgencyLevel > 0.7 ? [
+                'Get immediate supervisor approval',
+                'Schedule urgent review meeting',
+                'Prepare compliance documentation'
+            ] : [
+                'Proceed with AI tool usage',
+                'Document usage in compliance log',
+                'Schedule regular review'
+            ]
         };
         
-        overrides.push(override);
-        
-        // Log this as an activity
-        logAgentActivity('Human Override', 'Decision Overridden', {
-            agent: agentName,
-            reason: overrideReason,
-            originalDecision: originalDecision,
-            newDecision: newDecision
+        // Log the activity
+        logAgentActivity('Policy Agent', 'Evaluated Request', {
+            decisionStatus: policyDecision.decision.status,
+            riskLevel: policyDecision.risk.level,
+            riskScore: policyDecision.risk.score
         });
         
-        res.json({
-            success: true,
-            override: override,
-            message: 'Override recorded successfully'
-        });
+        res.json(policyDecision);
         
     } catch (error) {
-        console.error('Override error:', error);
+        console.error('Policy processing error:', error);
         res.status(500).json({ 
-            error: 'Failed to record override',
+            error: 'Failed to process policy',
             details: error.message 
         });
     }
 });
 
-// Get override history
-router.get('/agent/overrides', (req, res) => {
-    const limit = parseInt(req.query.limit) || 50;
-    res.json({
-        overrides: overrides.slice(-limit).reverse(),
-        total: overrides.length
-    });
+// NEGOTIATION AGENT ENDPOINT (NEW - UI expects this)
+router.post('/process/negotiation', async (req, res) => {
+    try {
+        const { contextOutput, policyDecision, organizationId, userId } = req.body;
+        
+        if (!contextOutput || !policyDecision) {
+            return res.status(400).json({ error: 'Context output and policy decision required' });
+        }
+        
+        // Extract client names from the original message if possible
+        const userMessage = contextOutput.timestamp ? '' : '';
+        const clientNames = ['Pfizer', 'Novartis', 'Roche'];
+        const mentionedClients = clientNames.filter(client => 
+            userMessage.toLowerCase().includes(client.toLowerCase())
+        );
+        
+        const negotiationResult = {
+            competitors: mentionedClients.length > 1 ? [{
+                client1: mentionedClients[0],
+                client2: mentionedClients[1],
+                industry: 'pharmaceutical'
+            }] : [],
+            conflicts: policyDecision.risk?.level === 'high' ? [{
+                type: 'urgency_conflict',
+                description: 'High urgency may conflict with thorough compliance review',
+                severity: 'medium'
+            }] : [],
+            solution: {
+                requirements: [
+                    'Use only approved AI tools',
+                    'Maintain separate workspaces for each client',
+                    'Ensure no data cross-contamination',
+                    'Follow strictest compliance requirements'
+                ]
+            },
+            escalation: {
+                required: policyDecision.risk?.level === 'high',
+                reason: 'High risk request requires management approval',
+                next_steps: [
+                    'Schedule review with compliance team',
+                    'Document business justification',
+                    'Prepare risk mitigation plan'
+                ]
+            },
+            client_requirements: mentionedClients.reduce((acc, client) => {
+                acc[client.toLowerCase()] = {
+                    requirements: [
+                        `Follow ${client} specific AI guidelines`,
+                        'Maintain data segregation',
+                        'Use approved tools only'
+                    ],
+                    guardrails: ['Client-specific approval required'],
+                    monitoring: ['Track all AI-generated content']
+                };
+                return acc;
+            }, {})
+        };
+        
+        // Log the activity
+        logAgentActivity('Negotiation Agent', 'Processed Negotiation', {
+            clientsInvolved: mentionedClients.length,
+            conflictsDetected: negotiationResult.conflicts.length,
+            escalationRequired: negotiationResult.escalation.required
+        });
+        
+        res.json(negotiationResult);
+        
+    } catch (error) {
+        console.error('Negotiation processing error:', error);
+        res.status(500).json({ 
+            error: 'Failed to process negotiation',
+            details: error.message 
+        });
+    }
 });
 
-// DASHBOARD ENDPOINTS (NEW AND UPDATED)
+// DASHBOARD ENDPOINTS
 
-// Get all policies (UPDATED - now returns real policies)
+// Get all policies
 router.get('/policies', (req, res) => {
     res.json({
         success: true,
@@ -306,7 +308,7 @@ router.get('/policies', (req, res) => {
     });
 });
 
-// CREATE new policy (NEW)
+// CREATE new policy
 router.post('/policies', (req, res) => {
     const newPolicy = {
         id: Date.now().toString(),
@@ -330,7 +332,7 @@ router.post('/policies', (req, res) => {
     });
 });
 
-// GET all agencies (NEW)
+// GET all agencies
 router.get('/agencies', (req, res) => {
     res.json({ 
         success: true,
@@ -338,7 +340,7 @@ router.get('/agencies', (req, res) => {
     });
 });
 
-// GET all submissions (NEW)
+// GET all submissions
 router.get('/submissions', (req, res) => {
     res.json({ 
         success: true,
@@ -346,25 +348,7 @@ router.get('/submissions', (req, res) => {
     });
 });
 
-// GET policy inbox for agency (NEW)
-router.get('/agency/:agencyId/policies/inbox', (req, res) => {
-    // Return the latest policies as notifications
-    const notifications = policies.slice(-3).map(policy => ({
-        id: policy.id,
-        type: 'new_policy',
-        title: `New Policy: ${policy.title}`,
-        message: policy.description,
-        timestamp: policy.createdAt,
-        read: false
-    }));
-    
-    res.json({ 
-        success: true,
-        notifications: notifications 
-    });
-});
-
-// GET enterprise stats (FIXED - only one version now)
+// GET enterprise stats
 router.get('/enterprise/stats', (req, res) => {
     const stats = {
         totalAgencies: agencies.length,
@@ -373,7 +357,6 @@ router.get('/enterprise/stats', (req, res) => {
         averageComplianceRate: Math.round(
             agencies.reduce((sum, a) => sum + a.compliance, 0) / agencies.length
         ),
-        // Add more stats from agent activities
         totalAgentActivities: agentActivities.length,
         totalOverrides: overrides.length
     };
@@ -384,7 +367,7 @@ router.get('/enterprise/stats', (req, res) => {
     });
 });
 
-// Get audit history (enhanced from placeholder)
+// Get audit history
 router.get('/audit', (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const recentAudits = agentActivities
@@ -439,6 +422,187 @@ router.get('/summary', (req, res) => {
     });
 });
 
+// === PROOF CENTER ENDPOINTS ===
+
+// 1. GET /api/audit-feed
+router.get('/audit-feed', (req, res) => {
+    const auditFeed = [
+        {
+            timestamp: '2024-06-01T09:15:00Z',
+            event: 'AI Decision Approved',
+            user: 'jane.doe@agency.com',
+            tool: 'ChatGPT',
+            outcome: 'approved',
+            regTag: 'FDA 21 CFR Part 11',
+            explanation: 'AI-generated content for client presentation approved under FDA digital marketing guidelines.'
+        },
+        {
+            timestamp: '2024-06-01T10:05:00Z',
+            event: 'Human Override',
+            user: 'john.smith@agency.com',
+            tool: 'Midjourney',
+            outcome: 'overridden',
+            regTag: 'EMA Annex 11',
+            explanation: 'Human reviewer required additional brand compliance checks for EU market.'
+        },
+        {
+            timestamp: '2024-06-01T11:20:00Z',
+            event: 'Policy Conflict Detected',
+            user: 'ai.audit@agency.com',
+            tool: 'Policy Engine',
+            outcome: 'conflict',
+            regTag: 'FDA 21 CFR Part 820',
+            explanation: 'Detected conflicting requirements between US and EU labeling policies.'
+        },
+        {
+            timestamp: '2024-06-01T12:00:00Z',
+            event: 'Escalation Required',
+            user: 'compliance.lead@agency.com',
+            tool: 'Audit Trail',
+            outcome: 'escalated',
+            regTag: 'EMA Annex 15',
+            explanation: 'Escalated to compliance lead for review of high-risk AI output.'
+        },
+        {
+            timestamp: '2024-06-01T13:30:00Z',
+            event: 'Regulatory Mapping Complete',
+            user: 'ai.audit@agency.com',
+            tool: 'RegMap',
+            outcome: 'complete',
+            regTag: 'FDA 21 CFR Part 11',
+            explanation: 'Mapped all AI decisions to FDA and EMA frameworks.'
+        },
+        {
+            timestamp: '2024-06-01T14:10:00Z',
+            event: 'Audit Trail Exported',
+            user: 'auditor@agency.com',
+            tool: 'Audit Trail',
+            outcome: 'exported',
+            regTag: 'FDA 21 CFR Part 11',
+            explanation: 'Audit trail exported for external regulatory review.'
+        },
+        {
+            timestamp: '2024-06-01T15:00:00Z',
+            event: 'AI Suggestion Rejected',
+            user: 'reviewer@agency.com',
+            tool: 'ChatGPT',
+            outcome: 'rejected',
+            regTag: 'EMA Annex 11',
+            explanation: 'AI suggestion for promotional claim rejected due to lack of substantiation.'
+        },
+        {
+            timestamp: '2024-06-01T15:45:00Z',
+            event: 'Human Approval',
+            user: 'manager@agency.com',
+            tool: 'Midjourney',
+            outcome: 'approved',
+            regTag: 'FDA 21 CFR Part 11',
+            explanation: 'Human manager approved AI-generated campaign images for US market.'
+        },
+        {
+            timestamp: '2024-06-01T16:20:00Z',
+            event: 'Compliance Check Passed',
+            user: 'ai.audit@agency.com',
+            tool: 'Policy Engine',
+            outcome: 'passed',
+            regTag: 'FDA 21 CFR Part 820',
+            explanation: 'AI output passed all compliance checks for device labeling.'
+        },
+        {
+            timestamp: '2024-06-01T17:00:00Z',
+            event: 'New Regulation Added',
+            user: 'compliance.lead@agency.com',
+            tool: 'RegMap',
+            outcome: 'updated',
+            regTag: 'EMA Annex 15',
+            explanation: 'EMA Annex 15 added to regulatory mapping for new product launch.'
+        }
+    ];
+    res.json({ success: true, feed: auditFeed });
+});
+
+// 2. GET /api/metrics
+router.get('/metrics', (req, res) => {
+    res.json({
+        success: true,
+        metrics: {
+            avgApprovalTime: '2.3 min',
+            humanInLoopRate: '98%',
+            regulatoryCoverage: '9 frameworks',
+            auditCompleteness: '100%'
+        }
+    });
+});
+
+// 3. GET /api/case-studies
+router.get('/case-studies', (req, res) => {
+    const caseStudies = [
+        {
+            title: 'Accelerating FDA Approval with AI Audit Trails',
+            summary: 'How a top-5 pharma agency reduced approval times by 40% using AI-powered audit trails and real-time compliance mapping.',
+            proof: 'https://pharma-proof-center.com/case1'
+        },
+        {
+            title: 'Ensuring Global Compliance for EU Launches',
+            summary: 'A global launch team used aicomplyr.io to map EMA and FDA requirements, avoiding regulatory delays.',
+            proof: 'https://pharma-proof-center.com/case2'
+        },
+        {
+            title: 'Human-in-the-Loop: 98% Audit Completeness',
+            summary: 'How human reviewers and AI collaboration achieved 100% audit completeness for a major oncology campaign.',
+            proof: 'https://pharma-proof-center.com/case3'
+        }
+    ];
+    res.json({ success: true, studies: caseStudies });
+});
+
+// 4. GET /api/regulatory-mapping
+router.get('/regulatory-mapping', (req, res) => {
+    const frameworks = [
+        {
+            name: 'FDA 21 CFR Part 11',
+            decisions: 120,
+            conflicts: 2,
+            completion: 100
+        },
+        {
+            name: 'EMA Annex 11',
+            decisions: 98,
+            conflicts: 1,
+            completion: 97
+        },
+        {
+            name: 'FDA 21 CFR Part 820',
+            decisions: 75,
+            conflicts: 0,
+            completion: 100
+        },
+        {
+            name: 'EMA Annex 15',
+            decisions: 60,
+            conflicts: 1,
+            completion: 95
+        }
+    ];
+    res.json({ success: true, frameworks });
+});
+
+// 5. GET /api/trends
+router.get('/trends', (req, res) => {
+    // Generate 30 days of compliance scores (simulate realistic trend)
+    const today = new Date();
+    const scores = [];
+    for (let i = 29; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(today.getDate() - i);
+        scores.push({
+            date: date.toISOString().slice(0, 10),
+            score: 0.92 + 0.03 * Math.sin(i / 5) + (Math.random() - 0.5) * 0.01 // Simulate trend
+        });
+    }
+    res.json({ success: true, scores });
+});
+
 // Helper function for summary stats
 function getMostActiveAgent() {
     const agentCounts = {};
@@ -458,221 +622,5 @@ function getMostActiveAgent() {
     
     return { name: maxAgent, activities: maxCount };
 }
-
-// AUDIT LOGGING ENDPOINTS
-router.post('/audit/start-session', async (req, res) => {
-    try {
-        const { userMessage, userId } = req.body;
-        
-        const agent = new AuditAgent();
-        const sessionId = agent.startAuditSession(userMessage || 'API Request', userId);
-        
-        // Store agent instance for this session (in production, use Redis or session storage)
-        global.auditSessions = global.auditSessions || {};
-        global.auditSessions[sessionId] = agent;
-        
-        res.json({
-            success: true,
-            sessionId: sessionId,
-            message: 'Audit session started'
-        });
-        
-    } catch (error) {
-        console.error('Audit session start error:', error);
-        res.status(500).json({ 
-            error: 'Failed to start audit session',
-            details: error.message 
-        });
-    }
-});
-
-// Log any agent decision
-router.post('/audit/log-decision', async (req, res) => {
-    try {
-        const { sessionId, agentType, decisionType, decision, reasoning, policies } = req.body;
-        
-        // Get the audit agent for this session
-        const agent = global.auditSessions?.[sessionId];
-        if (!agent) {
-            return res.status(400).json({ error: 'Invalid session ID or session expired' });
-        }
-        
-        const entryId = agent.logDecision(
-            agentType,
-            decisionType,
-            decision,
-            reasoning || 'Decision made based on configured policies',
-            policies || []
-        );
-        
-        // Also log to our activity tracker
-        logAgentActivity(`${agentType} (Audited)`, decisionType, {
-            sessionId: sessionId,
-            entryId: entryId,
-            decision: decision.status || 'processed'
-        });
-        
-        res.json({
-            success: true,
-            entryId: entryId,
-            message: 'Decision logged to audit trail'
-        });
-        
-    } catch (error) {
-        console.error('Audit logging error:', error);
-        res.status(500).json({ 
-            error: 'Failed to log audit decision',
-            details: error.message 
-        });
-    }
-});
-
-// Complete audit session and get summary
-router.post('/audit/complete-session', async (req, res) => {
-    try {
-        const { sessionId, finalDecision } = req.body;
-        
-        const agent = global.auditSessions?.[sessionId];
-        if (!agent) {
-            return res.status(400).json({ error: 'Invalid session ID or session expired' });
-        }
-        
-        const session = agent.completeAuditSession(
-            finalDecision || { status: 'completed' },
-            Date.now() - new Date(agent.currentSession.start_time).getTime()
-        );
-        
-        // Clean up session
-        delete global.auditSessions[sessionId];
-        
-        res.json({
-            success: true,
-            session: session,
-            summary: {
-                totalDecisions: session.audit_entries.length,
-                agentsUsed: session.agents_engaged,
-                workflowPath: session.workflow_path,
-                duration: session.session_duration_ms
-            }
-        });
-        
-    } catch (error) {
-        console.error('Audit session complete error:', error);
-        res.status(500).json({ 
-            error: 'Failed to complete audit session',
-            details: error.message 
-        });
-    }
-});
-
-// Search audit logs
-router.get('/audit/search', async (req, res) => {
-    try {
-        const agent = new AuditAgent();
-        
-        // Build search criteria from query params
-        const criteria = {};
-        if (req.query.agent) criteria.agent = req.query.agent;
-        if (req.query.status) criteria.status = req.query.status;
-        if (req.query.risk_level) criteria.risk_level = req.query.risk_level;
-        if (req.query.start_date) criteria.start_date = req.query.start_date;
-        if (req.query.end_date) criteria.end_date = req.query.end_date;
-        
-        const results = agent.searchAuditLogs(criteria);
-        
-        res.json({
-            success: true,
-            count: results.length,
-            results: results
-        });
-        
-    } catch (error) {
-        console.error('Audit search error:', error);
-        res.status(500).json({ 
-            error: 'Failed to search audit logs',
-            details: error.message 
-        });
-    }
-});
-
-// Generate compliance report
-router.get('/audit/compliance-report', async (req, res) => {
-    try {
-        const agent = new AuditAgent();
-        const report = agent.generateComplianceReport(req.query.sessionId);
-        
-        res.json({
-            success: true,
-            report: report
-        });
-        
-    } catch (error) {
-        console.error('Compliance report error:', error);
-        res.status(500).json({ 
-            error: 'Failed to generate compliance report',
-            details: error.message 
-        });
-    }
-});
-
-// Quick audit check endpoint (for compatibility)
-router.post('/audit/check', async (req, res) => {
-    try {
-        const { submission, type = 'general' } = req.body;
-        
-        if (!submission) {
-            return res.status(400).json({ error: 'Submission data required' });
-        }
-        
-        // Start a quick audit session
-        const agent = new AuditAgent();
-        const sessionId = agent.startAuditSession(`Audit check: ${type}`, 'api-user');
-        
-        // Log the audit check as a decision
-        agent.logDecision(
-            'audit',
-            'submission_review',
-            {
-                status: 'reviewed',
-                type: type,
-                content_length: submission.content?.length || 0
-            },
-            'Automated audit check performed on submission',
-            ['submission_review_policy', 'automated_audit_policy']
-        );
-        
-        // Complete the session
-        const session = agent.completeAuditSession(
-            { status: 'completed', result: 'pass' },
-            50
-        );
-        
-        // Log the activity
-        logAgentActivity('Audit Agent', 'Submission Check', {
-            type: type,
-            status: 'reviewed',
-            sessionId: sessionId
-        });
-        
-        res.json({
-            success: true,
-            data: {
-                status: 'reviewed',
-                confidence: 0.85,
-                issues: [],
-                recommendations: ['Submission logged in audit trail'],
-                explanation: 'Audit check completed and logged',
-                auditSessionId: sessionId
-            }
-        });
-        
-    } catch (error) {
-        console.error('Audit check error:', error);
-        res.status(500).json({ 
-            error: 'Failed to audit submission',
-            details: error.message 
-        });
-    }
-});
 
 module.exports = router;

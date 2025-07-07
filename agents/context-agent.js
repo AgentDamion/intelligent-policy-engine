@@ -67,6 +67,54 @@ class ContextAgent {
     }
 
     /**
+     * NEW METHOD: Wrapper for routes.js compatibility
+     * This is what routes.js expects to call
+     */
+    analyzeContext(content, contextType) {
+        // Use the existing processUserInput method
+        const result = this.processUserInput(content);
+        
+        // Format the response to match what routes.js expects
+        return {
+            context: result.context,
+            relevanceScore: result.context.confidence || 0.7,
+            relatedPolicies: this.getRelatedPolicies(result.context.inferredType),
+            explanation: `Context analysis completed with ${(result.context.confidence * 100).toFixed(0)}% confidence`,
+            // Include the full result for additional data
+            fullAnalysis: result
+        };
+    }
+
+    /**
+     * Get related policies based on inferred context
+     */
+    getRelatedPolicies(contextType) {
+        const policyMap = {
+            'client_presentation': [
+                'Client Communication Policy',
+                'AI Usage in Client Materials',
+                'Brand Guidelines Compliance'
+            ],
+            'internal_review': [
+                'Internal Communication Standards',
+                'Team Collaboration Policy'
+            ],
+            'creative_pitch': [
+                'Creative Content Guidelines',
+                'AI-Generated Creative Policy',
+                'Intellectual Property Guidelines'
+            ],
+            'data_analysis': [
+                'Data Privacy Policy',
+                'Analytics Best Practices',
+                'Client Data Handling'
+            ]
+        };
+        
+        return policyMap[contextType] || ['General AI Usage Policy'];
+    }
+
+    /**
      * Analyzes urgency and emotional intensity from user message
      */
     analyzeUrgency(message) {
@@ -324,6 +372,6 @@ if (typeof module !== 'undefined' && module.exports) {
 }
 
 // Run test if this file is executed directly
-if (typeof window === 'undefined') {
+if (typeof window === 'undefined' && require.main === module) {
     testContextAgent();
 }
