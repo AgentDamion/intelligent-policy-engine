@@ -1,115 +1,100 @@
+// database/seed-policy-templates.js
+// Script to add sample policy templates
+
 require('dotenv').config();
 const { Pool } = require('pg');
 
-// Use the same connection logic as the main application
-const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:' + process.env.DB_PASSWORD + '@localhost:5432/aicomplyr';
-
-const pool = new Pool({
-    connectionString,
+const pool = new Pool({ 
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
 });
 
-async function seedSampleData() {
-    const client = await pool.connect();
+const sampleTemplates = [
+  {
+    name: 'FDA Social Media Compliance',
+    description: 'Standard FDA compliance rules for pharmaceutical social media content',
+    industry: 'pharma',
+    template_type: 'fda_social_media',
+    base_rules: {
+      requires_medical_review: true,
+      requires_legal_review: true,
+      prohibited_claims: ['cure', 'treatment', 'diagnosis'],
+      required_disclaimers: ['FDA_approval_status', 'side_effects'],
+      approval_required_for: ['patient_facing', 'disease_specific'],
+      risk_factors: {
+        patient_facing: 'high',
+        off_label_mention: 'critical',
+        medical_claims: 'high'
+      }
+    }
+  },
+  {
+    name: 'AI Content Disclosure',
+    description: 'Requirements for disclosing AI-generated content',
+    industry: 'general',
+    template_type: 'ai_disclosure',
+    base_rules: {
+      disclosure_required: true,
+      disclosure_text: 'This content was created with AI assistance',
+      disclosure_placement: 'prominent',
+      human_review_required: true,
+      exceptions: ['internal_drafts', 'research_notes']
+    }
+  },
+  {
+    name: 'Off-Label Avoidance',
+    description: 'Prevents off-label promotion in marketing materials',
+    industry: 'pharma',
+    template_type: 'off_label_avoidance',
+    base_rules: {
+      scan_for_off_label: true,
+      approved_indications_only: true,
+      requires_indication_verification: true,
+      escalate_on_potential_violation: true,
+      review_threshold: 0.7
+    }
+  }
+];
+
+async function seedPolicyTemplates() {
+  const client = await pool.connect();
+  
+  try {
+    console.log('🌱 Seeding policy templates...');
     
-    try {
-        console.log('Seeding sample organizations and agencies...');
-        console.log('Using connection string:', connectionString.replace(/:[^:@]*@/, ':****@')); // Hide password in logs
+    for (const template of sampleTemplates) {
+      // Check if template already exists
+      const existsQuery = 'SELECT id FROM policy_templates WHERE name = $1';
+      const existsResult = await client.query(existsQuery, [template.name]);
+      
+      if (existsResult.rows.length === 0) {
+        const query = `
+          INSERT INTO policy_templates (name, description, industry, template_type, base_rules)
+          VALUES ($1, $2, $3, $4, $5)
+        `;
+      
+        await client.query(query, [
+          template.name,
+          template.description,
+          template.industry,
+          template.template_type,
+          JSON.stringify(template.base_rules)
+        ]);
         
-        // Insert sample organizations
-        const orgs = [
-            { name: 'PharmaCorp Inc.', industry: 'Pharmaceuticals', competitive_group: 'pharma_giants' },
-            { name: 'MediTech Solutions', industry: 'Medical Technology', competitive_group: 'medtech_innovators' },
-            { name: 'Global Finance Bank', industry: 'Banking', competitive_group: 'global_banks' },
-            { name: 'TechStart Ventures', industry: 'Technology', competitive_group: 'tech_startups' },
-            { name: 'BioGen Research', industry: 'Biotechnology', competitive_group: 'biotech_leaders' }
-        ];
-        
-        console.log('Inserting organizations...');
-        for (const org of orgs) {
-            const result = await client.query(`
-                INSERT INTO organizations (name, industry, competitive_group) 
-                VALUES ($1, $2, $3) 
-                RETURNING id, name
-            `, [org.name, org.industry, org.competitive_group]);
-            
-            console.log(`✅ Created organization: ${result.rows[0].name} (ID: ${result.rows[0].id})`);
-        }
-        
-        // Insert sample agencies
-        const agencies = [
-            { name: 'ComplianceFirst Agency', specialization: 'Regulatory Compliance' },
-            { name: 'RiskGuard Partners', specialization: 'Risk Management' },
-            { name: 'PolicyPro Solutions', specialization: 'Policy Development' },
-            { name: 'AuditSecure LLC', specialization: 'Audit Services' }
-        ];
-        
-        console.log('\nInserting agencies...');
-        for (const agency of agencies) {
-            const result = await client.query(`
-                INSERT INTO agencies (name, specialization) 
-                VALUES ($1, $2) 
-                RETURNING id, name
-            `, [agency.name, agency.specialization]);
-            
-            console.log(`✅ Created agency: ${result.rows[0].name} (ID: ${result.rows[0].id})`);
-        }
-        
-        // Create relationships between agencies and organizations
-        console.log('\nCreating agency-organization relationships...');
-        const relationships = [
-            { agency_id: 1, organization_id: 1, relationship_type: 'client' },
-            { agency_id: 1, organization_id: 2, relationship_type: 'client' },
-            { agency_id: 2, organization_id: 3, relationship_type: 'client' },
-            { agency_id: 2, organization_id: 4, relationship_type: 'client' },
-            { agency_id: 3, organization_id: 5, relationship_type: 'client' },
-            { agency_id: 4, organization_id: 1, relationship_type: 'client' },
-            { agency_id: 4, organization_id: 3, relationship_type: 'client' }
-        ];
-        
-        for (const rel of relationships) {
-            const result = await client.query(`
-                INSERT INTO relationships (agency_id, organization_id, relationship_type) 
-                VALUES ($1, $2, $3) 
-                RETURNING id
-            `, [rel.agency_id, rel.organization_id, rel.relationship_type]);
-            
-            console.log(`✅ Created relationship ID: ${result.rows[0].id} (Agency ${rel.agency_id} -> Org ${rel.organization_id})`);
-        }
-        
-        console.log('\n✅ Sample data seeding completed successfully!');
-        
-        // Display summary
-        const orgCount = await client.query('SELECT COUNT(*) FROM organizations');
-        const agencyCount = await client.query('SELECT COUNT(*) FROM agencies');
-        const relCount = await client.query('SELECT COUNT(*) FROM relationships');
-        
-        console.log(`\n📊 Database Summary:`);
-        console.log(`   Organizations: ${orgCount.rows[0].count}`);
-        console.log(`   Agencies: ${agencyCount.rows[0].count}`);
-        console.log(`   Relationships: ${relCount.rows[0].count}`);
-        
-    } catch (error) {
-        console.error('Error seeding sample data:', error);
-        throw error;
-    } finally {
-        client.release();
+        console.log(`✅ Added template: ${template.name}`);
+      } else {
+        console.log(`⏭️ Template already exists: ${template.name}`);
+      }
     }
+    
+    console.log('🎉 Policy templates seeded successfully!');
+    
+  } catch (error) {
+    console.error('❌ Error seeding policy templates:', error);
+  } finally {
+    client.release();
+    await pool.end();
+  }
 }
 
-async function main() {
-    try {
-        await seedSampleData();
-        console.log('\nSeeding completed successfully');
-    } catch (error) {
-        console.error('Seeding failed:', error);
-        process.exit(1);
-    } finally {
-        await pool.end();
-    }
-}
-
-if (require.main === module) {
-    main();
-}
-
-module.exports = { seedSampleData }; 
+seedPolicyTemplates();

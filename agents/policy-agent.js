@@ -9,8 +9,11 @@
  * 5. Graceful edge case handling
  */
 
-class PolicyAgent {
+const AgentBase = require('./agent-base');
+
+class PolicyAgent extends AgentBase {
     constructor() {
+        super('PolicyAgent');
         this.policies = {
             chatgpt_usage: {
                 risk_factors: {
@@ -45,7 +48,6 @@ class PolicyAgent {
                 compliance_requirements: ['brand_guidelines', 'client_approval', 'data_privacy']
             }
         };
-
         this.riskProfiles = {
             low_risk: {
                 max_urgency: 0.4,
@@ -67,27 +69,19 @@ class PolicyAgent {
         };
     }
 
-    /**
-     * Main entry point - evaluates Context Agent output and makes compliance decision
-     */
-    evaluateRequest(contextAgentOutput) {
-        console.log('🔒 Policy Agent Evaluating Request...\n');
-        
+    // Main async process method for workflow engine
+    async process(input, context) {
+        // input is expected to be contextAgentOutput
         // 1. Extract key information from Context Agent output
-        const requestContext = this.extractRequestContext(contextAgentOutput);
-        
+        const requestContext = this.extractRequestContext(input);
         // 2. Calculate risk score
         const riskAssessment = this.calculateRiskScore(requestContext);
-        
         // 3. Determine approval level
         const approvalDecision = this.determineApprovalLevel(riskAssessment);
-        
         // 4. Generate guardrails and conditions
         const guardrails = this.generateGuardrails(approvalDecision, requestContext);
-        
         // 5. Define monitoring requirements
         const monitoring = this.defineMonitoringRequirements(approvalDecision, requestContext);
-        
         // 6. Build final policy decision
         const policyDecision = this.buildPolicyDecision(
             requestContext, 
@@ -96,7 +90,6 @@ class PolicyAgent {
             guardrails, 
             monitoring
         );
-        
         return policyDecision;
     }
 
@@ -200,16 +193,16 @@ class PolicyAgent {
             };
         } else if (score <= this.policies.chatgpt_usage.approval_thresholds.conditional_approve) {
             return {
-                decision: 'approved',
+                decision: 'conditionally_approved',
                 type: 'conditional_approval',
-                reasoning: 'Medium risk request approved with conditions',
+                reasoning: 'Medium risk request requires additional guardrails',
                 requires_escalation: false
             };
         } else if (score <= this.policies.chatgpt_usage.approval_thresholds.require_escalation) {
             return {
-                decision: 'approved',
-                type: 'escalated_approval',
-                reasoning: 'High risk request requires manager approval',
+                decision: 'escalate',
+                type: 'escalation_required',
+                reasoning: 'High risk request requires escalation and enhanced monitoring',
                 requires_escalation: true
             };
         } else {
@@ -226,147 +219,33 @@ class PolicyAgent {
      * Generates specific guardrails based on approval level and context
      */
     generateGuardrails(approvalDecision, requestContext) {
-        const guardrails = {
-            content_review: {
-                required: true,
-                type: 'peer_review',
-                timeframe: 'before_presentation',
-                reviewer: 'senior_marketing_team_member'
-            },
-            time_limits: {
-                max_usage_time: 4, // hours
-                deadline: 'sunday_6pm',
-                reminder_intervals: [2, 1, 0.5] // hours before deadline
-            },
-            quality_checks: {
-                required: true,
-                checks: ['grammar', 'brand_compliance', 'fact_accuracy'],
-                automated_tools: ['grammarly', 'brand_checker']
-            }
-        };
-
-        // Add escalation requirements for high-risk requests
-        if (approvalDecision.requires_escalation) {
-            guardrails.escalation = {
-                required: true,
-                approver: 'marketing_director',
-                timeframe: 'within_2_hours',
-                documentation: 'risk_assessment_report'
-            };
+        if (approvalDecision.type === 'auto_approval') {
+            return ['content_review'];
+        } else if (approvalDecision.type === 'conditional_approval') {
+            return ['content_review', 'usage_tracking'];
+        } else { // escalation_required
+            return ['content_review', 'usage_tracking', 'manager_approval'];
         }
-
-        // Add client-specific guardrails for client presentations
-        if (requestContext.request.presentation_type === 'client_presentation') {
-            guardrails.client_approval = {
-                required: true,
-                type: 'content_preview',
-                timeframe: 'before_presentation',
-                contact: 'client_project_manager'
-            };
-        }
-
-        // Add weekend-specific guardrails
-        if (requestContext.context.is_weekend) {
-            guardrails.weekend_monitoring = {
-                required: true,
-                type: 'periodic_check_ins',
-                frequency: 'every_2_hours',
-                contact: 'on_call_manager'
-            };
-        }
-
-        return guardrails;
     }
 
     /**
      * Defines monitoring requirements based on risk level
      */
     defineMonitoringRequirements(approvalDecision, requestContext) {
-        const monitoring = {
-            usage_tracking: {
-                enabled: true,
-                metrics: ['time_spent', 'content_generated', 'revisions_made'],
-                alerts: ['time_limit_approaching', 'unusual_activity']
-            },
-            quality_monitoring: {
-                enabled: true,
-                checks: ['content_quality', 'brand_compliance', 'accuracy'],
-                frequency: 'real_time'
-            }
-        };
-
-        // Enhanced monitoring for high-risk requests
-        if (approvalDecision.type === 'escalated_approval') {
-            monitoring.enhanced_tracking = {
-                enabled: true,
-                features: ['screen_recording', 'keystroke_logging', 'real_time_review'],
-                duration: 'until_presentation_complete'
-            };
+        if (approvalDecision.type === 'auto_approval') {
+            return { requirements: ['usage_tracking'], escalation: false };
+        } else if (approvalDecision.type === 'conditional_approval') {
+            return { requirements: ['usage_tracking', 'manager_approval'], escalation: false };
+        } else { // escalation_required
+            return { requirements: ['real_time_tracking', 'manager_approval', 'quality_audit'], escalation: true };
         }
-
-        // Client presentation monitoring
-        if (requestContext.request.presentation_type === 'client_presentation') {
-            monitoring.client_feedback = {
-                enabled: true,
-                collection: 'post_presentation',
-                metrics: ['client_satisfaction', 'presentation_effectiveness']
-            };
-        }
-
-        return monitoring;
     }
 
     /**
      * Builds the final comprehensive policy decision
      */
     buildPolicyDecision(requestContext, riskAssessment, approvalDecision, guardrails, monitoring) {
-        const decision = {
-            timestamp: new Date().toISOString(),
-            request_id: this.generateRequestId(),
-            
-            // Decision summary
-            decision: {
-                status: approvalDecision.decision,
-                type: approvalDecision.type,
-                reasoning: approvalDecision.reasoning,
-                effective_immediately: approvalDecision.decision === 'approved'
-            },
-
-            // Risk assessment
-            risk: {
-                score: riskAssessment.score,
-                level: riskAssessment.level,
-                factors: riskAssessment.factors,
-                mitigation_strategies: this.generateMitigationStrategies(riskAssessment)
-            },
-
-            // Conditions and guardrails
-            conditions: {
-                guardrails: guardrails,
-                compliance_requirements: this.getComplianceRequirements(requestContext),
-                quality_standards: this.getQualityStandards(requestContext)
-            },
-
-            // Monitoring and oversight
-            monitoring: {
-                requirements: monitoring,
-                audit_trail: true,
-                reporting_frequency: this.getReportingFrequency(riskAssessment.level)
-            },
-
-            // Next steps
-            next_steps: this.generateNextSteps(approvalDecision, requestContext),
-            
-            // Escalation info
-            escalation: approvalDecision.requires_escalation ? {
-                required: true,
-                approver: 'marketing_director',
-                contact_info: 'director@agency.com',
-                timeframe: 'within_2_hours'
-            } : null
-        };
-
-        return decision;
+        return { request: requestContext, risk: riskAssessment, decision: approvalDecision, conditions: { guardrails }, monitoring, escalation: monitoring.escalation, next_steps: this.generateNextSteps(approvalDecision, requestContext) };
     }
 
     /**
@@ -445,26 +324,13 @@ class PolicyAgent {
      * Generates next steps based on approval decision
      */
     generateNextSteps(approvalDecision, requestContext) {
-        const steps = [];
-
-        if (approvalDecision.decision === 'approved') {
-            steps.push('Proceed with ChatGPT usage according to specified guardrails');
-            steps.push('Set up monitoring and tracking systems');
-            steps.push('Schedule content review sessions');
+        if (approvalDecision.type === 'auto_approval') {
+            return ['Proceed with request'];
+        } else if (approvalDecision.type === 'conditional_approval') {
+            return ['Proceed with guardrails in place'];
+        } else { // escalation_required
+            return ['Escalate to manager for review'];
         }
-
-        if (approvalDecision.requires_escalation) {
-            steps.push('Contact marketing director for approval');
-            steps.push('Prepare risk assessment documentation');
-            steps.push('Await escalation decision before proceeding');
-        }
-
-        if (requestContext.request.presentation_type === 'client_presentation') {
-            steps.push('Coordinate with client for content preview');
-            steps.push('Schedule legal review if required');
-        }
-
-        return steps;
     }
 
     /**
@@ -478,94 +344,8 @@ class PolicyAgent {
      * Checks if current time is weekend
      */
     isWeekend(timePressure) {
-        return timePressure > 0.5; // Simplified logic for weekend detection
+        return false; // Simplified logic for weekend detection
     }
 }
 
-// Test the Policy Agent with Context Agent output
-function testPolicyAgent() {
-    const policyAgent = new PolicyAgent();
-    
-    // Mock Context Agent output (from previous test)
-    const mockContextOutput = {
-        timestamp: "2025-06-28T23:25:39.648Z",
-        urgency: {
-            level: 1.0,
-            emotionalState: "panicked",
-            timePressure: 0.6
-        },
-        context: {
-            inferredType: "client_presentation",
-            confidence: 0.7,
-            reasoning: [
-                "Inferred client presentation based on marketing agency role",
-                "Weekend before Monday presentation increases confidence"
-            ]
-        },
-        clarification: {
-            question: "Is this for the Johnson & Co. quarterly review we've been prepping?",
-            purpose: "refine_context_and_urgency"
-        },
-        recommendations: [
-            {
-                priority: "high",
-                action: "Start with ChatGPT immediately for content generation",
-                reasoning: "High urgency detected - immediate action needed"
-            },
-            {
-                priority: "medium",
-                action: "Focus on professional tone and client-specific insights",
-                reasoning: "Client presentation requires polished, professional content"
-            }
-        ],
-        nextSteps: [
-            "Immediately open ChatGPT",
-            "Start with presentation outline",
-            "Set aside 2-3 hours for focused work"
-        ]
-    };
-
-    console.log('🔒 Testing Policy Agent...\n');
-    
-    const policyDecision = policyAgent.evaluateRequest(mockContextOutput);
-    
-    console.log('📋 POLICY DECISION:');
-    console.log(JSON.stringify(policyDecision, null, 2));
-    
-    console.log('\n🎯 KEY DECISION POINTS:');
-    console.log(`Status: ${policyDecision.decision.status.toUpperCase()}`);
-    console.log(`Type: ${policyDecision.decision.type}`);
-    console.log(`Risk Level: ${policyDecision.risk.level.toUpperCase()} (${(policyDecision.risk.score * 100).toFixed(0)}%)`);
-    console.log(`Escalation Required: ${policyDecision.escalation ? 'YES' : 'NO'}`);
-    
-    console.log('\n🛡️ GUARDRAILS:');
-    Object.keys(policyDecision.conditions.guardrails).forEach(guardrail => {
-        console.log(`- ${guardrail}: ${policyDecision.conditions.guardrails[guardrail].required ? 'REQUIRED' : 'OPTIONAL'}`);
-    });
-    
-    console.log('\n📊 MONITORING:');
-    Object.keys(policyDecision.monitoring.requirements).forEach(monitor => {
-        console.log(`- ${monitor}: ${policyDecision.monitoring.requirements[monitor].enabled ? 'ENABLED' : 'DISABLED'}`);
-    });
-    
-    console.log('\n📋 NEXT STEPS:');
-    policyDecision.next_steps.forEach((step, index) => {
-        console.log(`${index + 1}. ${step}`);
-    });
-}
-
-// Wrapper function for backend API
-function processPolicy(contextOutput) {
-    const agent = new PolicyAgent();
-    return agent.evaluateRequest(contextOutput);  // Replace 'evaluateRequest' with the actual method name
-}
-
-// Export for use in other modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { PolicyAgent, testPolicyAgent, processPolicy };
-}
-
-// Run test if this file is executed directly
-if (typeof window === 'undefined') {
-// testPolicyAgent();
-}
+module.exports = PolicyAgent;

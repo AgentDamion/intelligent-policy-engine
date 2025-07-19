@@ -9,8 +9,11 @@
  * 5. Handles escalation when no solution exists
  */
 
-class NegotiationAgent {
+const AgentBase = require('./agent-base');
+
+class NegotiationAgent extends AgentBase {
     constructor() {
+        super('NegotiationAgent');
         this.clientDatabase = {
             pharmaceutical: {
                 competitors: {
@@ -108,27 +111,19 @@ class NegotiationAgent {
         };
     }
 
-    /**
-     * Main entry point - negotiates multi-client policy conflicts
-     */
-    negotiateMultiClientRequest(contextAgentOutput, policyAgentOutput) {
-        console.log('🤝 Negotiation Agent Processing Multi-Client Request...\n');
-        
+    // Main async process method for workflow engine
+    async process(input, context) {
+        // input: { contextAgentOutput, policyAgentOutput }
         // 1. Extract client information from context
-        const clientAnalysis = this.extractClientInformation(contextAgentOutput);
-        
+        const clientAnalysis = this.extractClientInformation(input.contextAgentOutput);
         // 2. Map client relationships
         const relationshipMap = this.mapClientRelationships(clientAnalysis.clients);
-        
         // 3. Detect policy conflicts
         const conflictAnalysis = this.detectPolicyConflicts(clientAnalysis, relationshipMap);
-        
         // 4. Find compromise solutions
         const compromiseSolution = this.findCompromiseSolution(conflictAnalysis);
-        
         // 5. Generate client-specific requirements
         const clientRequirements = this.generateClientRequirements(clientAnalysis, compromiseSolution);
-        
         // 6. Build negotiation result
         const negotiationResult = this.buildNegotiationResult(
             clientAnalysis,
@@ -137,7 +132,6 @@ class NegotiationAgent {
             compromiseSolution,
             clientRequirements
         );
-        
         return negotiationResult;
     }
 
@@ -596,61 +590,4 @@ class NegotiationAgent {
     }
 }
 
-// Test the Negotiation Agent
-function testNegotiationAgent() {
-    const negotiationAgent = new NegotiationAgent();
-    
-    // Mock Context Agent output for Scenario 2
-    const mockContextOutput = {
-        userMessage: "Using Midjourney for campaign images serving Pfizer, Novartis, and Roche",
-        urgency: { level: 0.3, emotionalState: "calm" },
-        context: { inferredType: "creative_campaign", confidence: 0.7 }
-    };
-    
-    // Mock Policy Agent output
-    const mockPolicyOutput = {
-        decision: { status: "approved", type: "auto_approval" },
-        risk: { score: 0.5, level: "medium" }
-    };
-    
-    console.log('🤝 Testing Negotiation Agent...\n');
-    
-    const negotiationResult = negotiationAgent.negotiateMultiClientRequest(mockContextOutput, mockPolicyOutput);
-    
-    console.log('📋 NEGOTIATION RESULT:');
-    console.log(JSON.stringify(negotiationResult, null, 2));
-    
-    console.log('\n🎯 KEY INSIGHTS:');
-    console.log(`Clients: ${negotiationResult.clients.count} (${negotiationResult.clients.names.join(', ')})`);
-    console.log(`Industry: ${negotiationResult.clients.industry}`);
-    console.log(`Tool: ${negotiationResult.clients.tool.name} (${negotiationResult.clients.tool.type})`);
-    console.log(`Risk Level: ${negotiationResult.relationships.risk_level.toUpperCase()}`);
-    console.log(`Conflicts: ${negotiationResult.conflicts.total}`);
-    console.log(`Solution Feasibility: ${negotiationResult.solution.feasibility}`);
-    console.log(`Final Status: ${negotiationResult.decision.status.toUpperCase()}`);
-    
-    console.log('\n🔍 COMPETITIVE RELATIONSHIPS:');
-    negotiationResult.relationships.competitors.forEach(comp => {
-        console.log(`- ${comp.client1} ↔ ${comp.client2} (${comp.industry})`);
-    });
-    
-    console.log('\n🛡️ CONFLICT MITIGATION:');
-    negotiationResult.solution.requirements.forEach(req => {
-        console.log(`- ${req.type}: ${req.description}`);
-    });
-    
-    console.log('\n📋 NEXT STEPS:');
-    negotiationResult.decision.next_steps.forEach((step, index) => {
-        console.log(`${index + 1}. ${step}`);
-    });
-}
-
-// Export for use in other modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { NegotiationAgent, testNegotiationAgent };
-}
-
-// Run test if this file is executed directly
-if (typeof window === 'undefined') {
-// testNegotiationAgent();
-}
+module.exports = NegotiationAgent;

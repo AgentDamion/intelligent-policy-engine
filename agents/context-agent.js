@@ -368,7 +368,7 @@ function testContextAgent() {
 
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { ContextAgent, testContextAgent, processContext };
+    module.exports = ContextAgent;
 }
 
 // Run test if this file is executed directly

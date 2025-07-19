@@ -7,6 +7,9 @@ const { AuditAgent } = require('../agents/audit-agent.js');
 const { PolicyAgent } = require('../agents/policy-agent.js');
 const { NegotiationAgent } = require('../agents/negotiation-agent.js');
 const { ContextAgent } = require('../agents/context-agent.js');
+const workflowEngine = require('../core/workflow-engine');
+const { logAction } = require('../core/audit-log');
+const agentRegistry = require('../agents/agent-registry');
 
 // In-memory storage for activities and overrides (replace with database later)
 const agentActivities = [];
@@ -151,74 +154,20 @@ router.post('/process/context', async (req, res) => {
     }
 });
 
-// POLICY AGENT ENDPOINT (NEW - UI expects this)
+// POLICY AGENT ENDPOINT (refactored to use workflow engine)
 router.post('/process/policy', async (req, res) => {
     try {
         const { contextOutput, organizationId, userId } = req.body;
-        
         if (!contextOutput) {
             return res.status(400).json({ error: 'Context output required' });
         }
-        
-        // Create a policy decision based on the context analysis
-        const urgencyLevel = contextOutput.urgency?.level || 0.5;
-        const contextType = contextOutput.context?.inferredType || 'general';
-        
-        const policyDecision = {
-            decision: {
-                status: urgencyLevel > 0.7 ? 'pending' : 'approved',
-                type: 'ai_usage_request'
-            },
-            risk: {
-                score: urgencyLevel,
-                level: urgencyLevel > 0.7 ? 'high' : urgencyLevel > 0.4 ? 'medium' : 'low'
-            },
-            conditions: {
-                guardrails: {
-                    content_review: { required: true },
-                    time_limits: { required: urgencyLevel > 0.5 },
-                    quality_checks: { required: true },
-                    client_approval: { required: contextType === 'client_presentation' }
-                },
-                compliance_requirements: [
-                    'Follow AI usage guidelines',
-                    'Maintain audit trail',
-                    'Review output for accuracy'
-                ]
-            },
-            monitoring: {
-                requirements: {
-                    usage_tracking: { enabled: true },
-                    quality_monitoring: { enabled: true },
-                    client_feedback: { enabled: contextType === 'client_presentation' }
-                }
-            },
-            next_steps: urgencyLevel > 0.7 ? [
-                'Get immediate supervisor approval',
-                'Schedule urgent review meeting',
-                'Prepare compliance documentation'
-            ] : [
-                'Proceed with AI tool usage',
-                'Document usage in compliance log',
-                'Schedule regular review'
-            ]
-        };
-        
-        // Log the activity
-        logAgentActivity('Policy Agent', 'Evaluated Request', {
-            decisionStatus: policyDecision.decision.status,
-            riskLevel: policyDecision.risk.level,
-            riskScore: policyDecision.risk.score
-        });
-        
-        res.json(policyDecision);
-        
+        // Use the workflow engine for policy check
+        const result = await workflowEngine.runWorkflow('policy-check', contextOutput, { organizationId, userId });
+        logAction('policy-check', { input: contextOutput, result, userId, organizationId });
+        res.json(result);
     } catch (error) {
         console.error('Policy processing error:', error);
-        res.status(500).json({ 
-            error: 'Failed to process policy',
-            details: error.message 
-        });
+        res.status(500).json({ error: 'Failed to process policy', details: error.message });
     }
 });
 
@@ -601,6 +550,181 @@ router.get('/trends', (req, res) => {
         });
     }
     res.json({ success: true, scores });
+});
+
+// REAL-TIME ASSIST ENDPOINT
+router.post('/assist/real-time', async (req, res) => {
+  try {
+    const { content, clientId, userId } = req.body;
+    const context = {
+      clientId,
+      userId,
+      mode: 'real-time'
+    };
+    const result = await workflowEngine.runWorkflow('real-time-assist', { content, liveMode: true }, context);
+    res.json({
+      feedback: result.feedback,
+      severity: result.severity,
+      timestamp: Date.now()
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get submission status
+router.get('/submission/:id/status', async (req, res) => {
+  try {
+    const stateManager = agentRegistry.getAgent('submission-state');
+    const status = await stateManager.process({
+      action: 'status',
+      submissionId: req.params.id
+    });
+    res.json(status);
+  } catch (error) {
+    res.status(404).json({ error: error.message });
+  }
+});
+
+// Get submission timeline
+router.get('/submission/:id/timeline', async (req, res) => {
+  try {
+    const stateManager = agentRegistry.getAgent('submission-state');
+    const timeline = await stateManager.process({
+      action: 'timeline',
+      submissionId: req.params.id
+    });
+    res.json(timeline);
+  } catch (error) {
+    res.status(404).json({ error: error.message });
+  }
+});
+
+// Get analytics dashboard data
+router.get('/analytics/submissions', async (req, res) => {
+  try {
+    const stateManager = agentRegistry.getAgent('submission-state');
+    const analytics = await stateManager.process({
+      action: 'analytics',
+      data: {
+        timeRange: req.query.timeRange,
+        clientId: req.query.clientId,
+        status: req.query.status
+      }
+    });
+    res.json(analytics);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Test endpoint for intelligent routing
+router.post('/api/test/intelligent-routing', async (req, res) => {
+  try {
+    const testCases = [
+      {
+        content: "Check out our amazing new wellness product! Transform your life today!",
+        contentType: "marketing",
+        metadata: { campaign: "summer-2024" }
+      },
+      {
+        content: "Our drug showed 92% efficacy in treating Type 2 diabetes. FDA approved for patients over 18.",
+        contentType: "medical",
+        metadata: { regulatory: true }
+      },
+      {
+        content: "Happy holidays from our team at AICemplyr!",
+        contentType: "social",
+        metadata: { internal: true }
+      },
+      {
+        content: "This breakthrough treatment cures cancer in just 30 days! Guaranteed results or money back!",
+        contentType: "advertisement",
+        metadata: { urgent: true }
+      }
+    ];
+
+    const results = [];
+    for (const testCase of testCases) {
+      const result = await workflowEngine.executeWorkflow(
+        'auto', // Let context agent decide
+        testCase,
+        {
+          client: { id: 'test-client', tier: 'standard' },
+          user: { id: 'test-user' }
+        }
+      );
+      results.push({
+        input: testCase.content.substring(0, 50) + '...',
+        analysis: {
+          type: result.contextAnalysis?.type?.primary,
+          risk: result.contextAnalysis?.riskLevel?.level,
+          complexity: result.contextAnalysis?.complexity?.score
+        },
+        workflow: result.workflow,
+        summary: result.summary,
+        confidence: result.confidence
+      });
+    }
+    res.json({
+      message: 'Intelligent routing test complete',
+      results,
+      insights: {
+        workflowDistribution: results.reduce((acc, r) => {
+          acc[r.workflow] = (acc[r.workflow] || 0) + 1;
+          return acc;
+        }, {}),
+        averageConfidence: Math.round(
+          results.reduce((sum, r) => sum + r.confidence, 0) / results.length
+        )
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Workflow metrics endpoint (mock data)
+router.get('/api/metrics/workflows', async (req, res) => {
+  try {
+    // This would need to be implemented in your state manager
+    // For now, return mock data to show the structure
+    res.json({
+      workflows: {
+        'express-lane': {
+          count: 142,
+          avgDuration: '3m 24s',
+          successRate: 0.94,
+          avgConfidence: 92
+        },
+        'standard-review': {
+          count: 67,
+          avgDuration: '18m 12s',
+          successRate: 0.88,
+          avgConfidence: 85
+        },
+        'medical-content-review': {
+          count: 23,
+          avgDuration: '47m 33s',
+          successRate: 0.78,
+          avgConfidence: 73
+        },
+        'high-risk-review': {
+          count: 8,
+          avgDuration: '2h 14m',
+          successRate: 0.63,
+          avgConfidence: 61
+        }
+      },
+      insights: {
+        fastTrackPercentage: 58,
+        riskDetectionAccuracy: 0.91,
+        falsePositiveReduction: 0.34
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Helper function for summary stats

@@ -9,8 +9,11 @@
  * 5. Enterprise-grade compliance officer audit trail
  */
 
-class AuditAgent {
+const AgentBase = require('./agent-base');
+
+class AuditAgent extends AgentBase {
     constructor() {
+        super('AuditAgent');
         this.auditLog = [];
         this.currentSession = null;
         this.auditConfig = {
@@ -56,12 +59,6 @@ class AuditAgent {
             total_processing_time: 0,
             audit_entries: []
         };
-        
-        console.log('📋 AUDIT SESSION STARTED');
-        console.log(`Session ID: ${this.currentSession.session_id}`);
-        console.log(`User ID: ${userId}`);
-        console.log(`Request: "${userMessage}"`);
-        console.log('');
         
         return this.currentSession.session_id;
     }
@@ -114,9 +111,6 @@ class AuditAgent {
             this.currentSession.agents_engaged.push(agentType);
         }
 
-        // Log to console for real-time monitoring
-        this.logAuditEntry(auditEntry);
-        
         return auditEntry.entry_id;
     }
 
@@ -201,11 +195,8 @@ class AuditAgent {
         };
 
         const policiesReferenced = [
-            'multi_client_policy',
-            'competitive_intelligence_policy',
-            'information_segregation_policy',
-            'regulatory_compliance_policy',
-            'brand_separation_policy',
+            'negotiation_policy',
+            'conflict_resolution_policy',
             'escalation_policy'
         ];
 
@@ -213,10 +204,10 @@ class AuditAgent {
             'negotiation',
             'negotiation_processing',
             decision,
-            reasoning || `Negotiation completed for ${negotiationOutput.clients.count} clients with ${negotiationOutput.conflicts.total} conflicts resolved`,
+            reasoning || 'Negotiation processing completed.',
             policiesReferenced,
-            { context: contextOutput, policy: policyOutput },
-            negotiationOutput
+            contextOutput,
+            policyOutput
         );
     }
 
@@ -265,16 +256,6 @@ class AuditAgent {
         // Generate session summary
         const summary = this.generateSessionSummary(this.currentSession);
         
-        console.log('📋 AUDIT SESSION COMPLETED');
-        console.log('=' .repeat(60));
-        console.log(`Session ID: ${this.currentSession.session_id}`);
-        console.log(`Duration: ${this.currentSession.session_duration_ms}ms`);
-        console.log(`Agents Engaged: ${this.currentSession.agents_engaged.join(' → ')}`);
-        console.log(`Total Decisions: ${this.currentSession.audit_entries.length}`);
-        console.log(`Final Status: ${finalDecision.status.toUpperCase()}`);
-        console.log('=' .repeat(60));
-        console.log('');
-
         // Add session to audit log
         this.auditLog.push({
             type: 'session_summary',
@@ -451,18 +432,6 @@ class AuditAgent {
         return Math.floor(Math.random() * 100) + 10; // Simulated processing time
     }
 
-    logAuditEntry(entry) {
-        console.log(`📋 AUDIT ENTRY: ${entry.agent_display_name} - ${entry.decision_type_display}`);
-        console.log(`   Timestamp: ${entry.timestamp}`);
-        console.log(`   Status: ${entry.status.toUpperCase()}`);
-        console.log(`   Risk Level: ${entry.risk_level.toUpperCase()}`);
-        console.log(`   Policies: ${entry.policies_referenced.join(', ')}`);
-        if (entry.changes_detected) {
-            console.log(`   Changes: ${Object.keys(entry.changes_detected).length} detected`);
-        }
-        console.log('');
-    }
-
     generateSessionSummary(session) {
         return {
             session_id: session.session_id,
@@ -555,7 +524,4 @@ class AuditAgent {
     }
 }
 
-// Test the Audit Agent
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { AuditAgent };
-}
+module.exports = AuditAgent;

@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS relationships (
 );
 
 -- Users
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email VARCHAR UNIQUE NOT NULL,
     organization_id UUID REFERENCES organizations(id),
@@ -55,7 +55,7 @@ CREATE TABLE users (
 );
 
 -- Audit Sessions
-CREATE TABLE audit_sessions (
+CREATE TABLE IF NOT EXISTS audit_sessions (
     session_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID REFERENCES organizations(id),
     user_id UUID REFERENCES users(id),
@@ -69,7 +69,7 @@ CREATE TABLE audit_sessions (
 );
 
 -- Audit Entries
-CREATE TABLE audit_entries (
+CREATE TABLE IF NOT EXISTS audit_entries (
     entry_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     session_id UUID REFERENCES audit_sessions(session_id),
     timestamp TIMESTAMP DEFAULT NOW(),
@@ -87,7 +87,7 @@ CREATE TABLE audit_entries (
 );
 
 -- Negotiations
-CREATE TABLE negotiations (
+CREATE TABLE IF NOT EXISTS negotiations (
     negotiation_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID REFERENCES organizations(id),
     timestamp TIMESTAMP DEFAULT NOW(),
@@ -100,7 +100,7 @@ CREATE TABLE negotiations (
 );
 
 -- Policies
-CREATE TABLE policies (
+CREATE TABLE IF NOT EXISTS policies (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID REFERENCES organizations(id),
     name VARCHAR NOT NULL,
@@ -112,7 +112,7 @@ CREATE TABLE policies (
 );
 
 -- Workspaces
-CREATE TABLE workspaces (
+CREATE TABLE IF NOT EXISTS workspaces (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID REFERENCES organizations(id),
     name VARCHAR NOT NULL,
@@ -135,7 +135,32 @@ CREATE TABLE IF NOT EXISTS admin_audit_log (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Admin audit log table
+CREATE TABLE IF NOT EXISTS admin_audit_log (
+    id SERIAL PRIMARY KEY,
+    admin_user_id VARCHAR(255) NOT NULL,
+    action VARCHAR(100) NOT NULL,
+    target VARCHAR(255) NOT NULL,
+    reason TEXT NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ip_address INET,
+    result JSONB,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Policy Templates (Base templates that organizations can customize)
+CREATE TABLE IF NOT EXISTS policy_templates (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR NOT NULL,
+    description TEXT,
+    industry VARCHAR, -- 'pharma', 'finance', 'healthcare'
+    template_type VARCHAR NOT NULL, -- 'fda_social_media', 'ai_disclosure', 'custom'
+    base_rules JSONB NOT NULL,
+    is_public BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
 -- Index for efficient querying
 CREATE INDEX IF NOT EXISTS idx_admin_audit_log_admin_user_id ON admin_audit_log(admin_user_id);
 CREATE INDEX IF NOT EXISTS idx_admin_audit_log_action ON admin_audit_log(action);
-CREATE INDEX IF NOT EXISTS idx_admin_audit_log_timestamp ON admin_audit_log(timestamp); 
+CREATE INDEX IF NOT EXISTS idx_admin_audit_log_timestamp ON admin_audit_log(timestamp);
