@@ -61,6 +61,8 @@ const allowedOrigins = isProduction
       'https://aicomplyr.io',
       'https://www.aicomplyr.io',
       'https://app.aicomplyr.io'
+      'https://intelligent-policy-engine-production.up.railway.app',  // Add this line
+      'https://*.railway.app'  // Allow all Railway subdomains
     ]
   : [
       'http://localhost:3000',
