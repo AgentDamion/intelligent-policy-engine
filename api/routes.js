@@ -162,7 +162,7 @@ router.post('/process/policy', async (req, res) => {
             return res.status(400).json({ error: 'Context output required' });
         }
         // Use the workflow engine for policy check
-        const result = await workflowEngine.runWorkflow('policy-check', contextOutput, { organizationId, userId });
+        const result = await workflowEngine.executeWorkflow('policy-check', contextOutput, { organizationId, userId });
         logAction('policy-check', { input: contextOutput, result, userId, organizationId });
         res.json(result);
     } catch (error) {
