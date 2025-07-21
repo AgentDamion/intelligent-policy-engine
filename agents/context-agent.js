@@ -4,11 +4,14 @@
  * Scenario: User says "Need to use ChatGPT for Monday's presentation!!!"
  * 
  * Features:
- * 1. Urgency and emotion recognition
- * 2. Context inference based on user profile and timing
- * 3. Smart clarifying questions
+ * 1. Urgency and emotion recognition (AI-enhanced)
+ * 2. Context inference based on user profile and timing (AI-enhanced)
+ * 3. Smart clarifying questions (AI-powered)
  * 4. Structured responses with confidence levels
+ * 5. Industry-specific risk analysis (AI-powered)
  */
+
+const { analyzeWithAI } = require('./ai-services');
 
 class ContextAgent {
     constructor() {
@@ -19,6 +22,15 @@ class ContextAgent {
             urgencyLevel: 0,
             inferredContext: null,
             confidence: 0
+        };
+        
+        // AI Enhancement Configuration
+        this.aiConfig = {
+            enabled: true,
+            fallbackToRules: true,
+            confidenceBoost: 0.1,
+            industrySpecific: true,
+            workflowOptimization: true
         };
         
         this.presentationTypes = {
@@ -41,6 +53,25 @@ class ContextAgent {
                 keywords: ['data', 'analytics', 'metrics', 'report'],
                 confidence: 0.5,
                 clarifyingQuestion: "Do you need help with the campaign performance data for Monday's review?"
+            }
+        };
+
+        // Industry-specific risk patterns (enhanced with AI learning)
+        this.industryPatterns = {
+            pharmaceutical: {
+                competitors: ['pfizer', 'novartis', 'roche', 'merck', 'astrazeneca', 'sanofi'],
+                riskFactors: ['competitive intelligence', 'regulatory compliance', 'medical accuracy'],
+                workflowPreference: 'medical-content-review'
+            },
+            automotive: {
+                competitors: ['toyota', 'honda', 'ford', 'gm', 'volkswagen'],
+                riskFactors: ['safety claims', 'emissions standards', 'competitive positioning'],
+                workflowPreference: 'standard-review'
+            },
+            technology: {
+                competitors: ['apple', 'google', 'microsoft', 'amazon', 'samsung'],
+                riskFactors: ['data privacy', 'intellectual property', 'market disruption'],
+                workflowPreference: 'high-risk-review'
             }
         };
     }
@@ -87,7 +118,7 @@ class ContextAgent {
 
     /**
      * Standard process method for WorkflowEngine compatibility
-     * This is what the workflow engine expects to call
+     * Enhanced with AI analysis for deeper insights
      */
     async process(input, context) {
         // Extract the content from the input - ensure it's always a string
@@ -95,29 +126,34 @@ class ContextAgent {
         if (typeof input === 'string') {
             content = input;
         } else if (input && typeof input === 'object') {
-            content = input.content || input.message || input.userMessage || JSON.stringify(input);
+            content = input.content || input.message || input.userMessage || 'Unknown request';
         } else {
-            content = String(input || '');
-        }
-        
-        // Ensure content is a string
-        if (typeof content !== 'string') {
-            content = String(content);
+            content = String(input || 'Unknown request');
         }
         
         console.log('🔍 ContextAgent.process() received content:', content);
         
-        // Use the existing analyzeContext method
-        const result = this.analyzeContext(content, context);
+        // ENHANCED: Add AI analysis for deeper insights
+        const aiEnhancedAnalysis = await this.enhanceWithAI(content);
+        
+        // Call processUserInput directly to avoid circular loop
+        const result = this.processUserInput(content);
+        
+        // Enhance the result with AI insights
+        if (aiEnhancedAnalysis) {
+            result.aiInsights = aiEnhancedAnalysis;
+            result.context.confidence = Math.min(result.context.confidence + 0.1, 1.0); // AI boosts confidence
+        }
+        
+        // Determine workflow path with AI assistance
+        const workflowDecision = this.determineWorkflowWithAI(result, aiEnhancedAnalysis);
         
         // Return in the format the WorkflowEngine expects
         return {
-            analysis: result.fullAnalysis || result,
+            analysis: result,
             confidence: result.context?.confidence || 0.7,
-            workflow: {
-                name: 'standard-review', // Default workflow
-                reasoning: 'Standard workflow selected based on context analysis'
-            },
+            workflow: workflowDecision,
+            aiInsights: aiEnhancedAnalysis,
             enrichedContext: context
         };
     }
@@ -341,6 +377,227 @@ class ContextAgent {
         }
         
         return recommendations;
+    }
+
+    /**
+     * AI-ENHANCED: Uses AI to provide deeper context analysis
+     * This is the core AI value-add for aicomplyr.io
+     */
+    async enhanceWithAI(content) {
+        const aiPrompt = `Analyze this urgent business request for comprehensive insights:
+
+"${content}"
+
+Provide detailed analysis on:
+1. Hidden urgency indicators and stress signals
+2. Industry-specific risks and compliance requirements  
+3. Client relationship complexities and competitive dynamics
+4. Regulatory frameworks that may apply
+5. Recommended workflow complexity level (express-lane, standard-review, medical-content-review, high-risk-review)
+6. Potential escalation triggers
+7. Business impact assessment
+
+Focus on pharmaceutical industry nuances, competitive client relationships, and AI tool governance.`;
+        
+        try {
+            const aiResult = await analyzeWithAI(aiPrompt);
+            console.log('🤖 AI Enhancement completed for context analysis');
+            return {
+                aiAnalysis: aiResult,
+                enhancementApplied: true,
+                industryInsights: this.extractIndustryInsights(aiResult),
+                riskIndicators: this.extractRiskIndicators(aiResult),
+                workflowRecommendation: this.extractWorkflowRecommendation(aiResult)
+            };
+        } catch (error) {
+            console.error('🚨 AI enhancement failed, using rule-based analysis:', error.message);
+            return {
+                aiAnalysis: null,
+                enhancementApplied: false,
+                fallbackReason: error.message,
+                industryInsights: [],
+                riskIndicators: [],
+                workflowRecommendation: 'standard-review'
+            };
+        }
+    }
+
+    /**
+     * AI-ENHANCED: Determines optimal workflow path using AI insights
+     */
+    determineWorkflowWithAI(ruleBasedResult, aiEnhancedAnalysis) {
+        // Start with rule-based workflow decision
+        let workflowName = 'standard-review';
+        let reasoning = 'Standard workflow selected based on rule-based analysis';
+        
+        // Enhance with AI insights if available
+        if (aiEnhancedAnalysis && aiEnhancedAnalysis.enhancementApplied) {
+            const aiWorkflow = aiEnhancedAnalysis.workflowRecommendation;
+            
+            // AI recommends more complex workflow
+            if (aiWorkflow === 'high-risk-review' && ruleBasedResult.urgency.level > 0.7) {
+                workflowName = 'high-risk-review';
+                reasoning = 'AI detected high-risk scenario requiring comprehensive review';
+            } else if (aiWorkflow === 'medical-content-review' && this.detectsMedicalContent(ruleBasedResult)) {
+                workflowName = 'medical-content-review';
+                reasoning = 'AI identified medical/pharmaceutical content requiring specialized review';
+            } else if (aiWorkflow === 'express-lane' && ruleBasedResult.urgency.level < 0.4) {
+                workflowName = 'express-lane';
+                reasoning = 'AI confirmed low-risk scenario suitable for fast-track processing';
+            }
+        }
+        
+        // Override for pharmaceutical competitive scenarios
+        if (this.detectsPharmaceuticalCompetitors(ruleBasedResult)) {
+            workflowName = 'high-risk-review';
+            reasoning = 'Competing pharmaceutical clients detected - requires enhanced oversight';
+        }
+        
+        return {
+            name: workflowName,
+            reasoning: reasoning,
+            aiEnhanced: aiEnhancedAnalysis?.enhancementApplied || false,
+            confidenceScore: this.calculateWorkflowConfidence(ruleBasedResult, aiEnhancedAnalysis)
+        };
+    }
+
+    /**
+     * AI-ENHANCED: Extract industry-specific insights from AI analysis
+     */
+    extractIndustryInsights(aiResult) {
+        if (!aiResult) return [];
+        
+        // Look for pharmaceutical, regulatory, and compliance keywords in AI response
+        const insights = [];
+        const aiText = aiResult.toLowerCase();
+        
+        if (aiText.includes('pharmaceutical') || aiText.includes('pharma') || aiText.includes('drug')) {
+            insights.push({
+                type: 'industry_detection',
+                insight: 'Pharmaceutical industry context detected',
+                implications: ['FDA compliance required', 'Medical accuracy critical', 'Competitive intelligence risks']
+            });
+        }
+        
+        if (aiText.includes('competitor') || aiText.includes('competing') || aiText.includes('rival')) {
+            insights.push({
+                type: 'competitive_dynamics',
+                insight: 'Competitive client relationships identified',
+                implications: ['Information segregation required', 'Conflict of interest protocols', 'Enhanced monitoring needed']
+            });
+        }
+        
+        if (aiText.includes('regulatory') || aiText.includes('compliance') || aiText.includes('fda')) {
+            insights.push({
+                type: 'regulatory_framework',
+                insight: 'Regulatory compliance requirements detected',
+                implications: ['Legal review recommended', 'Audit trail documentation', 'Approval workflows required']
+            });
+        }
+        
+        return insights;
+    }
+
+    /**
+     * AI-ENHANCED: Extract risk indicators from AI analysis
+     */
+    extractRiskIndicators(aiResult) {
+        if (!aiResult) return [];
+        
+        const indicators = [];
+        const aiText = aiResult.toLowerCase();
+        
+        // High-risk indicators
+        if (aiText.includes('high risk') || aiText.includes('critical') || aiText.includes('urgent escalation')) {
+            indicators.push({
+                level: 'high',
+                indicator: 'Critical business risk detected by AI',
+                action: 'Immediate escalation recommended'
+            });
+        }
+        
+        // Medium-risk indicators  
+        if (aiText.includes('medium risk') || aiText.includes('moderate') || aiText.includes('caution')) {
+            indicators.push({
+                level: 'medium', 
+                indicator: 'Moderate risk factors identified',
+                action: 'Enhanced monitoring and approval required'
+            });
+        }
+        
+        // Competitive risks
+        if (aiText.includes('competitive') && aiText.includes('conflict')) {
+            indicators.push({
+                level: 'high',
+                indicator: 'Competitive conflict risk',
+                action: 'Implement strict information segregation'
+            });
+        }
+        
+        return indicators;
+    }
+
+    /**
+     * AI-ENHANCED: Extract workflow recommendation from AI analysis
+     */
+    extractWorkflowRecommendation(aiResult) {
+        if (!aiResult) return 'standard-review';
+        
+        const aiText = aiResult.toLowerCase();
+        
+        if (aiText.includes('high-risk-review') || aiText.includes('comprehensive review')) {
+            return 'high-risk-review';
+        }
+        if (aiText.includes('medical-content-review') || aiText.includes('medical review')) {
+            return 'medical-content-review';
+        }
+        if (aiText.includes('express-lane') || aiText.includes('fast-track')) {
+            return 'express-lane';
+        }
+        
+        return 'standard-review';
+    }
+
+    /**
+     * Helper: Detect medical/pharmaceutical content
+     */
+    detectsMedicalContent(result) {
+        const content = result.recommendations?.map(r => r.action).join(' ') || '';
+        return content.toLowerCase().includes('medical') || 
+               content.toLowerCase().includes('pharmaceutical') ||
+               content.toLowerCase().includes('drug');
+    }
+
+    /**
+     * Helper: Detect pharmaceutical competitors in the analysis
+     */
+    detectsPharmaceuticalCompetitors(result) {
+        const content = JSON.stringify(result).toLowerCase();
+        const pharmaCompanies = ['pfizer', 'novartis', 'roche', 'merck', 'astrazeneca', 'sanofi'];
+        let companiesFound = 0;
+        
+        pharmaCompanies.forEach(company => {
+            if (content.includes(company)) companiesFound++;
+        });
+        
+        return companiesFound >= 2; // Multiple pharma companies = competitive scenario
+    }
+
+    /**
+     * Helper: Calculate confidence score for workflow decision
+     */
+    calculateWorkflowConfidence(ruleBasedResult, aiEnhancedAnalysis) {
+        let confidence = ruleBasedResult.context.confidence || 0.7;
+        
+        if (aiEnhancedAnalysis && aiEnhancedAnalysis.enhancementApplied) {
+            confidence = Math.min(confidence + 0.15, 1.0); // AI adds confidence
+        }
+        
+        if (aiEnhancedAnalysis && aiEnhancedAnalysis.riskIndicators.length > 0) {
+            confidence = Math.min(confidence + 0.1, 1.0); // Risk detection adds confidence
+        }
+        
+        return Math.round(confidence * 100) / 100; // Round to 2 decimal places
     }
 
     /**
