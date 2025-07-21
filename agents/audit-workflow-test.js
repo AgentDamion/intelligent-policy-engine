@@ -5,7 +5,7 @@
  * Context Agent → Policy Agent → Negotiation Agent → Audit Trail
  */
 
-const { ContextAgent } = require('./context-agent');
+const ContextAgent = require('../agents/context-agent.js');
 const { PolicyAgent } = require('./policy-agent');
 const { NegotiationAgent } = require('./negotiation-agent');
 const { AuditAgent } = require('./audit-agent-fixed');

@@ -8,7 +8,7 @@
  * 4. Complete end-to-end reasoning for enterprise compliance
  */
 
-const { ContextAgent } = require('./context-agent');
+const ContextAgent = require('../agents/context-agent.js');
 const { PolicyAgent } = require('./policy-agent');
 const { NegotiationAgent } = require('./negotiation-agent');
 

@@ -1,6 +1,6 @@
 // Full Workflow Test: Context Agent → Policy Agent
 
-const { ContextAgent } = require('./context-agent');
+const ContextAgent = require('../agents/context-agent.js');
 const { PolicyAgent } = require('./policy-agent');
 
 function runFullWorkflowTest() {
