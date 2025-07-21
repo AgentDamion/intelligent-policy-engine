@@ -90,8 +90,22 @@ class ContextAgent {
      * This is what the workflow engine expects to call
      */
     async process(input, context) {
-        // Extract the content from the input
-        const content = input.content || input.message || input;
+        // Extract the content from the input - ensure it's always a string
+        let content;
+        if (typeof input === 'string') {
+            content = input;
+        } else if (input && typeof input === 'object') {
+            content = input.content || input.message || input.userMessage || JSON.stringify(input);
+        } else {
+            content = String(input || '');
+        }
+        
+        // Ensure content is a string
+        if (typeof content !== 'string') {
+            content = String(content);
+        }
+        
+        console.log('🔍 ContextAgent.process() received content:', content);
         
         // Use the existing analyzeContext method
         const result = this.analyzeContext(content, context);
