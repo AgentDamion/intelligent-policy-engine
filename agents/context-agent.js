@@ -81,6 +81,7 @@ class ContextAgent {
      */
     processUserInput(userMessage) {
         console.log(`🎯 Context Agent Processing: "${userMessage}"`);
+        this.originalUserMessage = userMessage;
         
         // 1. Analyze urgency and emotion
         const urgencyAnalysis = this.analyzeUrgency(userMessage);
@@ -363,6 +364,8 @@ class ContextAgent {
                 emotionalState: urgencyAnalysis.emotionalState,
                 timePressure: this.calculateTimePressure()
             },
+            originalContent: this.originalUserMessage,
+            rawContent: this.originalUserMessage,
             context: {
                 inferredType: contextInference.type,
                 confidence: contextInference.confidence,
