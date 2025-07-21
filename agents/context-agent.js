@@ -126,7 +126,13 @@ class ContextAgent {
         if (typeof input === 'string') {
             content = input;
         } else if (input && typeof input === 'object') {
-            content = input.content || input.message || input.userMessage || 'Unknown request';
+            // Try multiple possible properties
+            content = input.content || input.message || input.userMessage || input.text || input.query;
+            // If still no content found, stringify the object to see what we have
+            if (!content) {
+                console.log('🔍 Input object structure:', Object.keys(input));
+                content = JSON.stringify(input);
+            }
         } else {
             content = String(input || 'Unknown request');
         }
@@ -467,9 +473,19 @@ Focus on pharmaceutical industry nuances, competitive client relationships, and 
     extractIndustryInsights(aiResult) {
         if (!aiResult) return [];
         
+        // Extract text from AI result - handle both string and object responses
+        let aiText = '';
+        if (typeof aiResult === 'string') {
+            aiText = aiResult.toLowerCase();
+        } else if (aiResult && typeof aiResult === 'object') {
+            // Try common properties where AI response text might be stored
+            aiText = (aiResult.text || aiResult.content || aiResult.analysis || aiResult.response || JSON.stringify(aiResult)).toLowerCase();
+        } else {
+            aiText = String(aiResult).toLowerCase();
+        }
+        
         // Look for pharmaceutical, regulatory, and compliance keywords in AI response
         const insights = [];
-        const aiText = aiResult.toLowerCase();
         
         if (aiText.includes('pharmaceutical') || aiText.includes('pharma') || aiText.includes('drug')) {
             insights.push({
@@ -504,8 +520,17 @@ Focus on pharmaceutical industry nuances, competitive client relationships, and 
     extractRiskIndicators(aiResult) {
         if (!aiResult) return [];
         
+        // Extract text from AI result - handle both string and object responses
+        let aiText = '';
+        if (typeof aiResult === 'string') {
+            aiText = aiResult.toLowerCase();
+        } else if (aiResult && typeof aiResult === 'object') {
+            aiText = (aiResult.text || aiResult.content || aiResult.analysis || aiResult.response || JSON.stringify(aiResult)).toLowerCase();
+        } else {
+            aiText = String(aiResult).toLowerCase();
+        }
+        
         const indicators = [];
-        const aiText = aiResult.toLowerCase();
         
         // High-risk indicators
         if (aiText.includes('high risk') || aiText.includes('critical') || aiText.includes('urgent escalation')) {
@@ -543,7 +568,15 @@ Focus on pharmaceutical industry nuances, competitive client relationships, and 
     extractWorkflowRecommendation(aiResult) {
         if (!aiResult) return 'standard-review';
         
-        const aiText = aiResult.toLowerCase();
+        // Extract text from AI result - handle both string and object responses
+        let aiText = '';
+        if (typeof aiResult === 'string') {
+            aiText = aiResult.toLowerCase();
+        } else if (aiResult && typeof aiResult === 'object') {
+            aiText = (aiResult.text || aiResult.content || aiResult.analysis || aiResult.response || JSON.stringify(aiResult)).toLowerCase();
+        } else {
+            aiText = String(aiResult).toLowerCase();
+        }
         
         if (aiText.includes('high-risk-review') || aiText.includes('comprehensive review')) {
             return 'high-risk-review';
