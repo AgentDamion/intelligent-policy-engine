@@ -86,6 +86,29 @@ class ContextAgent {
     }
 
     /**
+     * Standard process method for WorkflowEngine compatibility
+     * This is what the workflow engine expects to call
+     */
+    async process(input, context) {
+        // Extract the content from the input
+        const content = input.content || input.message || input;
+        
+        // Use the existing analyzeContext method
+        const result = this.analyzeContext(content, context);
+        
+        // Return in the format the WorkflowEngine expects
+        return {
+            analysis: result.fullAnalysis || result,
+            confidence: result.context?.confidence || 0.7,
+            workflow: {
+                name: 'standard-review', // Default workflow
+                reasoning: 'Standard workflow selected based on context analysis'
+            },
+            enrichedContext: context
+        };
+    }
+
+    /**
      * Get related policies based on inferred context
      */
     getRelatedPolicies(contextType) {
