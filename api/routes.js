@@ -3,9 +3,9 @@ const router = express.Router();
 
 // Import all your agents
 const { ConflictDetectionAgent } = require('../agents/conflict-detection-agent.js');
-const { AuditAgent } = require('../agents/audit-agent.js');
-const { PolicyAgent } = require('../agents/policy-agent.js');
-const { NegotiationAgent } = require('../agents/negotiation-agent.js');
+const AuditAgent = require('../agents/audit-agent.js');
+const PolicyAgent = require('../agents/policy-agent.js');
+const NegotiationAgent = require('../agents/negotiation-agent.js');
 const ContextAgent = require('../agents/context-agent.js');
 const workflowEngine = require('../core/workflow-engine');
 const { logAction } = require('../core/audit-log');
@@ -561,7 +561,7 @@ router.post('/assist/real-time', async (req, res) => {
       userId,
       mode: 'real-time'
     };
-    const result = await workflowEngine.runWorkflow('real-time-assist', { content, liveMode: true }, context);
+    const result = await workflowEngine.executeWorkflow('real-time-assist', { content, liveMode: true }, context);
     res.json({
       feedback: result.feedback,
       severity: result.severity,
