@@ -98,6 +98,7 @@ class PolicyAgent extends AgentBase {
      */
     extractRequestContext(contextAgentOutput) {
         return {
+            originalContent: contextAgentOutput.originalContent || contextAgentOutput.rawContent || '',
             user: {
                 role: 'marketing_agency_employee',
                 urgency_level: contextAgentOutput.urgency.level,
@@ -125,6 +126,20 @@ class PolicyAgent extends AgentBase {
     calculateRiskScore(requestContext) {
         let riskScore = 0;
         const riskFactors = [];
+    
+        // Check for competitive pharmaceutical conflicts
+        if (requestContext.originalContent) {
+            const content = requestContext.originalContent.toLowerCase();
+            const pharmaCompanies = ['pfizer', 'novartis', 'roche', 'merck', 'astrazeneca', 'sanofi'];
+            let companiesFound = 0;
+            pharmaCompanies.forEach(company => {
+                if (content.includes(company)) companiesFound++;
+            });
+            if (companiesFound >= 2) {
+                riskScore += 0.5; // Major risk for competitive conflicts
+                riskFactors.push(`Competing pharmaceutical clients detected (${companiesFound} companies)`);
+            }
+        }
 
         // Urgency-based risk (reduced impact)
         if (requestContext.user.urgency_level > 0.8) {
