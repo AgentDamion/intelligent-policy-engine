@@ -126,17 +126,45 @@ class ContextAgent {
         console.log('🐛 DEBUG: input =', JSON.stringify(input, null, 2));
         console.log('🐛 DEBUG: context =', JSON.stringify(context, null, 2));
         
+        // Check if this is already a processed ContextAgent result
+        if (input && typeof input === 'object' && 
+            input.timestamp && input.urgency && input.context && input.recommendations) {
+            console.log('✅ DETECTED: Input is already a processed ContextAgent result - returning as-is');
+            return {
+                analysis: input,
+                confidence: input.context?.confidence || 0.7,
+                workflow: {
+                    name: 'standard-review',
+                    reasoning: 'Using pre-processed context analysis'
+                },
+                enrichedContext: context,
+                skipReprocessing: true
+            };
+        }
+        
         // Extract the content from the input - ensure it's always a string
         let content;
         if (typeof input === 'string') {
             content = input;
         } else if (input && typeof input === 'object') {
-            content = input.content || input.message || input.userMessage || 'Unknown request';
+            // Try to find the original user message in the input object
+            content = input.content || 
+                     input.message || 
+                     input.userMessage || 
+                     input.text || 
+                     input.query ||
+                     input.originalMessage ||
+                     input.prompt;
+                     
+            if (!content) {
+                console.log('🚨 WARNING: Could not find user message in input object');
+                content = "Unable to extract user message - please check WorkflowEngine input format";
+            }
         } else {
             content = String(input || 'Unknown request');
         }
         
-        console.log('🔍 ContextAgent.process() received content:', content);
+        console.log('🔍 ContextAgent.process() extracted content:', content);
         
         // ENHANCED: Add AI analysis for deeper insights
         const aiEnhancedAnalysis = await this.enhanceWithAI(content);
