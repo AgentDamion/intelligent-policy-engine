@@ -121,6 +121,11 @@ class ContextAgent {
      * Enhanced with AI analysis for deeper insights
      */
     async process(input, context) {
+        // TEMPORARY DEBUG - see what we're actually getting
+        console.log('🐛 DEBUG: input type =', typeof input);
+        console.log('🐛 DEBUG: input =', JSON.stringify(input, null, 2));
+        console.log('🐛 DEBUG: context =', JSON.stringify(context, null, 2));
+        
         // Extract the content from the input - ensure it's always a string
         let content;
         if (typeof input === 'string') {
