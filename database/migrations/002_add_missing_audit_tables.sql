@@ -33,4 +33,4 @@ CREATE TABLE audit_chains (
 -- Create indexes for audit_policy_references
 CREATE INDEX idx_audit_policy_references_entry_id ON audit_policy_references(entry_id);
 CREATE INDEX idx_audit_policy_references_policy_id ON audit_policy_references(policy_id);
-CREATE INDEX idx_audit_policy_references_compliance ON audit_policy_references(compliance_status)
+CREATE INDEX idx_audit_policy_references_compliance ON audit_policy_references(compliance_status);

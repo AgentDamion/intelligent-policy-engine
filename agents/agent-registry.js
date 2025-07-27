@@ -1,4 +1,4 @@
-const PolicyAgent = require('./policy-agent');
+const { PolicyAgent } = require('./policy-agent');
 const AuditAgent = require('./audit-agent');
 const NegotiationAgent = require('./negotiation-agent');
 const PreFlightAgent = require('./pre-flight-agent');

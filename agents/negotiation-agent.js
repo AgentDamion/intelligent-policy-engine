@@ -132,6 +132,24 @@ class NegotiationAgent extends AgentBase {
             compromiseSolution,
             clientRequirements
         );
+        
+        // --- Meta-Loop Event Capture ---
+        fetch('http://localhost:5050/meta-loop/event', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tenant_id: context?.organizationId || 'demo-tenant', // Replace with real org ID if available
+            domain: 'enterprise',
+            event_type: 'negotiation_decision',
+            metadata: {
+              decision: negotiationResult.decision.status, // e.g., 'approved', 'escalation_required', etc.
+              tool_name: 'negotiation-agent',
+              agent: 'negotiation-agent'
+            }
+          })
+        }).catch(e => { /* Optional: handle error or log */ });
+        // --- End Meta-Loop Event Capture ---
+        
         return negotiationResult;
     }
 
@@ -139,7 +157,7 @@ class NegotiationAgent extends AgentBase {
      * Extracts client information from Context Agent output
      */
     extractClientInformation(contextAgentOutput) {
-        const message = contextAgentOutput.userMessage || "Using Midjourney for campaign images serving Pfizer, Novartis, and Roche";
+        const message = contextAgentOutput?.userMessage || "Using Midjourney for campaign images serving Pfizer, Novartis, and Roche";
         
         // Extract client names from message
         const clientKeywords = this.getAllClientKeywords();
@@ -421,7 +439,6 @@ class NegotiationAgent extends AgentBase {
         return {
             timestamp: new Date().toISOString(),
             negotiation_id: this.generateNegotiationId(),
-            
             // Client analysis
             clients: {
                 count: clientAnalysis.clientCount,

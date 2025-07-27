@@ -226,7 +226,7 @@ async findContradictions(policyA, policyB) {
     });
 
     return contradictions;
-}  // This closing brace was missing
+}
 
     /**
      * Find requirement overlaps

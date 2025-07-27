@@ -158,7 +158,7 @@ class AuditAgent extends AgentBase {
             escalation: policyOutput.escalation,
             next_steps: policyOutput.next_steps
         };
-
+    
         const policiesReferenced = [
             'chatgpt_usage_policy',
             'client_presentations_policy',
@@ -166,7 +166,25 @@ class AuditAgent extends AgentBase {
             'risk_assessment_policy',
             'approval_thresholds_policy'
         ];
-
+    
+        // --- Meta-Loop Event Capture ---
+        fetch('http://localhost:5050/meta-loop/event', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tenant_id: contextOutput?.organizationId || 'demo-tenant', // Replace with real org ID if available
+            domain: 'enterprise',
+            event_type: 'audit_decision',
+            metadata: {
+              decision: policyOutput.decision.status, // e.g., 'approved', 'denied', etc.
+              tool_name: 'audit-agent',
+              risk_score: policyOutput.risk.score,
+              agent: 'audit-agent'
+            }
+          })
+        }).catch(e => { /* Optional: handle error or log */ });
+        // --- End Meta-Loop Event Capture ---
+    
         return this.logDecision(
             'policy',
             'policy_evaluation',
@@ -177,7 +195,6 @@ class AuditAgent extends AgentBase {
             policyOutput
         );
     }
-
     /**
      * Log Negotiation Agent decisions
      */

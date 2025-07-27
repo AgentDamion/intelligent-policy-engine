@@ -1,0 +1,174 @@
+# Query: ContextAgent
+# ContextLines: 1
+
+54 results - 12 files
+
+agents\agent-registry.js:
+   5  const SubmissionStateManager = require('./submission-state-manager');
+   6: const ContextAgent = require('./context-agent');
+   7  // const ClaimVerificationAgent = require('./claim-verification-agent');
+
+  16    'submission-state': new SubmissionStateManager(),
+  17:   context: new ContextAgent(),
+  18    // 'claim-verification': new ClaimVerificationAgent(),
+
+agents\audit-workflow-test.js:
+   7  
+const ContextAgent = require('../agents/context-agent.js');
+
+  14      constructor() {
+  15:         this.contextAgent = new ContextAgent();
+  16          this.policyAgent = new PolicyAgent();
+
+  59              console.log('-'.repeat(40));
+  60:             const contextOutput = this.contextAgent.processUserInput(userMessage);
+  61              workflowResult.workflow_path.push('context_analysis');
+
+agents\complete-workflow-test.js:
+  10  
+  11: const { ContextAgent } = require('./context-agent');
+  12  const { PolicyAgent } = require('./policy-agent');
+
+  16      constructor() {
+  17:         this.contextAgent = new ContextAgent();
+  18          this.policyAgent = new PolicyAgent();
+
+  53              console.log('-'.repeat(40));
+  54:             const contextOutput = this.contextAgent.processUserInput(userMessage);
+  55              workflowResult.workflow_path.push('context_analysis');
+
+agents\context-agent-agentic.js:
+   10  
+   11: class AgenticContextAgent {
+   12      constructor() {
+
+  343  // Singleton instance for the API
+  344: let agenticContextAgent = null;
+  345  
+  346: function getAgenticContextAgent() {
+  347:     if (!agenticContextAgent) {
+  348:         agenticContextAgent = new AgenticContextAgent();
+  349      }
+  350:     return agenticContextAgent;
+  351  }
+
+  354  async function processContext(userMessage) {
+  355:     const agent = getAgenticContextAgent();
+  356      return await agent.processContext(userMessage);
+
+  362      
+  363:     const agent = new AgenticContextAgent();
+  364      const testMessage = "URGENT!!! Need ChatGPT for Pfizer presentation Monday morning!!!";
+
+  382  module.exports = {
+  383:     AgenticContextAgent,
+  384      processContext,
+  385      testAgenticAgent,
+  386:     getAgenticContextAgent
+  387  };
+
+agents\context-agent.js:
+   12  
+   13: class ContextAgent {
+   14      constructor() {
+
+  336  function processContext(userMessage) {
+  337:     const agent = new ContextAgent();
+  338      return agent.processUserInput(userMessage);
+
+  341  // Test the Context Agent
+  342: function testContextAgent() {
+  343:     const agent = new ContextAgent();
+  344      
+
+  370  if (typeof module !== 'undefined' && module.exports) {
+  371:     module.exports = ContextAgent;
+  372  }
+
+  375  if (typeof window === 'undefined' && require.main === module) {
+  376:     testContextAgent();
+  377  }
+
+agents\full-workflow-test.js:
+   2  
+   3: const { ContextAgent } = require('./context-agent');
+   4  const { PolicyAgent } = require('./policy-agent');
+
+  13      // 2. Context Agent analyzes the request
+  14:     const contextAgent = new ContextAgent();
+  15:     const contextOutput = contextAgent.processUserInput(userMessage);
+  16      console.log('🧠 CONTEXT AGENT OUTPUT:');
+
+agents\negotiation-agent.js:
+  115      async process(input, context) {
+  116:         // input: { contextAgentOutput, policyAgentOutput }
+  117          // 1. Extract client information from context
+  118:         const clientAnalysis = this.extractClientInformation(input.contextAgentOutput);
+  119          // 2. Map client relationships
+
+  140       */
+  141:     extractClientInformation(contextAgentOutput) {
+  142:         const message = contextAgentOutput.userMessage || "Using Midjourney for campaign images serving Pfizer, Novartis, and Roche";
+  143          
+
+agents\policy-agent.js:
+   73      async process(input, context) {
+   74:         // input is expected to be contextAgentOutput
+   75          // 1. Extract key information from Context Agent output
+
+   98       */
+   99:     extractRequestContext(contextAgentOutput) {
+  100          return {
+
+  102                  role: 'marketing_agency_employee',
+  103:                 urgency_level: contextAgentOutput.urgency.level,
+  104:                 emotional_state: contextAgentOutput.urgency.emotionalState
+  105              },
+
+  108                  purpose: 'presentation_content',
+  109:                 presentation_type: contextAgentOutput.context.inferredType,
+  110:                 confidence: contextAgentOutput.context.confidence,
+  111                  deadline: 'monday_10am',
+
+  114              context: {
+  115:                 time_pressure: contextAgentOutput.urgency.timePressure,
+  116:                 is_weekend: this.isWeekend(contextAgentOutput.urgency.timePressure),
+  117:                 is_client_facing: contextAgentOutput.context.inferredType === 'client_presentation'
+  118              }
+
+api\routes.js:
+    8  const { NegotiationAgent } = require('../agents/negotiation-agent.js');
+    9: const { ContextAgent } = require('../agents/context-agent.js');
+   10  const workflowEngine = require('../core/workflow-engine');
+
+  133          
+  134:         const agent = new ContextAgent();
+  135          // Use the correct method name: processUserInput
+
+core\workflow-engine.js:
+  51        // INTELLIGENT ROUTING: Run context analysis first
+  52:       const contextAgent = this.registry.getAgent('context');
+  53:       const contextAnalysis = await contextAgent.process(input, { ...context, submissionId });
+  54        EventBus.emit('context-analysis-complete', { input: { ...input, submissionId }, result: contextAnalysis });
+
+test-scenarios\scenario-2-test.js:
+   3  
+   4: const { ContextAgent } = require('../agents/context-agent');
+   5  const { PolicyAgent } = require('../agents/policy-agent');
+
+  14      // Initialize agents
+  15:     const contextAgent = new ContextAgent();
+  16      const policyAgent = new PolicyAgent();
+
+  21      // Process with Context Agent
+  22:     const contextOutput = contextAgent.processUserInput(userMessage);
+  23      
+
+ui\script.js:
+  62              // Process with Context Agent (Real API Call)
+  63:             const contextOutput = await this.processWithContextAgent(userMessage);
+  64              
+
+  80      // Real API Calls to Backend
+  81:     async processWithContextAgent(userMessage) {
+  82          console.log('Sending message to context agent:', userMessage);

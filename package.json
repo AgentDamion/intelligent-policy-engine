@@ -1,14 +1,17 @@
 {
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js",
+    "start": "node server-railway.js",
+    "dev": "nodemon server-railway.js",
+    "railway": "node server-railway.js",
+    "local": "node server.js",
     "migrate": "node database/migrate.js",
     "migrate:rollback": "node database/migrate.js rollback",
     "migrate:status": "node database/migrate.js status",
     "add-admin-audit": "node database/add-admin-audit-table.js",
     "seed": "node database/seed-sample-orgs-agencies.js",
     "test": "node test-agency-api.js",
-    "test-health": "node test-health-connection.js"
+    "test-health": "node test-health-connection.js",
+    "test-railway": "node test-railway.js"
   },
   "dependencies": {
     "axios": "^1.10.0",
@@ -23,5 +26,8 @@
     "react": "^19.1.0",
     "uuid": "^9.0.0",
     "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "supertest": "^7.1.4"
   }
 }
