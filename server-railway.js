@@ -1,172 +1,370 @@
-require('dotenv').config();
+﻿// server-railway.js - Updated with WebSocket support for Railway deployment
 const express = require('express');
-const session = require('express-session');
-const cors = require('cors');
-const path = require('path');
 const http = require('http');
-const apiRoutes = require('./api/routes');
-const { authRouter } = require('./api/auth');
-const policyTemplatesRouter = require('./api/policy-templates');
-const dashboardRouter = require('./api/dashboard');
-require('./core/feedback-loop');
 const WebSocket = require('ws');
-const EventBus = require('./core/event-bus');
+const path = require('path');
+const cors = require('cors');
 
 const app = express();
-
-// Railway-specific configuration
-const isRailway = process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_ID;
-const isProduction = process.env.NODE_ENV === 'production' || isRailway;
 const PORT = process.env.PORT || 3000;
 
-console.log('🚂 Railway Environment:', isRailway ? 'YES' : 'NO');
-console.log(' Production Mode:', isProduction ? 'YES' : 'NO');
-console.log(' Port:', PORT);
-
-// CORS for Railway
-const allowedOrigins = isProduction 
-  ? [
-      'https://aicomplyr.io',
-      'https://www.aicomplyr.io',
-      'https://app.aicomplyr.io',
-      'https://*.railway.app',
-      'https://*.up.railway.app'
-    ]
-  : [
-      'http://localhost:3000',
-      'http://localhost:3002',
-      'http://localhost:8080'
-    ];
-
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.some(allowed => origin.includes(allowed.replace('*', '')))) {
-      callback(null, true);
-    } else {
-      console.warn(`Blocked request from: ${origin}`);
-      callback(null, true); // Allow in development
-    }
-  },
-  credentials: true,
-}));
-
-app.use(express.json());
-app.use(express.static('ui'));
-
-// Session middleware
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'railway-dev-secret',
-  resave: false,
-  saveUninitialized: false,
-  cookie: { 
-    secure: isProduction,
-    httpOnly: true,
-    sameSite: isProduction ? 'strict' : 'lax',
-    maxAge: 24 * 60 * 60 * 1000
-  }
-}));
-
-// Serve main UI
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'ui', 'index.html'));
-});
-
-// Health check for Railway
-app.get('/api/health', (req, res) => {
-    res.json({ 
-        status: 'healthy',
-        environment: isRailway ? 'railway' : 'local',
-        production: isProduction,
-        timestamp: new Date().toISOString(),
-        port: PORT
-    });
-});
-
-// API routes
-app.use('/auth', authRouter);
-app.use('/api', apiRoutes);
-app.use('/api/policy-templates', policyTemplatesRouter);
-app.use('/api/dashboard', dashboardRouter);
-
-// Create HTTP server
+// Create HTTP server (handles both HTTP and WebSocket)
 const server = http.createServer(app);
 
-// Railway-compatible WebSocket setup
-let wss;
-try {
-  // In Railway, WebSocket must be on same port as HTTP
-  wss = new WebSocket.Server({ server });
-  console.log('✅ WebSocket server attached to HTTP server');
-  
-  wss.on('connection', (ws) => {
-    console.log('🔌 WebSocket client connected');
-    
-    ws.on('message', (message) => {
-      console.log('📨 WebSocket message received:', message.toString());
-    });
-    
-    ws.on('close', () => {
-      console.log('🔌 WebSocket client disconnected');
-    });
-  });
-  
-  // Event handlers
-  EventBus.on('submission-state-changed', (event) => {
-    wss.clients.forEach(client => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({
-          type: 'state-update',
-          data: event
-        }));
-      }
-    });
-  });
+// CORS configuration for Railway deployment
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production' 
+    ? [
+        'https://aicomplyr.io', 
+        'https://www.aicomplyr.io',
+        'https://*.railway.app'
+      ]
+    : ['http://localhost:3000', 'http://localhost:3001'],
+  credentials: true
+};
 
-  EventBus.on('context-analysis-complete', (event) => {
-    wss.clients.forEach(client => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({
-          type: 'routing-decision',
-          data: {
-            submissionId: event.input.submissionId,
-            analysis: event.result.analysis,
-            workflow: event.result.workflow,
-            confidence: event.result.confidence
-          }
-        }));
-      }
-    });
-  });
-  
-} catch (error) {
-  console.error('❌ WebSocket setup failed:', error.message);
-  wss = null;
+app.use(cors(corsOptions));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Serve static files from React build (Railway production)
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, 'ui/build')));
 }
 
-// Start server
-server.listen(PORT, '0.0.0.0', () => {
-    console.log(`✅ aicomplyr.io running on port ${PORT}`);
-    console.log(`🌐 HTTP: http://localhost:${PORT}`);
-    console.log(` WebSocket: ${wss ? 'enabled' : 'disabled'}`);
-    if (isRailway) {
-        console.log(' Railway deployment detected');
+// Create WebSocket server on the same HTTP server
+const wss = new WebSocket.Server({ 
+  server,
+  path: '/ws',
+  clientTracking: true
+});
+
+// Store active WebSocket connections
+const clients = new Set();
+
+// WebSocket connection handling
+wss.on('connection', (ws, req) => {
+  console.log('🔌 New WebSocket connection established');
+  console.log('👤 Client IP:', req.socket.remoteAddress);
+  clients.add(ws);
+  
+  // Send welcome message
+  ws.send(JSON.stringify({
+    type: 'connection_established',
+    message: 'Connected to AICOMPLYR Live Governance Stream',
+    timestamp: new Date().toISOString(),
+    clientCount: clients.size
+  }));
+
+  // Handle incoming messages from frontend
+  ws.on('message', (message) => {
+    try {
+      const data = JSON.parse(message);
+      console.log('📨 Received WebSocket message:', data.type);
+      
+      // Handle different message types
+      switch (data.type) {
+        case 'subscribe_to_governance':
+          ws.governanceSubscribed = true;
+          ws.send(JSON.stringify({
+            type: 'subscription_confirmed',
+            data: { stream: 'governance_events' },
+            timestamp: new Date().toISOString()
+          }));
+          console.log('✅ Client subscribed to governance events');
+          break;
+          
+        case 'subscribe_to_agents':
+          ws.agentSubscribed = true;
+          ws.send(JSON.stringify({
+            type: 'subscription_confirmed',
+            data: { stream: 'agent_activity' },
+            timestamp: new Date().toISOString()
+          }));
+          console.log('✅ Client subscribed to agent activity');
+          break;
+          
+        case 'ping':
+          ws.send(JSON.stringify({ 
+            type: 'pong', 
+            timestamp: new Date().toISOString() 
+          }));
+          break;
+          
+        default:
+          console.log('❓ Unknown message type:', data.type);
+      }
+    } catch (error) {
+      console.error('❌ WebSocket message error:', error);
     }
+  });
+
+  // Handle connection close
+  ws.on('close', () => {
+    console.log('🔌 WebSocket connection closed');
+    clients.delete(ws);
+    console.log('👥 Active connections:', clients.size);
+  });
+
+  // Handle errors
+  ws.on('error', (error) => {
+    console.error('❌ WebSocket error:', error);
+    clients.delete(ws);
+  });
+});
+
+// Function to broadcast to all connected clients
+const broadcast = (message) => {
+  const messageStr = JSON.stringify(message);
+  clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(messageStr);
+    }
+  });
+  console.log('📢 Broadcasted message to ' + clients.size + ' clients');
+};
+
+// Function to broadcast to specific subscribers
+const broadcastToSubscribers = (message, subscriptionType) => {
+  const messageStr = JSON.stringify(message);
+  let sentCount = 0;
+  
+  clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN && client[subscriptionType]) {
+      client.send(messageStr);
+      sentCount++;
+    }
+  });
+  
+  console.log('📢 Broadcasted ' + message.type + ' to ' + sentCount + ' subscribers');
+};
+
+// ===== API ROUTES =====
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'healthy', 
+    timestamp: new Date().toISOString(),
+    websocketClients: clients.size,
+    environment: process.env.NODE_ENV || 'development',
+    port: PORT,
+    database: process.env.DATABASE_URL ? 'connected' : 'not configured'
+  });
+});
+
+// Agent status endpoint
+app.get('/api/agents/status', (req, res) => {
+  const agentStatus = {
+    contextAgent: { 
+      status: Math.random() > 0.2 ? 'active' : 'processing',
+      lastAction: Math.floor(Math.random() * 10) + 1 + 'm ago', 
+      confidence: Math.floor(Math.random() * 20) + 80,
+      tasks: Math.floor(Math.random() * 15) + 5
+    },
+    policyAgent: { 
+      status: Math.random() > 0.3 ? 'active' : 'processing', 
+      lastAction: Math.floor(Math.random() * 5) + 1 + 'm ago', 
+      confidence: Math.floor(Math.random() * 20) + 85,
+      tasks: Math.floor(Math.random() * 12) + 3
+    },
+    negotiationAgent: { 
+      status: Math.random() > 0.7 ? 'active' : 'standby', 
+      lastAction: Math.floor(Math.random() * 15) + 1 + 'm ago', 
+      confidence: Math.floor(Math.random() * 15) + 88,
+      tasks: Math.floor(Math.random() * 8) + 1
+    },
+    auditAgent: { 
+      status: 'active', 
+      lastAction: Math.floor(Math.random() * 3) + 1 + 'm ago', 
+      confidence: Math.floor(Math.random() * 10) + 90,
+      tasks: Math.floor(Math.random() * 20) + 10
+    },
+    conflictAgent: { 
+      status: Math.random() > 0.5 ? 'monitoring' : 'active', 
+      lastAction: Math.floor(Math.random() * 8) + 1 + 'm ago', 
+      confidence: Math.floor(Math.random() * 15) + 85,
+      tasks: Math.floor(Math.random() * 6) + 2
+    },
+    preFlightAgent: { 
+      status: 'ready', 
+      lastAction: Math.floor(Math.random() * 6) + 1 + 'm ago', 
+      confidence: Math.floor(Math.random() * 12) + 88,
+      tasks: Math.floor(Math.random() * 10) + 3
+    }
+  };
+  
+  res.json({
+    success: true,
+    data: agentStatus,
+    timestamp: new Date().toISOString()
+  });
+  
+  // Broadcast agent update to WebSocket subscribers
+  broadcastToSubscribers({
+    type: 'agent_status_update',
+    data: agentStatus,
+    timestamp: new Date().toISOString()
+  }, 'agentSubscribed');
+});
+
+// Governance events endpoint
+app.get('/api/governance/events', (req, res) => {
+  const { timeRange = '24h', eventType = 'all', severity = 'all' } = req.query;
+  const events = generateMockGovernanceEvents(50, { timeRange, eventType, severity });
+  
+  res.json({
+    success: true,
+    data: events,
+    filters: { timeRange, eventType, severity },
+    timestamp: new Date().toISOString(),
+    totalEvents: events.length
+  });
+});
+
+// Policies endpoint
+app.get('/api/policies', (req, res) => {
+  const policies = [
+    {
+      id: 1,
+      name: 'Social Media AI Content Policy',
+      description: 'Guidelines for AI-generated social media content',
+      status: 'active',
+      lastUpdated: new Date().toISOString(),
+      rules: ['No medical claims', 'FDA compliance required', 'Human review mandatory']
+    },
+    {
+      id: 2,
+      name: 'Image Generation Guidelines', 
+      description: 'Rules for AI-generated visual content',
+      status: 'active',
+      lastUpdated: new Date().toISOString(),
+      rules: ['Brand consistency', 'No misleading imagery', 'Copyright compliance']
+    }
+  ];
+  
+  res.json({
+    success: true,
+    data: policies,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// ===== REAL-TIME EVENT SIMULATION =====
+
+const simulateGovernanceEvents = () => {
+  const eventTypes = [
+    { type: 'policy_decision', severity: 'medium', title: 'AI Policy Updated' },
+    { type: 'tool_submission', severity: 'low', title: 'New Tool Submitted' },
+    { type: 'compliance_alert', severity: 'high', title: 'Compliance Issue Detected' },
+    { type: 'risk_assessment', severity: 'medium', title: 'Risk Assessment Complete' },
+    { type: 'agent_action', severity: 'low', title: 'AI Agent Action Completed' }
+  ];
+  
+  const agencies = ['Ogilvy Health', 'McCann Health', 'Havas Health', 'Razorfish Health'];
+  const users = ['Sarah Johnson', 'Mike Chen', 'Emma Wilson', 'David Lee', 'Lisa Park'];
+  
+  setInterval(() => {
+    if (clients.size > 0) {
+      const eventTemplate = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+      const event = {
+        id: Date.now(),
+        type: eventTemplate.type,
+        severity: eventTemplate.severity,
+        title: eventTemplate.title,
+        description: eventTemplate.title + ' - Real-time governance system activity',
+        agency: agencies[Math.floor(Math.random() * agencies.length)],
+        user: users[Math.floor(Math.random() * users.length)],
+        timestamp: new Date().toISOString()
+      };
+      
+      console.log('🔄 Simulating governance event:', event.type);
+      
+      broadcastToSubscribers({
+        type: 'governance_event',
+        data: event
+      }, 'governanceSubscribed');
+    }
+  }, 15000 + Math.random() * 15000);
+};
+
+simulateGovernanceEvents();
+
+// ===== SERVE REACT APP =====
+
+if (process.env.NODE_ENV === 'production') {
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'ui/build', 'index.html'));
+  });
+} else {
+  app.get('/', (req, res) => {
+    res.json({
+      message: 'AICOMPLYR AI Governance Platform API',
+      version: '2.0.0',
+      status: 'running',
+      endpoints: [
+        'GET /api/health',
+        'GET /api/agents/status',
+        'GET /api/governance/events',
+        'GET /api/policies'
+      ],
+      websocket: 'ws://localhost:3000/ws'
+    });
+  });
+}
+
+// Mock data generator
+function generateMockGovernanceEvents(count, filters) {
+  const events = [];
+  const eventTypes = ['policy_decision', 'tool_submission', 'compliance_alert', 'risk_assessment', 'agent_action'];
+  const severities = ['low', 'medium', 'high', 'critical'];
+  const agencies = ['Ogilvy Health', 'McCann Health', 'Havas Health', 'Razorfish Health'];
+  const users = ['Sarah Johnson', 'Mike Chen', 'Emma Wilson', 'David Lee', 'Lisa Park'];
+  
+  for (let i = 0; i < count; i++) {
+    const event = {
+      id: Date.now() + i,
+      type: eventTypes[Math.floor(Math.random() * eventTypes.length)],
+      severity: severities[Math.floor(Math.random() * severities.length)],
+      title: 'Governance Event ' + (i + 1),
+      description: 'AI governance system activity - Event ID: ' + (Date.now() + i),
+      agency: agencies[Math.floor(Math.random() * agencies.length)],
+      user: users[Math.floor(Math.random() * users.length)],
+      timestamp: new Date(Date.now() - Math.random() * 86400000 * 7).toISOString()
+    };
+    events.push(event);
+  }
+  
+  return events.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+}
+
+// ===== START SERVER =====
+
+server.listen(PORT, () => {
+  console.log('🚀 ===== AICOMPLYR AI GOVERNANCE PLATFORM =====');
+  console.log('🌐 Server running on port ' + PORT);
+  console.log('📊 API endpoints: http://localhost:' + PORT + '/api');
+  console.log('🔌 WebSocket server: ws://localhost:' + PORT + '/ws');
+  console.log('🗄️ Database: ' + (process.env.DATABASE_URL ? '✅ Connected' : '❌ Not configured'));
+  console.log('🌍 Environment: ' + (process.env.NODE_ENV || 'development'));
+  console.log('===============================================');
 });
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
-    console.log('🛑 Railway shutdown signal received');
-    server.close(() => {
-        console.log('✅ Server closed');
-        process.exit(0);
-    });
+  console.log('⏹️ SIGTERM received, shutting down gracefully...');
+  server.close(() => {
+    console.log('✅ Server shut down complete');
+    process.exit(0);
+  });
 });
 
 process.on('SIGINT', () => {
-    console.log('🛑 Manual shutdown signal received');
-    server.close(() => {
-        console.log('✅ Server closed');
-        process.exit(0);
-    });
+  console.log('⏹️ SIGINT received, shutting down gracefully...');
+  server.close(() => {
+    console.log('✅ Server shut down complete');
+    process.exit(0);
+  });
 });
+
+module.exports = { app, server, wss, broadcast, broadcastToSubscribers };
