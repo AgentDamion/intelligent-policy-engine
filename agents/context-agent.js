@@ -122,15 +122,12 @@ class ContextAgent {
      * Enhanced with AI analysis for deeper insights
      */
     async process(input, context) {
-        // TEMPORARY DEBUG - see what we're actually getting
-        console.log('🐛 DEBUG: input type =', typeof input);
-        console.log('🐛 DEBUG: input =', JSON.stringify(input, null, 2));
-        console.log('🐛 DEBUG: context =', JSON.stringify(context, null, 2));
+
         
         // Check if this is already a processed ContextAgent result
         if (input && typeof input === 'object' && 
             input.timestamp && input.urgency && input.context && input.recommendations) {
-            console.log('✅ DETECTED: Input is already a processed ContextAgent result - returning as-is');
+
             return {
                 analysis: input,
                 confidence: input.context?.confidence || 0.7,
@@ -158,14 +155,13 @@ class ContextAgent {
                      input.prompt;
                      
             if (!content) {
-                console.log('🚨 WARNING: Could not find user message in input object');
                 content = "Unable to extract user message - please check WorkflowEngine input format";
             }
         } else {
             content = String(input || 'Unknown request');
         }
         
-        console.log('🔍 ContextAgent.process() extracted content:', content);
+
         
         // ENHANCED: Add AI analysis for deeper insights
         const aiEnhancedAnalysis = await this.enhanceWithAI(content);

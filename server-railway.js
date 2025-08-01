@@ -4,6 +4,13 @@ const http = require('http');
 const WebSocket = require('ws');
 const path = require('path');
 const cors = require('cors');
+const auth0Routes = require('./api/auth/auth0-routes');
+const decisionsRoutes = require('./api/decisions');
+const overridesRoutes = require('./api/overrides');
+const agencyOnboardingRoutes = require('./api/agency-onboarding');
+const policyDistributionRoutes = require('./api/policy-distribution');
+const enhancedOrchestrationRoutes = require('./api/enhanced-orchestration');
+const { checkJwt, requirePermission } = require('./api/auth/auth0-middleware');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -26,6 +33,12 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use('/api/auth', auth0Routes);
+app.use('/api/decisions', decisionsRoutes);
+app.use('/api/overrides', overridesRoutes);
+app.use('/api/agency-onboarding', agencyOnboardingRoutes);
+app.use('/api/policy-distribution', policyDistributionRoutes);
+app.use('/api/enhanced-orchestration', enhancedOrchestrationRoutes);
 
 // Serve static files from React build (Railway production)
 if (process.env.NODE_ENV === 'production') {

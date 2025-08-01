@@ -10,14 +10,7 @@ class PolicyAgent {
                             data.context?.urgency?.level || 
                             0.5; // default fallback
         
-        console.log("🔍 Enhanced Policy Agent Debug:");
-        console.log("  - data.contextOutput:", !!data.contextOutput);
-        console.log("  - data.urgency:", !!data.urgency);
-        console.log("  - data.context:", !!data.context);
-        console.log("  - urgencyLevel found:", urgencyLevel);
-        console.log("  - tool:", data.tool);
-        console.log("  - vendor:", data.vendor);
-        console.log("  - dataHandling:", data.dataHandling);
+
         
         // Enhanced risk calculation
         const riskScore = this.calculateEnhancedRiskScore({
@@ -97,7 +90,7 @@ class PolicyAgent {
     calculateEnhancedRiskScore({ tool, vendor, usage, dataHandling, urgencyLevel }) {
       let score = 0.1; // Lower base score than before
       
-      console.log("  🧮 Risk Calculation Breakdown:");
+
       
       // VENDOR RISK (Major factor)
       const vendorLower = vendor?.toLowerCase() || "";
