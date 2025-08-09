@@ -6,7 +6,7 @@ const { checkJwt, requirePermission, requireOrganizationAccess } = require('./au
 // Get all policy distributions for an enterprise
 router.get('/distributions', checkJwt, requireOrganizationAccess, requirePermission('policy:read'), async (req, res) => {
   try {
-    const { org_id } = req.user;
+    const { organizationId } = req.user;
     const { status, agency_id } = req.query;
     
     let query = `
@@ -19,7 +19,7 @@ router.get('/distributions', checkJwt, requireOrganizationAccess, requirePermiss
       WHERE pd.enterprise_org_id = $1
     `;
     
-    const params = [org_id];
+    const params = [organizationId];
     let paramIndex = 2;
     
     if (status) {
@@ -50,13 +50,13 @@ router.post('/distribute', checkJwt, requireOrganizationAccess, requirePermissio
     await client.query('BEGIN');
     
     const { policy_id, agency_ids, message } = req.body;
-    const { org_id } = req.user;
+    const { organizationId } = req.user;
     
     // Validate policy exists and belongs to enterprise
-    const policyCheck = await client.query(
-      'SELECT id FROM policies WHERE id = $1 AND organization_id = $2',
-      [policy_id, org_id]
-    );
+          const policyCheck = await client.query(
+        'SELECT id FROM policies WHERE id = $1 AND organization_id = $2',
+        [policy_id, organizationId]
+      );
     
     if (policyCheck.rows.length === 0) {
       await client.query('ROLLBACK');
@@ -69,7 +69,7 @@ router.post('/distribute', checkJwt, requireOrganizationAccess, requirePermissio
       // Check if agency relationship exists
       const relationshipCheck = await client.query(
         'SELECT id FROM agency_enterprise_relationships WHERE agency_org_id = $1 AND enterprise_org_id = $2 AND relationship_status = $3',
-        [agency_id, org_id, 'active']
+        [agency_id, organizationId, 'active']
       );
       
       if (relationshipCheck.rows.length === 0) {
@@ -79,7 +79,7 @@ router.post('/distribute', checkJwt, requireOrganizationAccess, requirePermissio
       // Deactivate previous version if exists
       await client.query(
         'UPDATE policy_distributions SET is_current_version = FALSE WHERE policy_id = $1 AND agency_org_id = $2 AND enterprise_org_id = $3',
-        [policy_id, agency_id, org_id]
+        [policy_id, agency_id, organizationId]
       );
       
       // Create new distribution
@@ -89,7 +89,7 @@ router.post('/distribute', checkJwt, requireOrganizationAccess, requirePermissio
          VALUES ($1, $2, $3, $4, 
            COALESCE((SELECT MAX(version_number) + 1 FROM policy_distributions WHERE policy_id = $1 AND agency_org_id = $3), 1)
          ) RETURNING *`,
-        [policy_id, org_id, agency_id, 'active']
+        [policy_id, organizationId, agency_id, 'active']
       );
       
       distributions.push(distribution.rows[0]);
@@ -121,7 +121,7 @@ router.post('/distribute', checkJwt, requireOrganizationAccess, requirePermissio
 router.get('/compliance/:agency_id', checkJwt, requireOrganizationAccess, requirePermission('policy:read'), async (req, res) => {
   try {
     const { agency_id } = req.params;
-    const { org_id } = req.user;
+    const { organizationId } = req.user;
     
     const result = await pool.query(
       `SELECT apc.*, pd.policy_id, p.name as policy_name, p.description as policy_description,
@@ -132,8 +132,8 @@ router.get('/compliance/:agency_id', checkJwt, requireOrganizationAccess, requir
        JOIN organizations e ON pd.enterprise_org_id = e.id
        WHERE apc.agency_org_id = $1 AND pd.enterprise_org_id = $2
        ORDER BY apc.last_assessment_date DESC`,
-      [agency_id, org_id]
-    );
+             [agency_id, organizationId]
+     );
     
     res.json(result.rows);
   } catch (error) {
@@ -261,22 +261,22 @@ router.post('/distributions/:distribution_id/acknowledge', checkJwt, requireOrga
 // Get policy sync status dashboard
 router.get('/dashboard', checkJwt, requireOrganizationAccess, requirePermission('policy:read'), async (req, res) => {
   try {
-    const { org_id } = req.user;
+    const { organizationId } = req.user;
     
     // Get distribution statistics
     const distributionStats = await pool.query(
-      `SELECT 
+             `SELECT 
          COUNT(*) as total_distributions,
          COUNT(CASE WHEN distribution_status = 'active' THEN 1 END) as active_distributions,
          COUNT(CASE WHEN acknowledged_at IS NOT NULL THEN 1 END) as acknowledged_distributions
        FROM policy_distributions 
        WHERE enterprise_org_id = $1`,
-      [org_id]
+      [organizationId]
     );
     
     // Get compliance statistics
     const complianceStats = await pool.query(
-      `SELECT 
+             `SELECT 
          COUNT(*) as total_compliance_records,
          COUNT(CASE WHEN compliance_status = 'compliant' THEN 1 END) as compliant_count,
          COUNT(CASE WHEN compliance_status = 'non_compliant' THEN 1 END) as non_compliant_count,
@@ -285,12 +285,12 @@ router.get('/dashboard', checkJwt, requireOrganizationAccess, requirePermission(
        FROM agency_policy_compliance apc
        JOIN policy_distributions pd ON apc.policy_distribution_id = pd.id
        WHERE pd.enterprise_org_id = $1`,
-      [org_id]
+      [organizationId]
     );
     
     // Get conflict statistics
     const conflictStats = await pool.query(
-      `SELECT 
+             `SELECT 
          COUNT(*) as total_conflicts,
          COUNT(CASE WHEN resolution_status = 'unresolved' THEN 1 END) as unresolved_conflicts,
          COUNT(CASE WHEN resolution_status = 'resolved' THEN 1 END) as resolved_conflicts,
@@ -298,7 +298,7 @@ router.get('/dashboard', checkJwt, requireOrganizationAccess, requirePermission(
        FROM policy_conflicts pc
        JOIN policy_distributions pd ON pc.policy_a_id = pd.policy_id OR pc.policy_b_id = pd.policy_id
        WHERE pd.enterprise_org_id = $1`,
-      [org_id]
+      [organizationId]
     );
     
     res.json({
