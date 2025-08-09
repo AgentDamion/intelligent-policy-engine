@@ -1,7 +1,7 @@
 // api/agency-onboarding.js
 const express = require('express');
 const router = express.Router();
-const { pool } = require('../database/connection');
+const pool = require('../database/connection');
 const { checkJwt, requireOrganizationAccess, requirePermission } = require('./auth/auth0-middleware');
 const crypto = require('crypto');
 

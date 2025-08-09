@@ -1,9 +1,11 @@
-﻿// server-railway.js - Updated with WebSocket support for Railway deployment
+// server-railway.js - Updated with WebSocket support for Railway deployment
 const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
 const path = require('path');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const auth0Routes = require('./api/auth/auth0-routes');
 const decisionsRoutes = require('./api/decisions');
 const overridesRoutes = require('./api/overrides');
@@ -13,6 +15,9 @@ const enhancedOrchestrationRoutes = require('./api/enhanced-orchestration');
 const { checkJwt, requirePermission } = require('./api/auth/auth0-middleware');
 
 const app = express();
+// Security middleware
+app.use(helmet());
+app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
 const PORT = process.env.PORT || 3000;
 
 // Create HTTP server (handles both HTTP and WebSocket)
