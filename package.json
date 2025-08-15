@@ -3,8 +3,10 @@
   "private": true,
   "workspaces": ["apps/*", "packages/*"],
   "scripts": {
-    "build": "pnpm -r build",
-    "lint": "pnpm -r lint",
-    "test": "pnpm -r test"
+    "build": "npm run build --workspaces",
+    "lint": "npm run lint --workspaces",
+    "test": "npm run test --workspaces",
+    "dev:api": "npm run dev --workspace=@aicomplyr/api",
+    "start:api": "npm run start --workspace=@aicomplyr/api"
   }
 }
