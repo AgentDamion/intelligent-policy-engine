@@ -81,7 +81,7 @@
 }
 
 .tab.active {
-  background: #3b82f6;
+  background: var(--brand-indigo);
   color: white;
 }
 
@@ -107,20 +107,7 @@
   margin: 0;
 }
 
-.btn-primary {
-  background: #3b82f6;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.btn-primary:hover {
-  background: #2563eb;
-}
+/* obsolete: local btn-primary; using Tailwind component class */
 
 .btn-secondary {
   background: #f1f5f9;
@@ -394,25 +381,7 @@
   margin: 0;
 }
 
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  color: #64748b;
-  cursor: pointer;
-  padding: 0;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: background 0.2s ease;
-}
-
-.close-btn:hover {
-  background: #f1f5f9;
-}
+/* obsolete: close-btn replaced by btn-secondary */
 
 .form-group {
   margin-bottom: 20px;

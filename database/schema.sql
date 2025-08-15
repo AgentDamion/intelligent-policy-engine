@@ -135,19 +135,6 @@ CREATE TABLE IF NOT EXISTS admin_audit_log (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Admin audit log table
-CREATE TABLE IF NOT EXISTS admin_audit_log (
-    id SERIAL PRIMARY KEY,
-    admin_user_id VARCHAR(255) NOT NULL,
-    action VARCHAR(100) NOT NULL,
-    target VARCHAR(255) NOT NULL,
-    reason TEXT NOT NULL,
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    ip_address INET,
-    result JSONB,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
 -- Policy Templates (Base templates that organizations can customize)
 CREATE TABLE IF NOT EXISTS policy_templates (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

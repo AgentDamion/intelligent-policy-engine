@@ -54,15 +54,15 @@ const PolicyDistributionDemo = () => {
         <h1>Policy Distribution & Sync System Demo</h1>
         <p>Experience the comprehensive policy management system for Pharma enterprises and their agencies</p>
         
-        <div className="demo-controls">
+          <div className="demo-controls">
           <button 
-            className={`demo-mode-btn ${demoMode === 'enterprise' ? 'active' : ''}`}
+              className={`btn-primary ${demoMode === 'enterprise' ? 'active' : ''}`}
             onClick={() => setDemoMode('enterprise')}
           >
             🏢 Enterprise Admin
           </button>
           <button 
-            className={`demo-mode-btn ${demoMode === 'agency' ? 'active' : ''}`}
+              className={`btn-primary ${demoMode === 'agency' ? 'active' : ''}`}
             onClick={() => setDemoMode('agency')}
           >
             🎯 Agency Admin
@@ -75,7 +75,7 @@ const PolicyDistributionDemo = () => {
           <div className="instructions-header">
             <h2>{demoInstructions[demoMode].title}</h2>
             <button 
-              className="close-instructions"
+              className="btn-primary"
               onClick={() => setShowInstructions(false)}
             >
               ×
@@ -91,13 +91,13 @@ const PolicyDistributionDemo = () => {
             {demoMode === 'enterprise' && (
               <>
                 <button 
-                  className="demo-action-btn"
+                  className="btn-primary"
                   onClick={() => handleDemoAction('distribute_policy')}
                 >
                   📤 Distribute Policy
                 </button>
                 <button 
-                  className="demo-action-btn"
+                  className="btn-primary"
                   onClick={() => handleDemoAction('detect_conflicts')}
                 >
                   🔍 Detect Conflicts
@@ -107,13 +107,13 @@ const PolicyDistributionDemo = () => {
             {demoMode === 'agency' && (
               <>
                 <button 
-                  className="demo-action-btn"
+                  className="btn-primary"
                   onClick={() => handleDemoAction('acknowledge_distribution')}
                 >
                   ✅ Acknowledge Distribution
                 </button>
                 <button 
-                  className="demo-action-btn"
+                  className="btn-primary"
                   onClick={() => handleDemoAction('resolve_conflict')}
                 >
                   🔧 Resolve Conflict

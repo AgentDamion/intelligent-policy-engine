@@ -22,7 +22,7 @@ const EnterpriseCommandCenter = ({ context, onNavigate }) => {
         <h3>Failed to load dashboard</h3>
         <p>{error}</p>
         <button 
-          className="retry-btn"
+          className="btn-primary"
           onClick={() => window.location.reload()}
         >
           Retry
@@ -41,7 +41,7 @@ const EnterpriseCommandCenter = ({ context, onNavigate }) => {
       </div>
       
       <div className="dashboard-grid">
-        <div className="dashboard-card policy-management">
+        <div className="dashboard-card card-modern policy-management">
           <div className="card-header">
             <h3>📋 Policy Management</h3>
             <span className="card-badge">Active</span>
@@ -56,7 +56,7 @@ const EnterpriseCommandCenter = ({ context, onNavigate }) => {
               <span className="metric-label">Compliance Rate</span>
             </div>
             <button 
-              className="card-action-btn"
+              className="btn-primary"
               onClick={() => onNavigate('policy-management')}
             >
               Manage Policies
@@ -64,7 +64,7 @@ const EnterpriseCommandCenter = ({ context, onNavigate }) => {
           </div>
         </div>
 
-        <div className="dashboard-card seat-management">
+        <div className="dashboard-card card-modern seat-management">
           <div className="card-header">
             <h3>👥 Seat Management</h3>
             <span className="card-badge">Admin</span>
@@ -79,7 +79,7 @@ const EnterpriseCommandCenter = ({ context, onNavigate }) => {
               <span className="metric-label">Active Users</span>
             </div>
             <button 
-              className="card-action-btn"
+              className="btn-primary"
               onClick={() => onNavigate('seat-management')}
             >
               Manage Seats
@@ -87,7 +87,7 @@ const EnterpriseCommandCenter = ({ context, onNavigate }) => {
           </div>
         </div>
 
-        <div className="dashboard-card audit-center">
+        <div className="dashboard-card card-modern audit-center">
           <div className="card-header">
             <h3>🔍 Audit Center</h3>
             <span className="card-badge">Live</span>
@@ -102,7 +102,7 @@ const EnterpriseCommandCenter = ({ context, onNavigate }) => {
               <span className="metric-label">Pending Reviews</span>
             </div>
             <button 
-              className="card-action-btn"
+              className="btn-primary"
               onClick={() => onNavigate('audit-center')}
             >
               View Audits
@@ -110,7 +110,7 @@ const EnterpriseCommandCenter = ({ context, onNavigate }) => {
           </div>
         </div>
 
-        <div className="dashboard-card analytics">
+        <div className="dashboard-card card-modern analytics">
           <div className="card-header">
             <h3>📊 Analytics</h3>
             <span className="card-badge">Real-time</span>
@@ -125,7 +125,7 @@ const EnterpriseCommandCenter = ({ context, onNavigate }) => {
               <span className="metric-label">Efficiency Gain</span>
             </div>
             <button 
-              className="card-action-btn"
+              className="btn-primary"
               onClick={() => onNavigate('analytics')}
             >
               View Analytics
@@ -157,7 +157,7 @@ const AgencyWorkflowHub = ({ context, onNavigate }) => {
         <h3>Failed to load dashboard</h3>
         <p>{error}</p>
         <button 
-          className="retry-btn"
+          className="btn-primary"
           onClick={() => window.location.reload()}
         >
           Retry
@@ -176,7 +176,7 @@ const AgencyWorkflowHub = ({ context, onNavigate }) => {
       </div>
       
       <div className="dashboard-grid">
-        <div className="dashboard-card submissions">
+        <div className="dashboard-card card-modern submissions">
           <div className="card-header">
             <h3>📝 Submissions</h3>
             <span className="card-badge">Active</span>
@@ -191,7 +191,7 @@ const AgencyWorkflowHub = ({ context, onNavigate }) => {
               <span className="metric-label">Approved Today</span>
             </div>
             <button 
-              className="card-action-btn"
+              className="btn-primary"
               onClick={() => onNavigate('submissions')}
             >
               View Submissions
@@ -199,7 +199,7 @@ const AgencyWorkflowHub = ({ context, onNavigate }) => {
           </div>
         </div>
 
-        <div className="dashboard-card client-compliance">
+        <div className="dashboard-card card-modern client-compliance">
           <div className="card-header">
             <h3>👥 Client Compliance</h3>
             <span className="card-badge">Live</span>
@@ -214,7 +214,7 @@ const AgencyWorkflowHub = ({ context, onNavigate }) => {
               <span className="metric-label">Compliance Rate</span>
             </div>
             <button 
-              className="card-action-btn"
+              className="btn-primary"
               onClick={() => onNavigate('client-compliance')}
             >
               Manage Clients
@@ -222,7 +222,7 @@ const AgencyWorkflowHub = ({ context, onNavigate }) => {
           </div>
         </div>
 
-        <div className="dashboard-card tool-management">
+        <div className="dashboard-card card-modern tool-management">
           <div className="card-header">
             <h3>🛠️ Tool Management</h3>
             <span className="card-badge">Available</span>
@@ -237,7 +237,7 @@ const AgencyWorkflowHub = ({ context, onNavigate }) => {
               <span className="metric-label">Pending Requests</span>
             </div>
             <button 
-              className="card-action-btn"
+              className="btn-primary"
               onClick={() => onNavigate('tool-management')}
             >
               Manage Tools
@@ -245,7 +245,7 @@ const AgencyWorkflowHub = ({ context, onNavigate }) => {
           </div>
         </div>
 
-        <div className="dashboard-card workflow">
+        <div className="dashboard-card card-modern workflow">
           <div className="card-header">
             <h3>⚡ Quick Actions</h3>
             <span className="card-badge">Ready</span>
@@ -253,19 +253,19 @@ const AgencyWorkflowHub = ({ context, onNavigate }) => {
           <div className="card-content">
             <div className="quick-actions">
               <button 
-                className="quick-action-btn"
+                className="btn-primary"
                 onClick={() => onNavigate('new-submission')}
               >
                 📝 New Submission
               </button>
               <button 
-                className="quick-action-btn"
+                className="btn-primary"
                 onClick={() => onNavigate('tool-request')}
               >
                 🛠️ Request Tool
               </button>
               <button 
-                className="quick-action-btn"
+                className="btn-primary"
                 onClick={() => onNavigate('compliance-check')}
               >
                 ✅ Compliance Check

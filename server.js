@@ -7,6 +7,7 @@ const path = require('path');
 const WebSocket = require('ws');
 const apiRoutes = require('./api/routes');
 const { authRouter } = require('./api/auth');
+const modernAuthBridge = require('./api/auth/mock-auth-bridge');
 const policyTemplatesRouter = require('./api/policy-templates');
 const dashboardRouter = require('./api/dashboard');
 const hierarchicalRoutes = require('./api/routes/hierarchical-routes');
@@ -347,14 +348,16 @@ app.get('/api', (req, res) => {
     });
 });
 
+// Modern Authentication Hub Bridge (PRIORITY - must come first)
+app.use('/api', modernAuthBridge);
 // Auth and session
 app.use('/auth', authRouter);
 // Main API
 app.use('/api', apiRoutes);
 // Policy Templates
 app.use('/api/policy-templates', policyTemplatesRouter);
-// Hierarchical Multi-Tenant API
-app.use('/api', hierarchicalRoutes);
+// Hierarchical Multi-Tenant API (disabled for testing)
+// app.use('/api', hierarchicalRoutes);
 // Test dashboard route
 app.get('/api/dashboard/test', (req, res) => {
     res.json({ message: 'Dashboard routing works!' });

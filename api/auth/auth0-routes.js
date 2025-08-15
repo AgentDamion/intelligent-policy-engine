@@ -4,6 +4,49 @@ const router = express.Router();
 const { checkJwt, requireRole, requirePermission } = require('./auth0-middleware');
 const db = require('../../database/connection');
 
+// Simple login endpoint for testing
+router.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    // For testing purposes, accept any credentials
+    // In production, this would validate against Auth0 or database
+    if (!email || !password) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Email and password required' 
+      });
+    }
+    
+    // Mock user data for testing
+    const mockUser = {
+      id: 'test-user-id',
+      email: email,
+      name: 'Test User',
+      role: 'enterprise_admin',
+      organizationId: 'test-org-id',
+      organizationName: 'Test Organization'
+    };
+    
+    // Mock JWT token
+    const mockToken = 'mock-jwt-token-' + Date.now();
+    
+    res.json({
+      success: true,
+      user: mockUser,
+      token: mockToken,
+      message: 'Login successful (test mode)'
+    });
+    
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Login failed' 
+    });
+  }
+});
+
 // Get user profile
 router.get('/profile', checkJwt, async (req, res) => {
   try {

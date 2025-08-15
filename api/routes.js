@@ -74,6 +74,49 @@ router.get('/health', (req, res) => {
     });
 });
 
+// Authentication endpoint
+router.post('/auth/login', (req, res) => {
+    try {
+        const { email, password } = req.body;
+        
+        // For testing purposes, accept any credentials
+        // In production, this would validate against Auth0 or database
+        if (!email || !password) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Email and password required' 
+            });
+        }
+        
+        // Mock user data for testing
+        const mockUser = {
+            id: 'test-user-id',
+            email: email,
+            name: 'Test User',
+            role: 'enterprise_admin',
+            enterpriseId: 'enterprise-1',
+            organizationName: 'Test Organization'
+        };
+        
+        // Mock JWT token
+        const mockToken = 'mock-jwt-token-' + Date.now();
+        
+        res.json({
+            success: true,
+            user: mockUser,
+            token: mockToken,
+            message: 'Login successful (test mode)'
+        });
+        
+    } catch (error) {
+        console.error('Login error:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Login failed' 
+        });
+    }
+});
+
 // Demo Landing API Endpoints
 // Start demo session
 router.post('/demo/start-session', (req, res) => {
@@ -387,11 +430,52 @@ router.post('/process/negotiation', async (req, res) => {
 
 // DASHBOARD ENDPOINTS
 
-// Get all policies
+// Get all policies with enterprise scoping
 router.get('/policies', (req, res) => {
+    const { enterpriseId } = req.query;
+    
+    // Mock policies with enterprise scoping
+    const allPolicies = [
+        {
+            id: 1,
+            enterpriseId: 'enterprise-1',
+            name: 'Social Media AI Content Policy',
+            description: 'Guidelines for AI-generated social media content',
+            status: 'active',
+            lastUpdated: new Date().toISOString(),
+            rules: ['No medical claims', 'FDA compliance required', 'Human review mandatory']
+        },
+        {
+            id: 2,
+            enterpriseId: 'enterprise-1',
+            name: 'Image Generation Guidelines', 
+            description: 'Rules for AI-generated visual content',
+            status: 'active',
+            lastUpdated: new Date().toISOString(),
+            rules: ['Brand consistency', 'No misleading imagery', 'Copyright compliance']
+        },
+        {
+            id: 3,
+            enterpriseId: 'enterprise-2',
+            name: 'Pharma AI Compliance Policy',
+            description: 'Pharmaceutical AI content guidelines',
+            status: 'active',
+            lastUpdated: new Date().toISOString(),
+            rules: ['No patient data', 'FDA approval required', 'Medical review mandatory']
+        }
+    ];
+    
+    // Filter by enterprise if specified
+    let filteredPolicies = allPolicies;
+    if (enterpriseId) {
+        filteredPolicies = allPolicies.filter(policy => policy.enterpriseId === enterpriseId);
+    }
+    
     res.json({
         success: true,
-        policies: policies
+        data: filteredPolicies,
+        timestamp: new Date().toISOString(),
+        enterpriseId: enterpriseId || 'all'
     });
 });
 

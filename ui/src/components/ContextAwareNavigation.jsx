@@ -207,7 +207,7 @@ const ContextAwareNavigation = ({
             </div>
           </div>
           
-          <button className="logout-btn">
+          <button className="btn-secondary logout-btn">
             <span className="logout-icon">🚪</span>
             <span className="logout-label">Logout</span>
           </button>

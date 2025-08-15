@@ -11,6 +11,7 @@ const AdaptiveNavigation = ({ userRole, activeView, onViewChange, collapsed }) =
     enterprise: {
       primary: [
         { id: 'dashboard', label: 'Dashboard', icon: '📊', badge: null },
+        { id: 'enterprise-governance', label: 'Enterprise Governance', icon: '🎯', badge: '3' },
         { id: 'agency-management', label: 'Agency Management', icon: '🏢', badge: '3' },
         { id: 'policy-center', label: 'Policy Center', icon: '📋', badge: null },
         { id: 'compliance-hub', label: 'Compliance Hub', icon: '🛡️', badge: '12' },
@@ -135,10 +136,10 @@ const AdaptiveNavigation = ({ userRole, activeView, onViewChange, collapsed }) =
           <h3 className="section-title">Navigation</h3>
         </div>
         <nav className="nav-items">
-          {navigationConfig.primary?.map((item) => (
+            {navigationConfig.primary?.map((item) => (
             <button
               key={item.id}
-              className={`nav-item ${activeView === item.id ? 'active' : ''}`}
+                className={`nav-item btn-primary ${activeView === item.id ? 'active' : ''}`}
               onClick={() => handleNavigationClick(item.id)}
             >
               <span className="nav-icon">{item.icon}</span>
@@ -155,10 +156,10 @@ const AdaptiveNavigation = ({ userRole, activeView, onViewChange, collapsed }) =
           <h3 className="section-title">Quick Actions</h3>
         </div>
         <div className="quick-actions">
-          {quickActions.map((action) => (
+            {quickActions.map((action) => (
             <button
               key={action.id}
-              className="quick-action-btn"
+                className="btn-primary"
               onClick={() => handleQuickAction(action.action)}
             >
               <span className="action-icon">{action.icon}</span>

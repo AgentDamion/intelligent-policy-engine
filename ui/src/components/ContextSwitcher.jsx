@@ -66,7 +66,7 @@ const ContextSwitcher = ({ className = '' }) => {
           <span className="error-icon">⚠️</span>
           <span className="error-message">{error}</span>
           <button 
-            className="retry-btn"
+            className="btn-primary"
             onClick={() => {
               clearError();
               loadUserContexts();
@@ -133,7 +133,7 @@ const ContextSwitcher = ({ className = '' }) => {
               placeholder="Search contexts..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="context-search"
+              className="context-search input-modern"
             />
           </div>
 
@@ -197,7 +197,7 @@ const ContextSwitcher = ({ className = '' }) => {
 
           <div className="dropdown-footer">
             <button 
-              className="manage-contexts-btn"
+              className="btn-secondary manage-contexts-btn"
               onClick={() => {
                 // Navigate to context management page
                 window.location.href = '/settings/contexts';

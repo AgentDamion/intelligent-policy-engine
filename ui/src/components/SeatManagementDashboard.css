@@ -41,21 +41,7 @@
   margin-bottom: 1rem;
 }
 
-.retry-btn {
-  margin-top: 1rem;
-  padding: 0.75rem 1.5rem;
-  background-color: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.2s;
-}
-
-.retry-btn:hover {
-  background-color: #2563eb;
-}
+/* obsolete: retry-btn replaced by btn-primary */
 
 /* Seat Overview Cards */
 .seat-overview {
@@ -178,43 +164,9 @@
   align-items: center;
 }
 
-.bulk-action-btn {
-  padding: 0.75rem 1.5rem;
-  background-color: #6366f1;
-  color: white;
-  border: none;
-  border-radius: 0.5rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
+/* obsolete: bulk-action-btn replaced by btn-success */
 
-.bulk-action-btn:hover:not(:disabled) {
-  background-color: #4f46e5;
-}
-
-.bulk-action-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.create-seat-btn {
-  padding: 0.75rem 1.5rem;
-  background-color: #059669;
-  color: white;
-  border: none;
-  border-radius: 0.5rem;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: background-color 0.2s;
-}
-
-.create-seat-btn:hover {
-  background-color: #047857;
-}
+/* obsolete: create-seat-btn replaced by btn-primary */
 
 .btn-icon {
   font-size: 1.25rem;
@@ -428,20 +380,7 @@
   font-size: 1rem;
 }
 
-.create-first-seat-btn {
-  padding: 0.75rem 1.5rem;
-  background-color: #059669;
-  color: white;
-  border: none;
-  border-radius: 0.5rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.create-first-seat-btn:hover {
-  background-color: #047857;
-}
+/* obsolete: create-first-seat-btn replaced by btn-primary */
 
 /* Responsive Design */
 @media (max-width: 768px) {

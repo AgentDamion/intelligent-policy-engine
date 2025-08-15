@@ -204,7 +204,7 @@ const AIAgentHub = ({ onAgentInteraction, collapsed }) => {
 
               <div className="agent-actions">
                 <button
-                  className="action-btn primary"
+                  className="btn-primary"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleAgentAction(agentName, 'activate');
@@ -213,7 +213,7 @@ const AIAgentHub = ({ onAgentInteraction, collapsed }) => {
                   Activate
                 </button>
                 <button
-                  className="action-btn secondary"
+                  className="btn-success"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleAgentAction(agentName, 'configure');
@@ -233,7 +233,7 @@ const AIAgentHub = ({ onAgentInteraction, collapsed }) => {
           <div className="details-header">
             <h4 className="details-title">{agentDetails.name}</h4>
             <button 
-              className="close-btn"
+              className="btn-primary"
               onClick={() => setSelectedAgent(null)}
             >
               ×

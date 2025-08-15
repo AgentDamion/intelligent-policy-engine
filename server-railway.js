@@ -4,15 +4,21 @@ const http = require('http');
 const WebSocket = require('ws');
 const path = require('path');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const auth0Routes = require('./api/auth/auth0-routes');
 const decisionsRoutes = require('./api/decisions');
 const overridesRoutes = require('./api/overrides');
 const agencyOnboardingRoutes = require('./api/agency-onboarding');
 const policyDistributionRoutes = require('./api/policy-distribution');
 const enhancedOrchestrationRoutes = require('./api/enhanced-orchestration');
+const apiRoutes = require('./api/routes');
 const { checkJwt, requirePermission } = require('./api/auth/auth0-middleware');
 
 const app = express();
+// Security middleware
+app.use(helmet());
+app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
 const PORT = process.env.PORT || 3000;
 
 // Create HTTP server (handles both HTTP and WebSocket)
@@ -27,7 +33,10 @@ const corsOptions = {
         'https://*.railway.app'
       ]
     : ['http://localhost:3000', 'http://localhost:3001'],
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
 };
 
 app.use(cors(corsOptions));
@@ -39,6 +48,7 @@ app.use('/api/overrides', overridesRoutes);
 app.use('/api/agency-onboarding', agencyOnboardingRoutes);
 app.use('/api/policy-distribution', policyDistributionRoutes);
 app.use('/api/enhanced-orchestration', enhancedOrchestrationRoutes);
+app.use('/api', apiRoutes);
 
 // Serve static files from React build (Railway production)
 if (process.env.NODE_ENV === 'production') {
@@ -221,6 +231,49 @@ app.get('/api/agents/status', (req, res) => {
   }, 'agentSubscribed');
 });
 
+// Authentication endpoint
+app.post('/api/auth/login', (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    // For testing purposes, accept any credentials
+    // In production, this would validate against Auth0 or database
+    if (!email || !password) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Email and password required' 
+      });
+    }
+    
+    // Mock user data for testing
+    const mockUser = {
+      id: 'test-user-id',
+      email: email,
+      name: 'Test User',
+      role: 'enterprise_admin',
+      enterpriseId: 'enterprise-1',
+      organizationName: 'Test Organization'
+    };
+    
+    // Mock JWT token
+    const mockToken = 'mock-jwt-token-' + Date.now();
+    
+    res.json({
+      success: true,
+      user: mockUser,
+      token: mockToken,
+      message: 'Login successful (test mode)'
+    });
+    
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Login failed' 
+    });
+  }
+});
+
 // Governance events endpoint
 app.get('/api/governance/events', (req, res) => {
   const { timeRange = '24h', eventType = 'all', severity = 'all' } = req.query;
@@ -235,11 +288,15 @@ app.get('/api/governance/events', (req, res) => {
   });
 });
 
-// Policies endpoint
+// Policies endpoint with enterprise scoping
 app.get('/api/policies', (req, res) => {
-  const policies = [
+  const { enterpriseId } = req.query;
+  
+  // Mock policies with enterprise scoping
+  const allPolicies = [
     {
       id: 1,
+      enterpriseId: 'enterprise-1',
       name: 'Social Media AI Content Policy',
       description: 'Guidelines for AI-generated social media content',
       status: 'active',
@@ -248,18 +305,35 @@ app.get('/api/policies', (req, res) => {
     },
     {
       id: 2,
+      enterpriseId: 'enterprise-1',
       name: 'Image Generation Guidelines', 
       description: 'Rules for AI-generated visual content',
       status: 'active',
       lastUpdated: new Date().toISOString(),
       rules: ['Brand consistency', 'No misleading imagery', 'Copyright compliance']
+    },
+    {
+      id: 3,
+      enterpriseId: 'enterprise-2',
+      name: 'Pharma AI Compliance Policy',
+      description: 'Pharmaceutical AI content guidelines',
+      status: 'active',
+      lastUpdated: new Date().toISOString(),
+      rules: ['No patient data', 'FDA approval required', 'Medical review mandatory']
     }
   ];
+  
+  // Filter by enterprise if specified
+  let policies = allPolicies;
+  if (enterpriseId) {
+    policies = allPolicies.filter(policy => policy.enterpriseId === enterpriseId);
+  }
   
   res.json({
     success: true,
     data: policies,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    enterpriseId: enterpriseId || 'all'
   });
 });
 

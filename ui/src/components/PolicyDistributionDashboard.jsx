@@ -152,20 +152,20 @@ const PolicyDistributionDashboard = () => {
     <div className="policy-distribution-dashboard">
       <div className="dashboard-header">
         <h1>Policy Distribution & Sync Dashboard</h1>
-        <div className="dashboard-stats">
-          <div className="stat-card">
+      <div className="dashboard-stats">
+        <div className="stat-card card-modern">
             <h3>Total Distributions</h3>
             <p>{dashboard.distributions?.total_distributions || 0}</p>
           </div>
-          <div className="stat-card">
+        <div className="stat-card card-modern">
             <h3>Active Distributions</h3>
             <p>{dashboard.distributions?.active_distributions || 0}</p>
           </div>
-          <div className="stat-card">
+        <div className="stat-card card-modern">
             <h3>Compliance Rate</h3>
             <p>{dashboard.compliance?.avg_compliance_score?.toFixed(1) || 0}%</p>
           </div>
-          <div className="stat-card">
+        <div className="stat-card card-modern">
             <h3>Unresolved Conflicts</h3>
             <p>{dashboard.conflicts?.unresolved_conflicts || 0}</p>
           </div>
@@ -211,7 +211,7 @@ const PolicyDistributionDashboard = () => {
             ) : (
               <div className="distributions-list">
                 {distributions.map((distribution) => (
-                  <div key={distribution.id} className="distribution-card">
+                  <div key={distribution.id} className="distribution-card card-modern">
                     <div className="distribution-header">
                       <h3>{distribution.policy_name}</h3>
                       <span className={`status ${getStatusColor(distribution.distribution_status)}`}>
@@ -229,7 +229,7 @@ const PolicyDistributionDashboard = () => {
                     <div className="distribution-actions">
                       {!distribution.acknowledged_at && (
                         <button 
-                          className="btn-secondary"
+                          className="btn-success"
                           onClick={() => handleAcknowledgeDistribution(distribution.id)}
                         >
                           Acknowledge
@@ -248,7 +248,7 @@ const PolicyDistributionDashboard = () => {
             <h2>Compliance Tracking</h2>
             <div className="compliance-list">
               {compliance.map((record) => (
-                <div key={record.id} className="compliance-card">
+                <div key={record.id} className="compliance-card card-modern">
                   <div className="compliance-header">
                     <h3>{record.policy_name}</h3>
                     <span className={`status ${getStatusColor(record.compliance_status)}`}>
@@ -272,7 +272,7 @@ const PolicyDistributionDashboard = () => {
             <h2>Policy Conflicts</h2>
             <div className="conflicts-list">
               {conflicts.map((conflict) => (
-                <div key={conflict.id} className="conflict-card">
+                <div key={conflict.id} className="conflict-card card-modern">
                   <div className="conflict-header">
                     <h3>{conflict.conflict_type}</h3>
                     <span className={`severity ${getSeverityColor(conflict.severity)}`}>
@@ -341,7 +341,7 @@ const PolicyDistributeModal = ({ onClose, onDistribute }) => {
       <div className="modal">
         <div className="modal-header">
           <h2>Distribute Policy</h2>
-          <button className="close-btn" onClick={onClose}>×</button>
+          <button className="btn-secondary" onClick={onClose}>×</button>
         </div>
         <form onSubmit={handleSubmit}>
           <div className="form-group">

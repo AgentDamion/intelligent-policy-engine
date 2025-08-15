@@ -11,7 +11,7 @@
 .nav-header {
   padding: 24px 20px;
   border-bottom: 1px solid #e0e0e0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--brand-indigo);
   color: white;
 }
 
@@ -102,7 +102,7 @@
 
 .nav-link:hover {
   background: #f8f9fa;
-  color: #667eea;
+  color: var(--brand-indigo);
 }
 
 .nav-link:active {
@@ -120,7 +120,7 @@
 }
 
 .nav-badge {
-  background: #667eea;
+  background: var(--brand-indigo);
   color: white;
   padding: 2px 6px;
   border-radius: 10px;
@@ -147,7 +147,7 @@
 .user-avatar {
   width: 40px;
   height: 40px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--brand-indigo);
   border-radius: 50%;
   display: flex;
   align-items: center;

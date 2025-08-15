@@ -33,10 +33,10 @@ export const LiveGovernanceStream = ({
   const eventTypes = {
     policy_decision: {
       icon: Shield,
-      color: 'blue',
-      bgColor: 'bg-blue-50',
-      borderColor: 'border-blue-200',
-      textColor: 'text-blue-800',
+      color: 'indigo',
+      bgColor: 'bg-brand-indigo/10',
+      borderColor: 'border-brand-indigo',
+      textColor: 'text-brand-indigo',
       label: 'Policy Decision'
     },
     compliance_alert: {
@@ -238,12 +238,12 @@ export const LiveGovernanceStream = ({
       ${isOpen ? 'w-96' : 'w-0'}
     `}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+      <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-brand text-white">
         <div className="flex items-center gap-3">
           <Activity size={20} />
           <div>
             <h3 className="font-semibold">Live Governance</h3>
-            <p className="text-xs text-indigo-100">
+            <p className="text-xs text-brand-indigo">
               {isConnected ? 
                 `${filteredEvents.length} events • Connected` : 
                 `${filteredEvents.length} events • Mock Data`
@@ -422,7 +422,7 @@ const EventCard = ({ event, eventType, isExpanded, onToggleExpansion, currentUse
   // Fixed: Use static classes instead of dynamic
   const getIconColorClass = (color) => {
     switch (color) {
-      case 'blue': return 'text-blue-600'
+      case 'indigo': return 'text-brand-indigo'
       case 'orange': return 'text-orange-600'
       case 'green': return 'text-green-600'
       case 'purple': return 'text-purple-600'
@@ -524,7 +524,7 @@ const EventCard = ({ event, eventType, isExpanded, onToggleExpansion, currentUse
                     <button
                       key={index}
                       onClick={() => executeEventAction(action)}
-                      className="px-3 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium hover:bg-blue-200 transition-colors"
+                      className="px-3 py-1 bg-brand-indigo/10 text-brand-indigo rounded text-xs font-medium hover:bg-brand-indigo/20 transition-colors"
                     >
                       {action.label}
                     </button>

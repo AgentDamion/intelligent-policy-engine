@@ -71,7 +71,7 @@ const LiveGovernanceStream = ({
       case 'analysis':
         return 'border-purple-200 bg-purple-50';
       case 'sync':
-        return 'border-indigo-200 bg-indigo-50';
+        return 'border-brand-indigo bg-brand-indigo/10';
       case 'rejected':
         return 'border-red-200 bg-red-50';
       default:
@@ -90,7 +90,7 @@ const LiveGovernanceStream = ({
       case 'analysis':
         return 'bg-purple-100 text-purple-800';
       case 'sync':
-        return 'bg-indigo-100 text-indigo-800';
+        return 'bg-brand-indigo/10 text-brand-indigo';
       case 'rejected':
         return 'bg-red-100 text-red-800';
       default:

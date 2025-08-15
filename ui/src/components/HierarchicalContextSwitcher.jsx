@@ -111,7 +111,7 @@ const HierarchicalContextSwitcher = ({ className = '' }) => {
       <div className={`hierarchical-context-switcher error ${className}`}>
         <div className="error-message">
           <span>⚠️ Context Error</span>
-          <button onClick={clearError} className="retry-btn">Retry</button>
+          <button onClick={clearError} className="btn-primary">Retry</button>
         </div>
       </div>
     );
@@ -159,7 +159,7 @@ const HierarchicalContextSwitcher = ({ className = '' }) => {
                 placeholder="Search contexts..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="context-search"
+                className="context-search input-modern"
               />
             </div>
             <div className="filter-tabs">
@@ -267,7 +267,7 @@ const HierarchicalContextSwitcher = ({ className = '' }) => {
 
           <div className="dropdown-footer">
             <button 
-              className="manage-contexts-btn"
+              className="btn-secondary manage-contexts-btn"
               onClick={() => {
                 // Navigate to context management page
                 window.location.href = '/settings/contexts';
@@ -276,7 +276,7 @@ const HierarchicalContextSwitcher = ({ className = '' }) => {
               Manage Contexts
             </button>
             <button 
-              className="create-context-btn"
+              className="btn-primary create-context-btn"
               onClick={() => {
                 // Navigate to context creation page
                 window.location.href = '/settings/contexts/create';

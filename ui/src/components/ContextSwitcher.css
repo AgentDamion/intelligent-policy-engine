@@ -3,21 +3,7 @@
   display: inline-block;
 }
 
-.context-switcher-trigger {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
-  border-radius: 12px;
-  color: white;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-  min-width: 200px;
-  position: relative;
-}
+/* context-switcher-trigger styling now handled by component utilities */
 
 .context-switcher-trigger:hover:not(:disabled) {
   transform: translateY(-2px);
@@ -241,23 +227,7 @@
   background: #f8f9fa;
 }
 
-.manage-contexts-btn {
-  width: 100%;
-  padding: 8px 16px;
-  background: transparent;
-  border: 1px solid #667eea;
-  border-radius: 8px;
-  color: #667eea;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.manage-contexts-btn:hover {
-  background: #667eea;
-  color: white;
-}
+/* manage-contexts-btn now uses btn-secondary */
 
 /* Loading State */
 .loading-state {
@@ -307,21 +277,7 @@
   flex: 1;
 }
 
-.retry-btn {
-  padding: 4px 8px;
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 4px;
-  color: white;
-  font-size: 10px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.retry-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
+/* obsolete: retry-btn replaced by btn-primary */
 
 /* No Context State */
 .no-context-state {

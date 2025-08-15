@@ -100,11 +100,11 @@ const AgencyInviteModal = ({ isOpen, onClose, onSuccess }) => {
         {/* Modal */}
         <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
           {/* Header */}
-          <div className="bg-blue-50 px-6 py-4 border-b border-blue-200">
+          <div className="bg-brand-indigo/10 px-6 py-4 border-b border-brand-indigo/30">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div className="flex-shrink-0">
-                  <Mail className="h-6 w-6 text-blue-600" />
+                  <Mail className="h-6 w-6 text-brand-indigo" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">
@@ -118,7 +118,7 @@ const AgencyInviteModal = ({ isOpen, onClose, onSuccess }) => {
               
               <button
                 onClick={onClose}
-                className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-indigo"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -169,7 +169,7 @@ const AgencyInviteModal = ({ isOpen, onClose, onSuccess }) => {
                     id="agencyName"
                     value={formData.agencyName}
                     onChange={(e) => handleInputChange('agencyName', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-indigo focus:border-brand-indigo"
                     placeholder="Enter agency name"
                     required
                   />
@@ -184,7 +184,7 @@ const AgencyInviteModal = ({ isOpen, onClose, onSuccess }) => {
                     id="agencyEmail"
                     value={formData.agencyEmail}
                     onChange={(e) => handleInputChange('agencyEmail', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-indigo focus:border-brand-indigo"
                     placeholder="agency@example.com"
                     required
                   />
@@ -199,7 +199,7 @@ const AgencyInviteModal = ({ isOpen, onClose, onSuccess }) => {
                     id="contactPerson"
                     value={formData.contactPerson}
                     onChange={(e) => handleInputChange('contactPerson', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-indigo focus:border-brand-indigo"
                     placeholder="Primary contact name"
                   />
                 </div>
@@ -213,7 +213,7 @@ const AgencyInviteModal = ({ isOpen, onClose, onSuccess }) => {
                     id="phone"
                     value={formData.phone}
                     onChange={(e) => handleInputChange('phone', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-indigo focus:border-brand-indigo"
                     placeholder="+1 (555) 123-4567"
                   />
                 </div>
@@ -257,14 +257,14 @@ const AgencyInviteModal = ({ isOpen, onClose, onSuccess }) => {
                 <button
                   type="button"
                   onClick={onClose}
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-indigo"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading || !formData.agencyEmail || !formData.agencyName}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-brand-indigo hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-indigo disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (
                     <>

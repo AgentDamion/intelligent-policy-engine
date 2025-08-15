@@ -21,18 +21,7 @@
   font-size: 14px;
 }
 
-.retry-btn {
-  background: none;
-  border: none;
-  color: #dc2626;
-  text-decoration: underline;
-  cursor: pointer;
-  font-size: 12px;
-}
-
-.retry-btn:hover {
-  color: #b91c1c;
-}
+/* obsolete: retry-btn replaced by btn-primary */
 
 .context-switcher-trigger {
   display: flex;
@@ -145,21 +134,7 @@
   margin-bottom: 12px;
 }
 
-.context-search {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 14px;
-  background: #ffffff;
-  transition: border-color 0.2s ease;
-}
-
-.context-search:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
+/* context-search now styled via input-modern */
 
 .filter-tabs {
   display: flex;
@@ -337,36 +312,7 @@
   background: #fafafa;
 }
 
-.manage-contexts-btn,
-.create-context-btn {
-  flex: 1;
-  padding: 8px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  background: #ffffff;
-  color: #374151;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.manage-contexts-btn:hover,
-.create-context-btn:hover {
-  background: #f9fafb;
-  border-color: #9ca3af;
-}
-
-.create-context-btn {
-  background: #3b82f6;
-  color: #ffffff;
-  border-color: #3b82f6;
-}
-
-.create-context-btn:hover {
-  background: #2563eb;
-  border-color: #2563eb;
-}
+/* manage/create context buttons now use btn-secondary/btn-primary */
 
 /* Responsive Design */
 @media (max-width: 768px) {

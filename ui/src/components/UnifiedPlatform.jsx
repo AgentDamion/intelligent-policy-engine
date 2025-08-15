@@ -8,6 +8,8 @@ import PolicyDistributionDashboard from './PolicyDistributionDashboard';
 import HumanOverrideDemo from './HumanOverrideDemo';
 import LiveGovernanceStream from './LiveGovernanceStream';
 import NotificationCenter from './NotificationCenter';
+import EnhancedEnterpriseDashboard from '../app/enterprise/EnhancedEnterpriseDashboard';
+import { ToastProvider } from './ui/Toast';
 import { UserContext } from '../contexts/UserContext';
 import { AgentContext } from '../contexts/AgentContext';
 import { WorkflowContext } from '../contexts/WorkflowContext';
@@ -80,6 +82,8 @@ const UnifiedPlatform = () => {
     switch (activeView) {
       case 'dashboard':
         return <ContextAwareDashboard />;
+      case 'enterprise-governance':
+        return <EnhancedEnterpriseDashboard />;
       case 'agency-onboarding':
         return <AgencyOnboardingPortal />;
       case 'policy-distribution':
@@ -96,10 +100,11 @@ const UnifiedPlatform = () => {
   };
 
   return (
-    <UserContext.Provider value={userContext}>
-      <AgentContext.Provider value={agentContext}>
-        <WorkflowContext.Provider value={workflowContext}>
-          <div className={`unified-platform ${theme} ${sidebarCollapsed ? 'collapsed' : ''}`}>
+    <ToastProvider>
+      <UserContext.Provider value={userContext}>
+        <AgentContext.Provider value={agentContext}>
+          <WorkflowContext.Provider value={workflowContext}>
+            <div className={`unified-platform ${theme} ${sidebarCollapsed ? 'collapsed' : ''}`}>
             {/* Header */}
             <header className="platform-header">
               <div className="header-left">
@@ -154,6 +159,7 @@ const UnifiedPlatform = () => {
                 <div className="content-header">
                   <h1 className="page-title">
                     {activeView === 'dashboard' && 'Intelligence Dashboard'}
+                    {activeView === 'enterprise-governance' && 'Enterprise Governance Command Center'}
                     {activeView === 'agency-onboarding' && 'Agency Onboarding'}
                     {activeView === 'policy-distribution' && 'Policy Distribution'}
                     {activeView === 'human-override' && 'Human Override System'}
@@ -196,10 +202,11 @@ const UnifiedPlatform = () => {
                 <span className="ai-label">AI Assistant</span>
               </button>
             </div>
-          </div>
-        </WorkflowContext.Provider>
-      </AgentContext.Provider>
-    </UserContext.Provider>
+            </div>
+          </WorkflowContext.Provider>
+        </AgentContext.Provider>
+      </UserContext.Provider>
+    </ToastProvider>
   );
 };
 

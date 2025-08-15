@@ -12,7 +12,7 @@ const DashboardContent = ({ activeSection = 'dashboard' }) => {
             {/* Welcome Section */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <div className="flex items-center space-x-4">
-                <div className="h-12 w-12 rounded-full bg-gradient-to-r from-teal-500 to-blue-600 flex items-center justify-center">
+                <div className="h-12 w-12 rounded-full bg-gradient-brand flex items-center justify-center">
                   <span className="text-white text-xl">🦎</span>
                 </div>
                 <div>
@@ -30,8 +30,8 @@ const DashboardContent = ({ activeSection = 'dashboard' }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <div className="flex items-center">
-                  <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">   
-                    <span className="text-blue-600 text-lg">📊</span>
+                  <div className="h-8 w-8 rounded-full bg-brand-indigo/10 flex items-center justify-center">   
+                    <span className="text-brand-indigo text-lg">📊</span>
                   </div>
                   <div className="ml-4">
                     <p className="text-sm font-medium text-gray-600">Active Policies</p>
@@ -82,8 +82,8 @@ const DashboardContent = ({ activeSection = 'dashboard' }) => {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
               <div className="space-y-4">
                 <div className="flex items-center space-x-3">
-                  <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">   
-                    <span className="text-blue-600 text-sm">📝</span>
+                  <div className="h-8 w-8 rounded-full bg-brand-indigo/10 flex items-center justify-center">   
+                    <span className="text-brand-indigo text-sm">📝</span>
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-medium text-gray-900">Policy "FDA Compliance Standard" updated</p>
@@ -121,7 +121,7 @@ const DashboardContent = ({ activeSection = 'dashboard' }) => {
             {/* Live Governance Header */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <div className="flex items-center space-x-4">
-                <div className="h-12 w-12 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center">
+                  <div className="h-12 w-12 rounded-full bg-gradient-brand flex items-center justify-center">
                   <span className="text-white text-xl">⚡</span>
                 </div>
                 <div>

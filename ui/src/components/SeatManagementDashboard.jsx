@@ -16,7 +16,7 @@ const SeatMetricCard = ({ title, value, total, icon: Icon, trend, variant = 'def
       case 'danger':
         return 'border-red-200 bg-red-50 text-red-800';
       default:
-        return 'border-blue-200 bg-blue-50 text-blue-800';
+        return 'border-brand-indigo bg-brand-indigo/10 text-brand-indigo';
     }
   };
 
@@ -251,7 +251,7 @@ export const SeatManagementDashboard = () => {
         <h3>Failed to load seat data</h3>
         <p>{error}</p>
         <button 
-          className="retry-btn"
+          className="btn-primary"
           onClick={loadSeats}
         >
           Retry
@@ -312,13 +312,13 @@ export const SeatManagementDashboard = () => {
           <button
             onClick={() => setShowBulkModal(true)}
             disabled={selectedSeats.length === 0}
-            className="bulk-action-btn"
+            className="btn-success"
           >
             Assign Policies ({selectedSeats.length})
           </button>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="create-seat-btn"
+            className="btn-primary"
           >
             <span className="btn-icon">+</span>
             Create Seat
@@ -341,7 +341,7 @@ export const SeatManagementDashboard = () => {
           <p>Create your first agency seat to get started with seat management.</p>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="create-first-seat-btn"
+            className="btn-primary"
           >
             Create Your First Seat
           </button>
