@@ -1,4 +1,4 @@
-﻿// server-railway.js - Updated with WebSocket support for Railway deployment
+// server-railway.js - Updated with WebSocket support for Railway deployment
 const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
@@ -12,6 +12,7 @@ const overridesRoutes = require('./api/overrides');
 const agencyOnboardingRoutes = require('./api/agency-onboarding');
 const policyDistributionRoutes = require('./api/policy-distribution');
 const enhancedOrchestrationRoutes = require('./api/enhanced-orchestration');
+const aiToolGovernanceRoutes = require('./api/ai-tool-governance');
 const apiRoutes = require('./api/routes');
 const { checkJwt, requirePermission } = require('./api/auth/auth0-middleware');
 
