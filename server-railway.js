@@ -49,6 +49,7 @@ app.use('/api/overrides', overridesRoutes);
 app.use('/api/agency-onboarding', agencyOnboardingRoutes);
 app.use('/api/policy-distribution', policyDistributionRoutes);
 app.use('/api/enhanced-orchestration', enhancedOrchestrationRoutes);
+app.use('/api/ai-governance', aiToolGovernanceRoutes);
 app.use('/api', apiRoutes);
 
 // Serve static files from React build (Railway production)
