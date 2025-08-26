@@ -196,6 +196,9 @@ npm test
 
 ## 📖 Documentation
 
+- [Technical Architecture](docs/TECHNICAL_ARCHITECTURE.md)
+- [User Stories](docs/USER_STORIES.md)
+- [Architecture ⇄ Code Mapping](docs/ARCHITECTURE_TO_CODE_MAP.md)
 - [Unified Platform README](UNIFIED_PLATFORM_README.md)
 - [Enhanced Orchestration README](ENHANCED_ORCHESTRATION_README.md)
 - [Agency Onboarding README](AGENCY_ONBOARDING_README.md)
