@@ -1,0 +1,141 @@
+/* Intelligent system theme - not traditional policy engine styling */
+:root {
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #1a1a1a;
+  --bg-tertiary: #2a2a2a;
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0a0;
+  --accent-primary: #00d4ff; /* Intelligent blue */
+  --accent-success: #00ff88;
+  --accent-warning: #ffaa00;
+  --accent-error: #ff4444;
+}
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+  margin: 0;
+  min-height: 100vh;
+}
+
+.dashboard-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  background: var(--bg-primary);
+  padding: 2rem 0;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 2rem;
+  width: 90vw;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.status-card {
+  background: var(--bg-secondary);
+  border-radius: 1rem;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.4);
+  padding: 2rem 1.5rem;
+  margin-bottom: 1rem;
+  transition: box-shadow 0.2s;
+  border: 1px solid var(--bg-tertiary);
+}
+
+.status-card h2 {
+  color: var(--accent-primary);
+  margin-bottom: 1rem;
+  font-size: 1.4rem;
+}
+
+.status-details p, .agent-placeholder p, .activity-placeholder p {
+  color: var(--text-secondary);
+  margin: 0.5rem 0;
+}
+
+.status-value {
+  color: var(--accent-success);
+  font-weight: bold;
+}
+
+.status-indicator {
+  display: inline-block;
+  width: 0.9em;
+  height: 0.9em;
+  border-radius: 50%;
+  margin-right: 0.5em;
+  vertical-align: middle;
+  box-shadow: 0 0 8px 2px var(--accent-success);
+  background: var(--accent-success);
+  transition: background 0.3s, box-shadow 0.3s;
+}
+.status-indicator.yellow {
+  background: var(--accent-warning);
+  box-shadow: 0 0 8px 2px var(--accent-warning);
+}
+.status-indicator.red {
+  background: var(--accent-error);
+  box-shadow: 0 0 8px 2px var(--accent-error);
+}
+
+/* AgentStatus grid */
+.agent-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  min-height: 180px;
+  margin-top: 1rem;
+}
+.agent-placeholder {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: var(--text-secondary);
+  animation: agentPulse 2s infinite alternate;
+}
+@keyframes agentPulse {
+  0% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+
+/* ActivityFeed */
+.activity-feed {
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+.activity-placeholder {
+  text-align: center;
+  color: var(--text-secondary);
+  animation: feedPulse 1.5s infinite alternate;
+}
+@keyframes feedPulse {
+  0% { opacity: 0.8; }
+  100% { opacity: 1; }
+}
+
+/* Loading spinner */
+.loading-spinner {
+  display: inline-block;
+  width: 1.5em;
+  height: 1.5em;
+  border: 3px solid var(--accent-primary);
+  border-top: 3px solid var(--bg-tertiary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 0.5em;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@media (max-width: 800px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+} 
