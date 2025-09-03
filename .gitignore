@@ -159,3 +159,6 @@ out/
 # Test outputs
 test-results/
 coverage/
+
+# Embedded repositories
+aicomplyr-intelligence/
