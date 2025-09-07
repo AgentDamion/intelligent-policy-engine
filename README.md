@@ -1,207 +1,200 @@
-# AICOMPLYR - AI Governance Platform
+# AIComplyr Policy Studio
 
-A comprehensive AI governance platform for pharmaceutical enterprises and marketing agencies, featuring agentic AI systems, human override capabilities, and real-time policy distribution.
+A comprehensive enterprise policy management platform built with React, TypeScript, and Supabase.
 
 ## 🚀 Features
 
-### Core Systems
-- **Enhanced Orchestration Engine** - Intelligent workflow routing and agent coordination
-- **Trust & Transparency Layer** - Comprehensive audit trails and decision explainability
-- **Agency-Enterprise Bridge** - Seamless communication between enterprises and agencies
-- **Human Override System** - Manual intervention capabilities for AI decisions
-- **Policy Distribution & Sync** - Real-time policy distribution with conflict detection
-- **Agency Onboarding Portal** - Streamlined agency registration and tool approval
+- **Multi-tenant Architecture**: Enterprise and workspace isolation
+- **Policy Management**: Create, version, and distribute policies
+- **Role-based Access Control**: Owner, Admin, Editor, Viewer roles
+- **Real-time Updates**: Live collaboration and notifications
+- **Audit Logging**: Complete activity tracking and compliance
+- **Responsive Design**: Mobile-first, modern UI/UX
+- **Enterprise Security**: Row-level security and data isolation
 
-### AI Agents
-- **Context Agent** - Analyzes user intent and urgency
-- **Policy Agent** - Evaluates compliance and risk
-- **Negotiation Agent** - Handles complex decision scenarios
-- **Audit Agent** - Maintains comprehensive audit trails
-- **Conflict Detection Agent** - Identifies policy conflicts
-- **Pre-Flight Agent** - Pre-validates requests
-- **Pattern Recognition Agent** - Learns from historical data
+## 🛠️ Tech Stack
 
-### Frontend Components
-- **Unified Platform** - Modern React-based interface
-- **Adaptive Navigation** - Context-aware navigation system
-- **AI Agent Hub** - Real-time agent status and interaction
-- **Live Governance Stream** - Real-time decision monitoring
-- **Notification Center** - Centralized alert system
+- **Frontend**: React 18 + TypeScript + Vite
+- **Styling**: Tailwind CSS + Custom Design System
+- **State Management**: React Context + React Query
+- **Database**: Supabase (PostgreSQL)
+- **Authentication**: Supabase Auth
+- **Real-time**: Supabase Realtime
+- **Icons**: Lucide React
+- **Forms**: React Hook Form + Zod validation
 
-## 🛠️ Technology Stack
+## 📋 Prerequisites
 
-### Backend
-- **Node.js** with Express.js
-- **PostgreSQL** database
-- **Auth0** authentication
-- **WebSocket** for real-time communication
-- **Railway** deployment support
-
-### Frontend
-- **React.js** with modern hooks
-- **Tailwind CSS** for styling
-- **Zustand** for state management
-- **WebSocket** for real-time updates
-
-### AI Integration
-- **OpenAI** API support
-- **Anthropic** Claude API support
-- **Custom AI services** for specialized tasks
-
-## 📦 Installation
-
-### Prerequisites
-- Node.js 16+ 
-- PostgreSQL 12+
+- Node.js 18+ (20+ recommended)
 - npm or yarn
+- Supabase account and project
+- Git
 
-### Setup
+## 🚀 Quick Start
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/your-org/aicomplyr-intelligence.git
-   cd aicomplyr-intelligence
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   cd ui && npm install
-   cd ..
-   ```
-
-3. **Environment Configuration**
-   ```bash
-   cp env.example .env
-   # Edit .env with your configuration
-   ```
-
-4. **Database Setup**
-   ```bash
-   # Run migrations
-   npm run migrate
-   
-   # Seed initial data
-   npm run seed
-   ```
-
-5. **Start Development Servers**
-   ```bash
-   # Backend API server
-   npm run dev
-   
-   # Frontend React server (in another terminal)
-   cd ui && npm start
-   ```
-
-## 🔧 Environment Variables
-
-Copy `env.example` to `.env` and configure:
+### 1. Clone the Repository
 
 ```bash
-# Database
-DATABASE_URL=postgresql://user:password@localhost:5432/aicomplyr
-
-# Auth0
-AUTH0_DOMAIN=your-domain.auth0.com
-AUTH0_CLIENT_ID=your-client-id
-AUTH0_CLIENT_SECRET=your-client-secret
-
-# AI Providers
-OPENAI_API_KEY=your-openai-key
-ANTHROPIC_API_KEY=your-anthropic-key
-
-# Server
-PORT=3000
-NODE_ENV=development
+git clone <your-repo-url>
+cd aicomplyr-policy-studio
 ```
 
-## 🗄️ Database Schema
+### 2. Install Dependencies
 
-### Core Tables
-- `organizations` - Enterprises and agencies
-- `users` - User accounts and roles
-- `policies` - AI governance policies
-- `audit_entries` - Decision audit trails
-- `policy_distributions` - Policy distribution tracking
-- `agency_policy_compliance` - Compliance monitoring
-- `policy_conflicts` - Conflict detection
-- `agency_invitations` - Agency onboarding
-- `agency_enterprise_relationships` - Enterprise-agency relationships
-
-### Key Features
-- **UUID primary keys** for scalability
-- **JSONB columns** for flexible data storage
-- **Comprehensive indexing** for performance
-- **Triggers** for automatic timestamps
-- **Views** for complex queries
-- **Stored procedures** for business logic
-
-## 🚀 Deployment
-
-### Railway Deployment
 ```bash
-# Deploy to Railway
-railway up
+npm install
 ```
 
-### Environment Setup
-1. Set environment variables in Railway dashboard
-2. Configure database connection
-3. Set up Auth0 application
-4. Configure AI provider API keys
+### 3. Environment Setup
 
-## 📚 API Documentation
+Create a `.env.local` file in the root directory:
 
-### Core Endpoints
-- `GET /api/health` - Health check
-- `GET /api/agents/status` - Agent status
-- `GET /api/governance/events` - Governance events
-- `POST /api/enhanced-orchestration/process` - Process requests
+```bash
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+VITE_API_URL=your_api_url
+VITE_WS_URL=your_websocket_url
+```
 
-### Agency Onboarding
-- `POST /api/agency-onboarding/invite` - Invite agency
-- `POST /api/agency-onboarding/register` - Register agency
-- `POST /api/agency-onboarding/submit-tool` - Submit AI tool
+### 4. Database Setup
 
-### Policy Distribution
-- `POST /api/policy-distribution/distribute` - Distribute policy
-- `GET /api/policy-distribution/compliance/:agency_id` - Get compliance
-- `GET /api/policy-distribution/conflicts/:agency_id` - Get conflicts
+Make sure you have applied the database migrations:
 
-### Human Override
-- `POST /api/overrides/request` - Request override
-- `PUT /api/overrides/:id/approve` - Approve override
-- `PUT /api/overrides/:id/reject` - Reject override
+```bash
+# Apply the policy studio core migration
+node supabase/run-migrations-direct.js run 20250829140812_policy_studio_core.sql
+
+# Apply the schema standardization migration
+node supabase/run-migrations-direct.js run 20250829140813_schema_standardization_and_improvements.sql
+```
+
+### 5. Start Development Server
+
+```bash
+npm run dev
+```
+
+The application will be available at `http://localhost:3000`
+
+## 🏗️ Project Structure
+
+```
+src/
+├── components/          # Reusable UI components
+│   ├── ui/             # Basic UI components
+│   └── Layout.tsx      # Main layout component
+├── contexts/            # React contexts
+│   ├── AuthContext.tsx # Authentication state
+│   └── EnterpriseContext.tsx # Enterprise/workspace state
+├── pages/               # Page components
+│   ├── DashboardPage.tsx
+│   ├── LoginPage.tsx
+│   ├── PoliciesPage.tsx
+│   ├── WorkspacesPage.tsx
+│   └── SettingsPage.tsx
+├── lib/                 # Utility libraries
+│   └── supabase.ts     # Supabase client configuration
+├── App.tsx             # Main app component
+├── main.tsx            # Application entry point
+└── index.css           # Global styles
+```
+
+## 🔐 Authentication Flow
+
+1. **Sign Up**: Users create accounts with email/password
+2. **Enterprise Creation**: First user creates an enterprise
+3. **Workspace Setup**: Create workspaces within the enterprise
+4. **Member Invitation**: Invite team members with specific roles
+5. **Access Control**: RLS policies ensure data isolation
+
+## 🎯 Core Features
+
+### Enterprise Management
+- Create and manage enterprises
+- Multi-workspace support
+- Role-based permissions
+- Team member management
+
+### Policy Management
+- Policy creation and editing
+- Version control
+- Status tracking (draft, review, published, archived)
+- Distribution to workspaces
+
+### Security Features
+- Row-level security (RLS)
+- Enterprise data isolation
+- Audit logging
+- Role-based access control
+
+## 🚀 Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
+- `npm run type-check` - Run TypeScript type checking
+
+## 🔧 Configuration
+
+### Tailwind CSS
+Custom design system with:
+- Color palette (primary, secondary, success, warning, danger)
+- Component classes (buttons, inputs, cards)
+- Responsive utilities
+- Custom animations
+
+### Supabase
+- Real-time subscriptions
+- Row-level security policies
+- Database triggers and functions
+- File storage (if needed)
+
+## 📱 Responsive Design
+
+- Mobile-first approach
+- Responsive sidebar navigation
+- Adaptive layouts for all screen sizes
+- Touch-friendly interactions
 
 ## 🧪 Testing
 
-### Backend Tests
 ```bash
-# Test API endpoints
-npm run test
+# Run type checking
+npm run type-check
 
-# Test health connection
-npm run test-health
-
-# Test agency API
-npm run test-agency-api
+# Run linting
+npm run lint
 ```
 
-### Frontend Tests
+## 🚀 Deployment
+
+### Build for Production
+
 ```bash
-cd ui
-npm test
+npm run build
 ```
 
-## 📖 Documentation
+### Deploy to Vercel/Netlify
 
-- [Unified Platform README](UNIFIED_PLATFORM_README.md)
-- [Enhanced Orchestration README](ENHANCED_ORCHESTRATION_README.md)
-- [Agency Onboarding README](AGENCY_ONBOARDING_README.md)
-- [Policy Distribution README](POLICY_DISTRIBUTION_SYSTEM_README.md)
-- [Hierarchical System README](HIERARCHICAL_SYSTEM_README.md)
-- [Validation System README](VALIDATION_SYSTEM_README.md)
+1. Connect your repository
+2. Set environment variables
+3. Deploy automatically on push
+
+### Environment Variables for Production
+
+```bash
+VITE_SUPABASE_URL=your_production_supabase_url
+VITE_SUPABASE_ANON_KEY=your_production_supabase_anon_key
+```
+
+## 🔒 Security Considerations
+
+- All database queries use RLS policies
+- User authentication required for all routes
+- Enterprise data isolation enforced
+- Input validation and sanitization
+- HTTPS required in production
 
 ## 🤝 Contributing
 
@@ -213,21 +206,25 @@ npm test
 
 ## 📄 License
 
-This project is proprietary software. All rights reserved.
+This project is proprietary and confidential.
 
 ## 🆘 Support
 
 For support and questions:
-- Create an issue in this repository
+- Check the documentation
+- Review the code comments
 - Contact the development team
-- Check the documentation files
 
-## 🔄 Version History
+## 🗺️ Roadmap
 
-- **v2.0.0** - Enhanced Orchestration Engine & Unified Platform
-- **v1.5.0** - Policy Distribution & Agency Onboarding
-- **v1.0.0** - Initial release with core AI agents
+- [ ] Policy templates and workflows
+- [ ] Advanced compliance reporting
+- [ ] AI-powered policy suggestions
+- [ ] Mobile app
+- [ ] Advanced analytics dashboard
+- [ ] Integration APIs
+- [ ] Multi-language support
 
 ---
 
-**AICOMPLYR** - Intelligent AI Governance for the Modern Enterprise 
+**Built with ❤️ by the AIComplyr Team** 

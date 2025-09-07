@@ -1,4 +1,6 @@
-﻿// server-railway.js - Updated with WebSocket support for Railway deployment
+﻿require('dotenv').config({ path: '.env.local' });
+require('dotenv').config();
+// server-railway.js - Updated with WebSocket support for Railway deployment
 const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
@@ -12,6 +14,8 @@ const overridesRoutes = require('./api/overrides');
 const agencyOnboardingRoutes = require('./api/agency-onboarding');
 const policyDistributionRoutes = require('./api/policy-distribution');
 const enhancedOrchestrationRoutes = require('./api/enhanced-orchestration');
+const inviteRoutes = require('./api/invite');
+const toolSubmissionRoutes = require('./api/tool-submission');
 const apiRoutes = require('./api/routes');
 const { checkJwt, requirePermission } = require('./api/auth/auth0-middleware');
 
@@ -48,6 +52,8 @@ app.use('/api/overrides', overridesRoutes);
 app.use('/api/agency-onboarding', agencyOnboardingRoutes);
 app.use('/api/policy-distribution', policyDistributionRoutes);
 app.use('/api/enhanced-orchestration', enhancedOrchestrationRoutes);
+app.use('/api/invite', inviteRoutes);
+app.use('/api/tool-submission', toolSubmissionRoutes);
 app.use('/api', apiRoutes);
 
 // Serve static files from React build (Railway production)

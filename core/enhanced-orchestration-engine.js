@@ -82,14 +82,45 @@ class EnhancedOrchestrationEngine {
       console.log(`🏢 Enterprise: ${context.enterpriseId || 'unknown'}`);
       console.log(`🏭 Agency: ${context.agencyId || 'none'}`);
 
-      // Step 1: Determine workflow type based on input and context
-      const workflowType = await this.determineWorkflowType(input, context);
+      // Pre-step: Resolve tenant context
+      const tenantAgent = this.registry.getAgent('multi-tenant-orchestrator');
+      if (tenantAgent) {
+        const tenantInfo = await tenantAgent.process(input, context);
+        context = { ...context, tenantInfo };
+      }
+
+      // Step 1: Determine workflow type based on input, triage, and context
+      let workflowType = await this.determineWorkflowType(input, context);
+      const triage = this.registry.getAgent('triage-router');
+      if (triage) {
+        try {
+          const triageResult = await triage.process(input, { ...context, sessionId });
+          if (triageResult?.workflowType) {
+            workflowType = triageResult.workflowType;
+          }
+        } catch (e) {
+          console.warn('Triage agent failed, falling back to default workflow:', e.message);
+        }
+      }
       
       // Step 2: Initialize Trust & Transparency Layer
       await this.trustTransparencyLayer.initializeSession(sessionId, context);
       
       // Step 3: Execute workflow with enhanced monitoring
       const result = await this.executeEnhancedWorkflow(workflowType, input, context, sessionId);
+
+      // Pre-response guardrail validation
+      const guardrails = this.registry.getAgent('guardrail-orchestrator');
+      if (guardrails) {
+        const guard = await guardrails.process(result, { ...context, requestType: input?.type });
+        if (!guard.ok) {
+          // Escalate to human if violations present
+          const escalator = this.registry.getAgent('human-escalation');
+          if (escalator) {
+            await escalator.process({ agentName: 'guardrail-orchestrator', reason: 'guardrail_violations', result }, { ...context, sessionId });
+          }
+        }
+      }
       
       // Step 4: Handle post-workflow actions (distribution, notifications, etc.)
       await this.handlePostWorkflowActions(result, context);

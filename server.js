@@ -11,6 +11,9 @@ const modernAuthBridge = require('./api/auth/mock-auth-bridge');
 const policyTemplatesRouter = require('./api/policy-templates');
 const dashboardRouter = require('./api/dashboard');
 const hierarchicalRoutes = require('./api/routes/hierarchical-routes');
+const enhancedOrchestrationRouter = require('./api/enhanced-orchestration');
+const inviteRoutes = require('./api/invite');
+const toolSubmissionRoutes = require('./api/tool-submission');
 require('./core/feedback-loop');
 const EventBus = require('./core/event-bus');
 
@@ -356,8 +359,14 @@ app.use('/auth', authRouter);
 app.use('/api', apiRoutes);
 // Policy Templates
 app.use('/api/policy-templates', policyTemplatesRouter);
+// Invite token resolution
+app.use('/api/invite', inviteRoutes);
+// Partner tool submission
+app.use('/api/tool-submission', toolSubmissionRoutes);
 // Hierarchical Multi-Tenant API (disabled for testing)
 // app.use('/api', hierarchicalRoutes);
+// Enhanced Orchestration
+app.use('/api/enhanced-orchestration', enhancedOrchestrationRouter);
 // Test dashboard route
 app.get('/api/dashboard/test', (req, res) => {
     res.json({ message: 'Dashboard routing works!' });

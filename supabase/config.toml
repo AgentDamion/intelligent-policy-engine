@@ -14,11 +14,9 @@ major_version = 15
 [db.pooler]
 enabled = false
 port = 54329
-pooler_enabled = false
 
 [realtime]
 enabled = true
-port = 54324
 
 [studio]
 enabled = true
@@ -33,17 +31,12 @@ pop3_port = 54326
 
 [storage]
 enabled = true
-port = 54325
 
 [auth]
 enabled = true
-port = 54326
 site_url = "http://localhost:3000"
 additional_redirect_urls = ["https://aicomplyr.io", "https://app.aicomplyr.io"]
 jwt_expiry = 3600
-refresh_token_rotation_enabled = true
-security_update_password_require_reauthentication = true
 
 [edge_runtime]
 enabled = true
-port = 54327
