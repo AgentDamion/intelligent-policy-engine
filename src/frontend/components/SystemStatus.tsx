@@ -31,9 +31,15 @@ const SystemStatus: React.FC = () => {
   useEffect(() => {
     let mounted = true;
     setLoading(true);
-    fetch("http://localhost:3001/api/status")
-      .then((res) => res.json())
-      .then((d) => {
+    
+    const fetchStatus = async () => {
+      try {
+        const response = await fetch("http://localhost:3001/api/status");
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const d = await response.json();
         if (mounted) {
           setData({
             status: d.status,
@@ -42,9 +48,23 @@ const SystemStatus: React.FC = () => {
           });
           setLoading(false);
         }
-      })
-      .catch(() => setLoading(false));
-    return () => { mounted = false; };
+      } catch (error) {
+        console.error('Failed to fetch system status:', error);
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+    
+    fetchStatus();
+    
+    // Poll for status updates every 30 seconds
+    const interval = setInterval(fetchStatus, 30000);
+    
+    return () => { 
+      mounted = false; 
+      clearInterval(interval);
+    };
   }, []);
 
   if (loading) {

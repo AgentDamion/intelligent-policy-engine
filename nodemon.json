@@ -1,9 +1,9 @@
 {
-  "watch": ["src"],
-  "ext": "ts,js",
+  "watch": ["server-unified.js", "src"],
+  "ext": "js,ts",
   "ignore": ["src/frontend/**/*"],
-  "exec": "ts-node src/index.ts",
+  "exec": "node server-unified.js",
   "env": {
     "NODE_ENV": "development"
   }
-} 
+}

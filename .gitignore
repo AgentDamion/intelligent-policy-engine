@@ -162,3 +162,6 @@ coverage/
 
 # Embedded repositories
 aicomplyr-intelligence/
+# Exclude zip files
+supabase-cli.zip
+*.zip
