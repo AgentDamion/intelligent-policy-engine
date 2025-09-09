@@ -179,6 +179,29 @@ serve(async (req) => {
     // 6. Log audit trail
     await logAuditTrail(supabase, activity, complianceResults, organizationId);
 
+    // 7. Trigger platform integration if compliance passed
+    let platformIntegrationResult = null;
+    if (complianceResults.violations.length === 0 || 
+        complianceResults.overall_score >= 70) {
+      
+      // Check if platform integration is enabled for this organization
+      const { data: configs } = await supabase
+        .from('platform_configurations')
+        .select('id')
+        .eq('organization_id', organizationId)
+        .eq('status', 'active')
+        .limit(1);
+      
+      if (configs && configs.length > 0) {
+        platformIntegrationResult = await triggerPlatformIntegration(
+          supabase,
+          activity,
+          complianceResults,
+          organizationId
+        );
+      }
+    }
+
     return new Response(JSON.stringify({
       success: true,
       activity_id,
@@ -188,6 +211,7 @@ serve(async (req) => {
       alerts_generated: alerts.length,
       compliance_results: complianceResults,
       alerts: alerts,
+      platform_integration: platformIntegrationResult,
       timestamp: new Date().toISOString()
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -1017,4 +1041,151 @@ async function logAuditTrail(
   if (auditError) {
     console.error('Error logging audit trail:', auditError);
   }
+}
+
+// Trigger platform integration
+async function triggerPlatformIntegration(
+  supabase: SupabaseClient,
+  activity: AgentActivity,
+  complianceResults: any,
+  organizationId: string
+): Promise<any> {
+  try {
+    // Update activity status to indicate platform integration is starting
+    await supabase
+      .from('agent_activities')
+      .update({
+        platform_integration_status: 'processing',
+        platform_integration_timestamp: new Date().toISOString()
+      })
+      .eq('id', activity.id);
+
+    // Build compliance metadata for platform integration
+    const complianceMetadata = {
+      aicomplyr: {
+        version: '1.0.0',
+        generated_at: new Date().toISOString(),
+        project_id: activity.project_id || '',
+        organization_id: organizationId,
+        activity_id: activity.id
+      },
+      compliance: {
+        status: complianceResults.violations.length === 0 ? 'compliant' : 'warning',
+        score: complianceResults.overall_score,
+        risk_level: complianceResults.risk_level,
+        last_checked: new Date().toISOString()
+      },
+      ai_tools: extractAITools(activity),
+      policy_checks: complianceResults.checks.map((check: any) => ({
+        policy_id: check.policy_id,
+        policy_name: 'Policy', // Would need to look this up
+        policy_version: '1.0.0',
+        status: check.status,
+        findings: check.findings,
+        checked_at: check.check_date
+      })),
+      violations: complianceResults.violations.map((violation: any) => ({
+        violation_id: violation.id || crypto.randomUUID(),
+        violation_type: violation.violation_type,
+        severity: violation.severity,
+        description: violation.description,
+        corrective_actions: violation.corrective_actions || [],
+        detected_at: violation.detected_at
+      })),
+      references: {
+        detailed_report_url: `/compliance/reports/${activity.id}`,
+        audit_trail_url: `/audit/activities/${activity.id}`,
+        source_activity_url: `/activities/${activity.id}`
+      }
+    };
+
+    // Call platform-universal integration endpoint
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const platformUrl = `${supabaseUrl}/functions/v1/platform-universal/integrate`;
+    const response = await fetch(platformUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+        'x-org-id': organizationId
+      },
+      body: JSON.stringify({
+        activity_id: activity.id,
+        compliance_data: complianceMetadata,
+        project_id: activity.project_id,
+        organization_id: organizationId,
+        priority: determineIntegrationPriority(complianceResults),
+        async: true // Use async mode to avoid blocking compliance response
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Platform integration failed: ${error}`);
+    }
+
+    const result = await response.json();
+    
+    console.log(`Platform integration triggered for activity ${activity.id}:`, result);
+    
+    return {
+      triggered: true,
+      job_id: result.job_id,
+      status: result.status,
+      message: result.message
+    };
+
+  } catch (error) {
+    console.error('Error triggering platform integration:', error);
+    
+    // Update activity with error status
+    await supabase
+      .from('agent_activities')
+      .update({
+        platform_integration_status: 'failed',
+        platform_integration_results: {
+          error: error instanceof Error ? error.message : String(error),
+          timestamp: new Date().toISOString()
+        }
+      })
+      .eq('id', activity.id);
+
+    return {
+      triggered: false,
+      error: error instanceof Error ? error.message : String(error)
+    };
+  }
+}
+
+// Helper function to extract AI tools from activity
+function extractAITools(activity: AgentActivity): Array<any> {
+  const tools = [];
+  
+  // Extract from agent name
+  if (activity.agent) {
+    tools.push({
+      tool_name: activity.agent,
+      tool_version: activity.details?.agent_version || 'unknown',
+      usage_type: activity.action,
+      approval_status: 'approved', // Would need to check against approved tools
+      evidence_files: [],
+      usage_timestamp: activity.created_at
+    });
+  }
+
+  // Extract from activity details if available
+  if (activity.details?.ai_tools && Array.isArray(activity.details.ai_tools)) {
+    tools.push(...activity.details.ai_tools);
+  }
+
+  return tools;
+}
+
+// Determine integration priority based on compliance results
+function determineIntegrationPriority(complianceResults: any): number {
+  if (complianceResults.risk_level === 'critical') return 1;
+  if (complianceResults.risk_level === 'high') return 2;
+  if (complianceResults.violations.length > 0) return 3;
+  if (complianceResults.overall_score < 80) return 4;
+  return 5; // Default priority
 }

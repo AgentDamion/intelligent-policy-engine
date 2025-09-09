@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>AICOMPLYR Compliance</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/adobe-spectrum.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <div class="header">
+            <img src="img/logo.svg" alt="AICOMPLYR" class="logo">
+            <div class="connection-status" id="connectionStatus">
+                <span class="status-indicator"></span>
+                <span class="status-text">Connecting...</span>
+            </div>
+        </div>
+
+        <!-- Compliance Status Card -->
+        <div class="compliance-card" id="complianceStatus">
+            <h2>Compliance Status</h2>
+            <div class="status-display">
+                <div class="status-circle" data-status="unknown">
+                    <svg viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="#e0e0e0" stroke-width="10"/>
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="#4CAF50" stroke-width="10"
+                                stroke-dasharray="283" stroke-dashoffset="283" 
+                                transform="rotate(-90 50 50)" id="scoreCircle"/>
+                    </svg>
+                    <div class="score-text">
+                        <span class="score-number" id="scoreNumber">--</span>
+                        <span class="score-label">Score</span>
+                    </div>
+                </div>
+                <div class="status-details">
+                    <div class="detail-item">
+                        <span class="label">Status:</span>
+                        <span class="value" id="statusValue">Unknown</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Risk Level:</span>
+                        <span class="value" id="riskValue">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Last Check:</span>
+                        <span class="value" id="lastCheckValue">Never</span>
+                    </div>
+                </div>
+            </div>
+            <button class="spectrum-Button spectrum-Button--primary" id="checkComplianceBtn">
+                Check Compliance Now
+            </button>
+        </div>
+
+        <!-- AI Tools Usage -->
+        <div class="section" id="aiToolsSection">
+            <h3>AI Tool Usage</h3>
+            <div class="ai-tools-list" id="aiToolsList">
+                <div class="empty-state">No AI tools detected</div>
+            </div>
+        </div>
+
+        <!-- Policy Violations -->
+        <div class="section" id="violationsSection">
+            <h3>Policy Violations</h3>
+            <div class="violations-list" id="violationsList">
+                <div class="empty-state">No violations found</div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="actions-section">
+            <button class="spectrum-Button spectrum-Button--secondary" id="embedMetadataBtn">
+                Embed Compliance Metadata
+            </button>
+            <button class="spectrum-Button spectrum-Button--secondary" id="viewReportBtn">
+                View Full Report
+            </button>
+        </div>
+
+        <!-- Settings -->
+        <div class="settings-toggle" id="settingsToggle">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
+            </svg>
+        </div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div class="settings-panel" id="settingsPanel">
+        <h3>Settings</h3>
+        <div class="settings-content">
+            <div class="setting-item">
+                <label>API Endpoint</label>
+                <input type="text" id="apiEndpoint" class="spectrum-Textfield">
+            </div>
+            <div class="setting-item">
+                <label>Organization ID</label>
+                <input type="text" id="organizationId" class="spectrum-Textfield">
+            </div>
+            <div class="setting-item">
+                <label>Auto-check on save</label>
+                <input type="checkbox" id="autoCheck" class="spectrum-Checkbox">
+            </div>
+            <div class="setting-item">
+                <label>Real-time monitoring</label>
+                <input type="checkbox" id="realTimeMonitoring" class="spectrum-Checkbox" checked>
+            </div>
+        </div>
+        <button class="spectrum-Button spectrum-Button--primary" id="saveSettingsBtn">
+            Save Settings
+        </button>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/CSInterface.js"></script>
+    <script src="js/themeManager.js"></script>
+    <script src="js/aicomplyr-api.js"></script>
+    <script src="js/cep-interface.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

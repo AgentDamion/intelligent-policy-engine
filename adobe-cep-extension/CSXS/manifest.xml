@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ExtensionManifest Version="11.0" ExtensionBundleId="io.aicomplyr.compliance" ExtensionBundleVersion="1.0.0" ExtensionBundleName="AICOMPLYR Compliance">
+  <ExtensionList>
+    <Extension Id="io.aicomplyr.compliance.panel" Version="1.0.0" />
+  </ExtensionList>
+  <ExecutionEnvironment>
+    <HostList>
+      <!-- Photoshop -->
+      <Host Name="PHSP" Version="[23.0,99.9]" />
+      <Host Name="PHXS" Version="[23.0,99.9]" />
+      <!-- Illustrator -->
+      <Host Name="ILST" Version="[26.0,99.9]" />
+      <!-- InDesign -->
+      <Host Name="IDSN" Version="[17.0,99.9]" />
+      <!-- After Effects -->
+      <Host Name="AEFT" Version="[19.0,99.9]" />
+      <!-- Premiere Pro -->
+      <Host Name="PPRO" Version="[16.0,99.9]" />
+    </HostList>
+    <LocaleList>
+      <Locale Code="All" />
+    </LocaleList>
+    <RequiredRuntimeList>
+      <RequiredRuntime Name="CSXS" Version="11.0" />
+    </RequiredRuntimeList>
+  </ExecutionEnvironment>
+  <DispatchInfoList>
+    <Extension Id="io.aicomplyr.compliance.panel">
+      <DispatchInfo>
+        <Resources>
+          <MainPath>./client/index.html</MainPath>
+          <ScriptPath>./host/index.jsx</ScriptPath>
+          <CEFCommandLine>
+            <Parameter>--enable-nodejs</Parameter>
+            <Parameter>--mixed-context</Parameter>
+          </CEFCommandLine>
+        </Resources>
+        <Lifecycle>
+          <AutoVisible>true</AutoVisible>
+        </Lifecycle>
+        <UI>
+          <Type>Panel</Type>
+          <Menu>AICOMPLYR Compliance</Menu>
+          <Geometry>
+            <Size>
+              <Width>320</Width>
+              <Height>600</Height>
+            </Size>
+            <MinSize>
+              <Width>280</Width>
+              <Height>400</Height>
+            </MinSize>
+          </Geometry>
+          <Icons>
+            <Icon Type="Normal">./client/img/icon-normal.png</Icon>
+            <Icon Type="RollOver">./client/img/icon-rollover.png</Icon>
+            <Icon Type="DarkNormal">./client/img/icon-dark.png</Icon>
+            <Icon Type="DarkRollOver">./client/img/icon-dark-rollover.png</Icon>
+          </Icons>
+        </UI>
+      </DispatchInfo>
+    </Extension>
+  </DispatchInfoList>
+</ExtensionManifest>
