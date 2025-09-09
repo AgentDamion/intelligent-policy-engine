@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { z } from "https://deno.land/x/zod@v3.20.2/mod.ts"
@@ -144,6 +145,8 @@ serve(async (req) => {
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
+
+    // Note: For immediate integration, caller should use compliance_check_agent_activity
 
   } catch (error) {
     console.error('Error in ingest_agent_activity function:', error);

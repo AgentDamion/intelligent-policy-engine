@@ -133,6 +133,124 @@ serve(async (req) => {
 
       return json({ ok: true, results })
     }
+    
+    // Job processor: processes queued platform integration jobs with retries/backoff
+    if (req.method === 'POST' && url.pathname.endsWith('/process-jobs')) {
+      const body = await req.json().catch(() => ({}))
+      const { organization_id, limit = 5 } = body || {}
+      const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
+
+      // Select pending jobs ordered by priority and schedule
+      let jq = sb
+        .from('platform_integration_jobs')
+        .select('*')
+        .eq('status', 'pending')
+        .lte('scheduled_for', new Date().toISOString())
+        .order('priority', { ascending: true })
+        .order('scheduled_for', { ascending: true })
+        .limit(limit)
+
+      if (organization_id) jq = jq.eq('organization_id', organization_id)
+      const { data: jobs, error: jobsErr } = await jq
+      if (jobsErr) return json({ error: jobsErr.message }, 500)
+
+      const results: any[] = []
+      for (const job of jobs || []) {
+        const jobId = job.id
+        const startAt = new Date().toISOString()
+        await sb.from('platform_integration_jobs').update({ status: 'processing', started_at: startAt }).eq('id', jobId)
+
+        try {
+          // Load platform configuration and credentials
+          const { data: cfg, error: cfgErr } = await sb.from('platform_configurations').select('*').eq('id', job.platform_config_id).single()
+          if (cfgErr || !cfg) throw new Error(cfgErr?.message || 'Missing platform configuration')
+
+          const credsObj = cfg.credentials_encrypted ? await CredentialManager.decryptCredentials(cfg.credentials_encrypted) : null
+          const creds = credsObj as PlatformCredentials | null
+          const pconfig: PlatformConfig = { name: cfg.platform_type, endpoints: { base_url: cfg.configuration?.endpoints?.base_url || cfg.configuration?.base_url || '' } }
+          const pt = (cfg.platform_type || '').toLowerCase()
+
+          const pickAdapter = (platformType: string, credentials: PlatformCredentials | null, config: PlatformConfig) => {
+            if (platformType.includes('veeva')) return new VeevaAdapter(credentials as any, config)
+            if (platformType.includes('sharepoint')) return new SharePointAdapter(credentials as any, config)
+            return null
+          }
+
+          const adapter = pickAdapter(pt, creds, pconfig)
+          if (!adapter) throw new Error(`Unsupported platform: ${cfg.platform_type}`)
+          if (creds) await adapter.authenticate(creds)
+
+          const payload = job.payload || {}
+          const activityId = payload.activity_id
+          const fileData = payload.file_data
+          const compData = payload.compliance_data as ComplianceMetadata | undefined
+          const uploadReq: FileUploadRequest | null = fileData ? { file: fileData, metadata: compData as any, project_id: (compData as any)?.aicomplyr?.project_id } : null
+
+          const t0 = Date.now()
+          const res = uploadReq ? await adapter.uploadFile(uploadReq) : { success: true, metadata_only: true }
+          const duration = Date.now() - t0
+
+          // Log success
+          await sb.from('platform_integration_logs').insert({
+            organization_id: job.organization_id,
+            platform_config_id: cfg.id,
+            operation: uploadReq ? 'upload' : 'metadata',
+            entity_type: 'file',
+            entity_id: activityId,
+            status: res.success ? 'success' : 'error',
+            response_data: res,
+            duration_ms: duration,
+          })
+
+          // Metrics
+          await sb.from('platform_metrics').insert({
+            organization_id: job.organization_id,
+            platform_config_id: cfg.id,
+            metric_type: 'response_time_ms',
+            metric_value: res.success ? duration : 0,
+            metric_unit: 'ms',
+          })
+
+          // Complete job
+          await sb.from('platform_integration_jobs').update({ status: 'completed', completed_at: new Date().toISOString() }).eq('id', jobId)
+
+          // Update activity status based on remaining jobs for this activity
+          if (activityId) await reconcileActivityIntegrationStatus(sb, activityId)
+
+          results.push({ job_id: jobId, success: true })
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e)
+          const nextRetry = new Date(Date.now() + Math.pow(2, (job.retry_count || 0)) * 1000).toISOString()
+          const willRetry = (job.retry_count || 0) + 1 < (job.max_retries || 3)
+
+          await sb.from('platform_integration_logs').insert({
+            organization_id: job.organization_id,
+            platform_config_id: job.platform_config_id,
+            operation: 'upload',
+            entity_type: 'file',
+            entity_id: job.payload?.activity_id,
+            status: willRetry ? 'retrying' : 'error',
+            error_message: msg,
+          })
+
+          if (willRetry) {
+            await sb.from('platform_integration_jobs').update({
+              status: 'pending',
+              retry_count: (job.retry_count || 0) + 1,
+              scheduled_for: nextRetry,
+              updated_at: new Date().toISOString(),
+            }).eq('id', jobId)
+          } else {
+            await sb.from('platform_integration_jobs').update({ status: 'failed', completed_at: new Date().toISOString(), error_message: msg }).eq('id', jobId)
+            if (job.payload?.activity_id) await markActivityFailed(sb, job.payload.activity_id, msg)
+          }
+
+          results.push({ job_id: jobId, success: false, error: msg })
+        }
+      }
+
+      return json({ ok: true, processed: (jobs || []).length, results })
+    }
     return json({ ok: true, message: 'Universal Platform API alive' })
   } catch (e) {
     return json({ ok: false, error: e instanceof Error ? e.message : String(e) }, 500)
@@ -147,6 +265,39 @@ const corsHeaders = {
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json', ...corsHeaders } })
+}
+
+
+async function reconcileActivityIntegrationStatus(sb: ReturnType<typeof createClient>, activityId: string) {
+  // Determine if any jobs remain for this activity
+  const { data: pending } = await sb
+    .from('platform_integration_jobs')
+    .select('id,status')
+    .in('status', ['pending','processing'])
+    .filter('payload->>activity_id', 'eq', activityId)
+
+  const { data: failures } = await sb
+    .from('platform_integration_jobs')
+    .select('id,status')
+    .eq('status', 'failed')
+    .filter('payload->>activity_id', 'eq', activityId)
+
+  if (pending && pending.length > 0) {
+    await sb.from('agent_activities').update({ platform_integration_status: 'processing' }).eq('id', activityId)
+    return
+  }
+  if (failures && failures.length > 0) {
+    await sb.from('agent_activities').update({ platform_integration_status: 'failed' }).eq('id', activityId)
+    return
+  }
+  await sb.from('agent_activities').update({ platform_integration_status: 'completed' }).eq('id', activityId)
+}
+
+async function markActivityFailed(sb: ReturnType<typeof createClient>, activityId: string, message: string) {
+  await sb.from('agent_activities').update({
+    platform_integration_status: 'failed',
+    platform_integration_errors: [{ message, at: new Date().toISOString() }]
+  }).eq('id', activityId)
 }
 
 
