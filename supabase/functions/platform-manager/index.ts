@@ -4,6 +4,9 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { PlatformConfigurationInputSchema, PlatformConfigurationUpdateSchema } from "../shared/platform-config.ts"
 import { CredentialManager } from "../shared/credential-manager.ts"
 import { buildAuthHeaders } from "../shared/auth-headers.ts"
+import { VeevaAdapter } from "../platform-veeva/adapter.ts"
+import { SharePointAdapter } from "../platform-sharepoint/adapter.ts"
+import { PlatformConfig } from "../shared/platform-adapter-base.ts"
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: cors })
@@ -98,13 +101,50 @@ serve(async (req) => {
       const creds = rec.credentials_encrypted
         ? await CredentialManager.decryptCredentials(rec.credentials_encrypted)
         : null
-      const baseUrl = rec?.configuration?.endpoints?.base_url || rec?.configuration?.base_url || rec?.configuration?.api_base || null
-      const status = await testConnectivity(baseUrl, creds || undefined)
+      
+      // Enhanced platform-specific connectivity testing
+      const status = await testPlatformConnectivity(rec.platform_type, rec.configuration, creds)
+      
       await createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
         .from('platform_configurations')
-        .update({ last_connection_test: new Date().toISOString(), connection_status: status.connected ? 'connected' : 'error', error_message: status.error || null })
+        .update({ 
+          last_connection_test: new Date().toISOString(), 
+          connection_status: status.connected ? 'connected' : 'error', 
+          error_message: status.error || null 
+        })
         .eq('id', id)
+      
       return json(status)
+    }
+
+    if (req.method === 'POST' && id && action === 'validate') {
+      const rec = await CredentialManager.loadFromDb(id)
+      if (!rec || rec.organization_id !== org) return json({ error: 'Not found' }, 404)
+      
+      const validation = await validatePlatformConfiguration(rec.platform_type, rec.configuration, rec.field_mappings)
+      return json(validation)
+    }
+
+    if (req.method === 'POST' && id && action === 'rotate-credentials') {
+      const body = await req.json()
+      const { new_credentials } = body
+      
+      if (!new_credentials) return json({ error: 'Missing new_credentials' }, 400)
+      
+      const rec = await CredentialManager.loadFromDb(id)
+      if (!rec || rec.organization_id !== org) return json({ error: 'Not found' }, 404)
+      
+      const encrypted = await CredentialManager.encryptCredentials(new_credentials)
+      
+      await createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
+        .from('platform_configurations')
+        .update({ 
+          credentials_encrypted: encrypted,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+      
+      return json({ success: true, message: 'Credentials rotated successfully' })
     }
 
     return json({ error: 'Unsupported route' }, 404)
@@ -134,14 +174,166 @@ function headerOrg(req: Request, url: URL): string | null {
   )
 }
 
-async function testConnectivity(baseUrl: string | null, creds?: Record<string, unknown>): Promise<{ connected: boolean; code?: number; error?: string }> {
-  if (!baseUrl) return { connected: false, error: 'Missing base_url' }
+async function testPlatformConnectivity(
+  platformType: string, 
+  configuration: Record<string, unknown>, 
+  creds?: Record<string, unknown>
+): Promise<{ connected: boolean; code?: number; error?: string; latency?: number; capabilities?: string[] }> {
+  const startTime = Date.now()
+  
+  try {
+    const baseUrl = configuration?.endpoints?.base_url || configuration?.base_url || configuration?.api_base
+    if (!baseUrl) return { connected: false, error: 'Missing base_url' }
+
+    // Platform-specific connectivity testing
+    if (platformType.toLowerCase().includes('veeva')) {
+      return await testVeevaConnectivity(baseUrl as string, creds, startTime)
+    } else if (platformType.toLowerCase().includes('sharepoint')) {
+      return await testSharePointConnectivity(baseUrl as string, creds, startTime)
+    } else if (platformType.toLowerCase().includes('adobe')) {
+      return await testAdobeConnectivity(baseUrl as string, creds, startTime)
+    } else {
+      // Generic connectivity test
+      return await testGenericConnectivity(baseUrl as string, creds, startTime)
+    }
+  } catch (e) {
+    return { 
+      connected: false, 
+      error: e instanceof Error ? e.message : String(e),
+      latency: Date.now() - startTime
+    }
+  }
+}
+
+async function testVeevaConnectivity(baseUrl: string, creds: any, startTime: number) {
+  try {
+    const pconfig: PlatformConfig = { name: 'veeva', endpoints: { base_url: baseUrl } }
+    const adapter = new VeevaAdapter(creds as any, pconfig)
+    await adapter.authenticate(creds as any)
+    const health = await adapter.getHealth()
+    return {
+      connected: health.status === 'healthy',
+      latency: Date.now() - startTime,
+      capabilities: ['file_upload', 'metadata', 'projects']
+    }
+  } catch (e) {
+    return {
+      connected: false,
+      error: e instanceof Error ? e.message : String(e),
+      latency: Date.now() - startTime
+    }
+  }
+}
+
+async function testSharePointConnectivity(baseUrl: string, creds: any, startTime: number) {
+  try {
+    const pconfig: PlatformConfig = { name: 'sharepoint', endpoints: { base_url: baseUrl } }
+    const adapter = new SharePointAdapter(creds as any, pconfig)
+    await adapter.authenticate(creds as any)
+    const health = await adapter.getHealth()
+    return {
+      connected: health.status === 'healthy',
+      latency: Date.now() - startTime,
+      capabilities: ['file_upload', 'metadata', 'projects', 'webhooks']
+    }
+  } catch (e) {
+    return {
+      connected: false,
+      error: e instanceof Error ? e.message : String(e),
+      latency: Date.now() - startTime
+    }
+  }
+}
+
+async function testAdobeConnectivity(baseUrl: string, creds: any, startTime: number) {
+  // Placeholder for Adobe connectivity test
+  try {
+    const headers = creds ? buildAuthHeaders(creds as any) : {}
+    const res = await fetch(`${baseUrl}/health`, { method: 'GET', headers })
+    return {
+      connected: res.ok,
+      code: res.status,
+      latency: Date.now() - startTime,
+      capabilities: ['file_upload', 'metadata', 'xmp_embedding']
+    }
+  } catch (e) {
+    return {
+      connected: false,
+      error: e instanceof Error ? e.message : String(e),
+      latency: Date.now() - startTime
+    }
+  }
+}
+
+async function testGenericConnectivity(baseUrl: string, creds: any, startTime: number) {
   try {
     const headers = creds ? buildAuthHeaders(creds as any) : {}
     const res = await fetch(String(baseUrl), { method: 'GET', headers })
-    return { connected: res.ok || (res.status >= 200 && res.status < 500), code: res.status }
+    return { 
+      connected: res.ok || (res.status >= 200 && res.status < 500), 
+      code: res.status,
+      latency: Date.now() - startTime
+    }
   } catch (e) {
-    return { connected: false, error: e instanceof Error ? e.message : String(e) }
+    return { 
+      connected: false, 
+      error: e instanceof Error ? e.message : String(e),
+      latency: Date.now() - startTime
+    }
+  }
+}
+
+async function validatePlatformConfiguration(
+  platformType: string, 
+  configuration: Record<string, unknown>, 
+  fieldMappings?: Record<string, unknown>
+): Promise<{ valid: boolean; errors: string[]; warnings: string[] }> {
+  const errors: string[] = []
+  const warnings: string[] = []
+
+  // Validate required configuration fields
+  if (!configuration.endpoints?.base_url && !configuration.base_url) {
+    errors.push('Missing required base_url in configuration')
+  }
+
+  // Platform-specific validation
+  if (platformType.toLowerCase().includes('veeva')) {
+    if (!configuration.vault_id) {
+      errors.push('Veeva configuration missing vault_id')
+    }
+    if (!configuration.document_class) {
+      warnings.push('Veeva configuration missing document_class (optional)')
+    }
+  } else if (platformType.toLowerCase().includes('sharepoint')) {
+    if (!configuration.site_id) {
+      errors.push('SharePoint configuration missing site_id')
+    }
+    if (!configuration.drive_id) {
+      warnings.push('SharePoint configuration missing drive_id (optional)')
+    }
+  } else if (platformType.toLowerCase().includes('adobe')) {
+    if (!configuration.client_id) {
+      errors.push('Adobe configuration missing client_id')
+    }
+    if (!configuration.organization_id) {
+      warnings.push('Adobe configuration missing organization_id (optional)')
+    }
+  }
+
+  // Validate field mappings
+  if (fieldMappings) {
+    const requiredFields = ['project_id', 'compliance_status', 'ai_tools_used']
+    for (const field of requiredFields) {
+      if (!fieldMappings[field]) {
+        warnings.push(`Field mapping missing for required field: ${field}`)
+      }
+    }
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+    warnings
   }
 }
 

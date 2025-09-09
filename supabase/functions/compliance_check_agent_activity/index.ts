@@ -179,6 +179,17 @@ serve(async (req) => {
     // 6. Log audit trail
     await logAuditTrail(supabase, activity, complianceResults, organizationId);
 
+    // 7. Trigger platform integration if compliance check passed
+    let platformIntegrationResult = null;
+    if (complianceResults.overall_score >= 80 && complianceResults.violations.length === 0) {
+      try {
+        platformIntegrationResult = await triggerPlatformIntegration(supabase, activity, complianceResults, organizationId);
+      } catch (e) {
+        console.error('Platform integration failed:', e);
+        // Don't fail the compliance check if platform integration fails
+      }
+    }
+
     return new Response(JSON.stringify({
       success: true,
       activity_id,
@@ -188,6 +199,7 @@ serve(async (req) => {
       alerts_generated: alerts.length,
       compliance_results: complianceResults,
       alerts: alerts,
+      platform_integration: platformIntegrationResult,
       timestamp: new Date().toISOString()
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -1017,4 +1029,159 @@ async function logAuditTrail(
   if (auditError) {
     console.error('Error logging audit trail:', auditError);
   }
+}
+
+// Trigger platform integration after successful compliance check
+async function triggerPlatformIntegration(
+  supabase: SupabaseClient,
+  activity: AgentActivity,
+  complianceResults: any,
+  organizationId: string
+): Promise<any> {
+  try {
+    // Prepare compliance metadata for platform integration
+    const complianceMetadata = {
+      aicomplyr: {
+        version: '1.0.0',
+        generated_at: new Date().toISOString(),
+        project_id: activity.project_id || 'unknown',
+        organization_id: organizationId,
+        activity_id: activity.id
+      },
+      compliance: {
+        status: complianceResults.overall_score >= 90 ? 'compliant' : 'warning',
+        score: complianceResults.overall_score,
+        risk_level: complianceResults.risk_level,
+        last_checked: new Date().toISOString()
+      },
+      ai_tools: extractAIToolsFromActivity(activity),
+      policy_checks: complianceResults.checks.map((check: any) => ({
+        policy_id: check.policy_id,
+        policy_name: 'Unknown', // Would need to fetch from policies table
+        policy_version: '1.0',
+        status: check.status,
+        findings: check.findings,
+        checked_at: check.check_date
+      })),
+      violations: complianceResults.violations.map((violation: any) => ({
+        violation_id: violation.id || crypto.randomUUID(),
+        violation_type: violation.violation_type,
+        severity: violation.severity,
+        description: violation.description,
+        corrective_actions: violation.corrective_actions || [],
+        detected_at: violation.detected_at
+      })),
+      references: {
+        detailed_report_url: `${Deno.env.get('SUPABASE_URL')}/functions/v1/generate_compliance_report?activity_id=${activity.id}`,
+        audit_trail_url: `${Deno.env.get('SUPABASE_URL')}/functions/v1/audit_logs?entity_id=${activity.id}`,
+        source_activity_url: `${Deno.env.get('SUPABASE_URL')}/functions/v1/agent_activities/${activity.id}`
+      }
+    };
+
+    // Call Universal Platform Coordinator
+    const integrationResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/platform-universal/integrate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+        'x-org-id': organizationId
+      },
+      body: JSON.stringify({
+        activity_id: activity.id,
+        compliance_data: complianceMetadata,
+        organization_id: organizationId,
+        async: true, // Use async processing for better performance
+        priority: complianceResults.risk_level === 'high' ? 'high' : 'normal'
+      })
+    });
+
+    if (!integrationResponse.ok) {
+      throw new Error(`Platform integration failed: ${integrationResponse.status}`);
+    }
+
+    const integrationResult = await integrationResponse.json();
+
+    // Update activity with integration status
+    await supabase
+      .from('agent_activities')
+      .update({ 
+        platform_integration_status: 'triggered',
+        platform_integration_job_id: integrationResult.job_id,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', activity.id);
+
+    return integrationResult;
+
+  } catch (error) {
+    console.error('Platform integration trigger failed:', error);
+    
+    // Update activity with failed integration status
+    await supabase
+      .from('agent_activities')
+      .update({ 
+        platform_integration_status: 'failed',
+        platform_integration_error: error instanceof Error ? error.message : String(error),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', activity.id);
+
+    throw error;
+  }
+}
+
+// Extract AI tools used from activity details
+function extractAIToolsFromActivity(activity: AgentActivity): Array<{
+  tool_name: string;
+  tool_version?: string;
+  usage_type: string;
+  approval_status: 'approved' | 'pending' | 'denied';
+  evidence_files: string[];
+  usage_timestamp: string;
+}> {
+  const tools: Array<{
+    tool_name: string;
+    tool_version?: string;
+    usage_type: string;
+    approval_status: 'approved' | 'pending' | 'denied';
+    evidence_files: string[];
+    usage_timestamp: string;
+  }> = [];
+
+  // Extract from activity details
+  const details = activity.details || {};
+  
+  if (details.tool_name) {
+    tools.push({
+      tool_name: details.tool_name,
+      tool_version: details.tool_version,
+      usage_type: activity.action,
+      approval_status: details.approval_status || 'pending',
+      evidence_files: details.evidence_files || [],
+      usage_timestamp: activity.created_at
+    });
+  }
+
+  // Extract from agent name if it contains AI tool info
+  if (activity.agent.includes('openai') || activity.agent.includes('gpt')) {
+    tools.push({
+      tool_name: 'OpenAI GPT',
+      usage_type: activity.action,
+      approval_status: 'approved',
+      evidence_files: [],
+      usage_timestamp: activity.created_at
+    });
+  }
+
+  if (activity.agent.includes('claude') || activity.agent.includes('anthropic')) {
+    tools.push({
+      tool_name: 'Anthropic Claude',
+      usage_type: activity.action,
+      approval_status: 'approved',
+      evidence_files: [],
+      usage_timestamp: activity.created_at
+    });
+  }
+
+  return tools;
 }
