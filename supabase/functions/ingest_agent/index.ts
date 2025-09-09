@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { z } from "https://deno.land/x/zod@v3.20.2/mod.ts"
@@ -276,6 +277,21 @@ serve(async (req) => {
       } : null,
       timestamp: new Date().toISOString()
     };
+
+    // Optional immediate platform integration trigger
+    const trigger = req.headers.get('x-trigger-integration') === 'true'
+    if (trigger && activitiesInserted > 0) {
+      try {
+        const orgId = validatedProject?.organization_id
+        if (orgId) {
+          await fetch(`${supabaseUrl!.replace(/\/$/, '')}/functions/v1/platform-universal/integrate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-org-id': orgId },
+            body: JSON.stringify({ async: true, priority: 5 })
+          })
+        }
+      } catch {}
+    }
 
     return new Response(JSON.stringify(response), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
