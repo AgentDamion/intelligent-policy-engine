@@ -46,3 +46,10 @@ BEGIN
         RAISE NOTICE 'Projects table does not exist yet, skipping foreign key constraint';
     END IF;
 END $$;
+
+-- Add platform integration tracking columns
+ALTER TABLE public.agent_activities 
+  ADD COLUMN IF NOT EXISTS platform_integration_status VARCHAR(20) DEFAULT 'pending' CHECK (platform_integration_status IN ('pending','processing','completed','failed')),
+  ADD COLUMN IF NOT EXISTS platform_integration_errors JSONB DEFAULT '[]'::jsonb;
+
+CREATE INDEX IF NOT EXISTS idx_agent_activities_integration_status ON public.agent_activities(platform_integration_status);

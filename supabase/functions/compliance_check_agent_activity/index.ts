@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { z } from "https://deno.land/x/zod@v3.20.2/mod.ts"
@@ -179,6 +180,38 @@ serve(async (req) => {
     // 6. Log audit trail
     await logAuditTrail(supabase, activity, complianceResults, organizationId);
 
+    // Trigger platform integration (non-blocking)
+    try {
+      await supabase
+        .from('agent_activities')
+        .update({ platform_integration_status: 'processing' })
+        .eq('id', activity_id)
+
+      const integrateRes = await fetch(`${supabaseUrl!.replace(/\/$/, '')}/functions/v1/platform-universal/integrate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-org-id': organizationId },
+        body: JSON.stringify({
+          activity_id,
+          compliance_data: buildComplianceMetadata(activity, complianceResults, organizationId),
+          target_platforms: undefined,
+          async: true,
+          priority: 5,
+        }),
+      })
+      if (!integrateRes.ok) {
+        const errText = await integrateRes.text()
+        await supabase
+          .from('agent_activities')
+          .update({ platform_integration_status: 'failed', platform_integration_errors: [{ message: errText, at: new Date().toISOString() }] })
+          .eq('id', activity_id)
+      }
+    } catch (e) {
+      await supabase
+        .from('agent_activities')
+        .update({ platform_integration_status: 'failed', platform_integration_errors: [{ message: e instanceof Error ? e.message : String(e), at: new Date().toISOString() }] })
+        .eq('id', activity_id)
+    }
+
     return new Response(JSON.stringify({
       success: true,
       activity_id,
@@ -240,6 +273,33 @@ async function getOrganizationId(supabase: SupabaseClient, activity: AgentActivi
   }
 
   return null;
+}
+
+// Build minimal compliance metadata payload compatible with platform adapters
+function buildComplianceMetadata(activity: AgentActivity, results: any, organizationId: string) {
+  const now = new Date().toISOString()
+  return {
+    aicomplyr: {
+      version: '1.0',
+      generated_at: now,
+      project_id: String(activity.project_id || ''),
+      organization_id: organizationId,
+      activity_id: String(activity.id),
+    },
+    compliance: {
+      status: results.violations.length > 0 ? 'violation' : 'compliant',
+      score: results.overall_score || 100,
+      risk_level: results.risk_level || 'low',
+      last_checked: now,
+    },
+    ai_tools: [],
+    policy_checks: [],
+    violations: results.violations || [],
+    references: {
+      detailed_report_url: '',
+      audit_trail_url: '',
+    },
+  }
 }
 
 // Main compliance checking logic
