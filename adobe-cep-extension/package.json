@@ -1,0 +1,52 @@
+{
+  "name": "aicomplyr-cep-extension",
+  "version": "1.0.0",
+  "description": "AICOMPLYR Compliance Extension for Adobe Creative Cloud",
+  "main": "client/index.html",
+  "scripts": {
+    "build": "npm run build:zxp",
+    "build:zxp": "zxpSignCmd -sign . aicomplyr-compliance.zxp cert.p12 password -tsa http://timestamp.digicert.com",
+    "debug": "npm run copy:debug",
+    "copy:debug": "cp -R . ~/Library/Application\\ Support/Adobe/CEP/extensions/io.aicomplyr.compliance",
+    "clean": "rm -rf build *.zxp",
+    "certificate": "zxpSignCmd -selfSignedCert US NY 'AICOMPLYR' 'AICOMPLYR IO' password cert.p12"
+  },
+  "keywords": [
+    "adobe",
+    "cep",
+    "creative-cloud",
+    "compliance",
+    "ai"
+  ],
+  "author": "AICOMPLYR.IO",
+  "license": "MIT",
+  "devDependencies": {
+    "zxpSignCmd": "^0.2.0"
+  },
+  "cep": {
+    "version": "11.0",
+    "id": "io.aicomplyr.compliance",
+    "hosts": [
+      {
+        "name": "Photoshop",
+        "version": "[23.0,99.9]"
+      },
+      {
+        "name": "Illustrator",
+        "version": "[26.0,99.9]"
+      },
+      {
+        "name": "InDesign",
+        "version": "[17.0,99.9]"
+      },
+      {
+        "name": "AfterEffects",
+        "version": "[19.0,99.9]"
+      },
+      {
+        "name": "Premiere",
+        "version": "[16.0,99.9]"
+      }
+    ]
+  }
+}
