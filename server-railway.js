@@ -1,4 +1,4 @@
-﻿require('dotenv').config({ path: '.env.local' });
+require('dotenv').config({ path: '.env.local' });
 require('dotenv').config();
 // server-railway.js - Updated with WebSocket support for Railway deployment
 const express = require('express');
@@ -14,6 +14,7 @@ const overridesRoutes = require('./api/overrides');
 const agencyOnboardingRoutes = require('./api/agency-onboarding');
 const policyDistributionRoutes = require('./api/policy-distribution');
 const enhancedOrchestrationRoutes = require('./api/enhanced-orchestration');
+const enhancedDocumentProcessingRoutes = require('./api/routes/enhanced-document-processing');
 const inviteRoutes = require('./api/invite');
 const toolSubmissionRoutes = require('./api/tool-submission');
 const apiRoutes = require('./api/routes');
@@ -52,6 +53,7 @@ app.use('/api/overrides', overridesRoutes);
 app.use('/api/agency-onboarding', agencyOnboardingRoutes);
 app.use('/api/policy-distribution', policyDistributionRoutes);
 app.use('/api/enhanced-orchestration', enhancedOrchestrationRoutes);
+app.use('/api/enhanced-document-processing', enhancedDocumentProcessingRoutes);
 app.use('/api/invite', inviteRoutes);
 app.use('/api/tool-submission', toolSubmissionRoutes);
 app.use('/api', apiRoutes);
