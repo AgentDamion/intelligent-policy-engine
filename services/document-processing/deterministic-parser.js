@@ -6,6 +6,8 @@
 
 const crypto = require('crypto');
 const { validateInput, validateOutput } = require('../io/contracts');
+const GoogleCloudConfig = require('../../config/google-cloud-config');
+const AWSTextractConfig = require('../../config/aws-textract-config');
 
 class DeterministicDocumentParser {
   constructor(config) {
@@ -21,7 +23,13 @@ class DeterministicDocumentParser {
     this.cache = new Map();
     this.circuitBreakers = new Map();
     
+    // Initialize cloud service clients
+    this.googleCloudConfig = new GoogleCloudConfig();
+    this.awsTextractConfig = new AWSTextractConfig();
+    
     console.log('🔧 Deterministic Document Parser initialized');
+    console.log(`   Google Document AI: ${this.googleCloudConfig.isConfigured() ? '✅ Configured' : '❌ Not configured'}`);
+    console.log(`   AWS Textract: ${this.awsTextractConfig.isConfigured() ? '✅ Configured' : '❌ Not configured'}`);
   }
 
   /**
@@ -121,45 +129,58 @@ class DeterministicDocumentParser {
   async parseWithGoogleDocAI(input) {
     console.log('🤖 Attempting Google Document AI parsing');
     
-    if (!this.config.googleCloudProjectId) {
-      throw new Error('Google Cloud configuration missing');
+    if (!this.googleCloudConfig.isConfigured()) {
+      throw new Error('Google Document AI not configured');
     }
 
-    // Simulate processing time and potential failure
-    await this.simulateProcessingDelay(1000, 2000);
+    const startTime = Date.now();
     
-    // Simulate occasional failures (5% rate)
-    if (Math.random() < 0.05) {
-      throw new Error('Google Document AI service unavailable');
+    try {
+      // In a real implementation, you would:
+      // 1. Upload the document to Google Cloud Storage
+      // 2. Process it with Document AI
+      // 3. Extract text, tables, and entities
+      
+      // For now, we'll simulate the real processing
+      await this.simulateProcessingDelay(1000, 2000);
+      
+      // Simulate occasional failures (5% rate)
+      if (Math.random() < 0.05) {
+        throw new Error('Google Document AI service unavailable');
+      }
+
+      const result = {
+        docId: crypto.randomUUID(),
+        pages: 5,
+        tables: [
+          { 
+            rows: 3, 
+            cols: 4, 
+            content: [
+              ['Header1', 'Header2', 'Header3', 'Header4'], 
+              ['Data1', 'Data2', 'Data3', 'Data4'], 
+              ['Data5', 'Data6', 'Data7', 'Data8']
+            ] 
+          }
+        ],
+        text: "This is a sample policy document extracted using Google Document AI. It contains structured information about compliance requirements and risk assessments. The document outlines key policies regarding data handling, privacy protection, and regulatory compliance.",
+        method: "gdocai",
+        confidence: 0.92,
+        entities: [
+          { text: "GDPR", type: "REGULATION", confidence: 0.95 },
+          { text: "personal data", type: "DATA_TYPE", confidence: 0.88 },
+          { text: "compliance", type: "CONCEPT", confidence: 0.90 }
+        ],
+        processingTimeMs: Date.now() - startTime
+      };
+
+      console.log('✅ Google Document AI parsing completed');
+      return result;
+      
+    } catch (error) {
+      console.error('❌ Google Document AI parsing failed:', error.message);
+      throw error;
     }
-
-    const result = {
-      docId: crypto.randomUUID(),
-      pages: 5,
-      tables: [
-        { 
-          rows: 3, 
-          cols: 4, 
-          content: [
-            ['Header1', 'Header2', 'Header3', 'Header4'], 
-            ['Data1', 'Data2', 'Data3', 'Data4'], 
-            ['Data5', 'Data6', 'Data7', 'Data8']
-          ] 
-        }
-      ],
-      text: "This is a sample policy document extracted using Google Document AI. It contains structured information about compliance requirements and risk assessments. The document outlines key policies regarding data handling, privacy protection, and regulatory compliance.",
-      method: "gdocai",
-      confidence: 0.92,
-      entities: [
-        { text: "GDPR", type: "REGULATION", confidence: 0.95 },
-        { text: "personal data", type: "DATA_TYPE", confidence: 0.88 },
-        { text: "compliance", type: "CONCEPT", confidence: 0.90 }
-      ],
-      processingTimeMs: 1500
-    };
-
-    console.log('✅ Google Document AI parsing completed');
-    return result;
   }
 
   /**
@@ -168,42 +189,56 @@ class DeterministicDocumentParser {
   async parseWithTextract(input) {
     console.log('🔍 Attempting AWS Textract parsing');
     
-    if (!this.config.awsAccessKeyId) {
-      throw new Error('AWS configuration missing');
+    if (!this.awsTextractConfig.isConfigured()) {
+      throw new Error('AWS Textract not configured');
     }
 
-    await this.simulateProcessingDelay(800, 1500);
+    const startTime = Date.now();
     
-    // Simulate occasional failures (3% rate)
-    if (Math.random() < 0.03) {
-      throw new Error('AWS Textract service unavailable');
+    try {
+      // In a real implementation, you would:
+      // 1. Upload the document to S3
+      // 2. Process it with Textract
+      // 3. Extract text, tables, and entities
+      
+      // For now, we'll simulate the real processing
+      await this.simulateProcessingDelay(800, 1500);
+      
+      // Simulate occasional failures (3% rate)
+      if (Math.random() < 0.03) {
+        throw new Error('AWS Textract service unavailable');
+      }
+
+      const result = {
+        docId: crypto.randomUUID(),
+        pages: 5,
+        tables: [
+          { 
+            rows: 2, 
+            cols: 3, 
+            content: [
+              ['Field', 'Value', 'Status'], 
+              ['Compliance', 'Required', 'Active']
+            ] 
+          }
+        ],
+        text: "Policy document processed using AWS Textract. Contains compliance information and regulatory requirements. This document outlines the necessary steps for maintaining regulatory compliance and data protection standards.",
+        method: "textract",
+        confidence: 0.85,
+        entities: [
+          { text: "HIPAA", type: "REGULATION", confidence: 0.90 },
+          { text: "patient data", type: "DATA_TYPE", confidence: 0.82 }
+        ],
+        processingTimeMs: Date.now() - startTime
+      };
+
+      console.log('✅ AWS Textract parsing completed');
+      return result;
+      
+    } catch (error) {
+      console.error('❌ AWS Textract parsing failed:', error.message);
+      throw error;
     }
-
-    const result = {
-      docId: crypto.randomUUID(),
-      pages: 5,
-      tables: [
-        { 
-          rows: 2, 
-          cols: 3, 
-          content: [
-            ['Field', 'Value', 'Status'], 
-            ['Compliance', 'Required', 'Active']
-          ] 
-        }
-      ],
-      text: "Policy document processed using AWS Textract. Contains compliance information and regulatory requirements. This document outlines the necessary steps for maintaining regulatory compliance and data protection standards.",
-      method: "textract",
-      confidence: 0.85,
-      entities: [
-        { text: "HIPAA", type: "REGULATION", confidence: 0.90 },
-        { text: "patient data", type: "DATA_TYPE", confidence: 0.82 }
-      ],
-      processingTimeMs: 1200
-    };
-
-    console.log('✅ AWS Textract parsing completed');
-    return result;
   }
 
   /**
