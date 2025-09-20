@@ -1,108 +1,136 @@
-import * as React from "react";
-import { cn } from "../../utils/cn";
+import React, { createContext, useContext, useState, useCallback } from 'react';
+import { cn } from '@/lib/utils';
+import { X, CheckCircle, AlertTriangle, Info, XCircle } from 'lucide-react';
 
-export interface ToastProps {
+interface Toast {
   id: string;
   title: string;
   description?: string;
-  type?: 'success' | 'error' | 'info' | 'warning';
+  variant?: 'default' | 'success' | 'warning' | 'error';
   duration?: number;
-  onClose: (id: string) => void;
 }
 
-export const Toast: React.FC<ToastProps> = ({
-  id,
-  title,
-  description,
-  type = 'info',
-  duration = 4000,
-  onClose,
-}) => {
-  React.useEffect(() => {
-    const timer = setTimeout(() => {
-      onClose(id);
-    }, duration);
-
-    return () => clearTimeout(timer);
-  }, [id, duration, onClose]);
-
-  const typeStyles = {
-    success: 'bg-emerald-50 border-emerald-200 text-emerald-800',
-    error: 'bg-red-50 border-red-200 text-red-800',
-    warning: 'bg-amber-50 border-amber-200 text-amber-800',
-    info: 'bg-blue-50 border-blue-200 text-blue-800',
-  };
-
-  const icons = {
-    success: '✅',
-    error: '❌',
-    warning: '⚠️',
-    info: 'ℹ️',
-  };
-
-  return (
-    <div
-      className={cn(
-        "flex items-start gap-3 p-4 rounded-lg border shadow-lg",
-        typeStyles[type]
-      )}
-      role="alert"
-    >
-      <span className="text-lg">{icons[type]}</span>
-      <div className="flex-1">
-        <div className="font-medium text-sm">{title}</div>
-        {description && (
-          <div className="text-xs mt-1 opacity-90">{description}</div>
-        )}
-      </div>
-      <button
-        onClick={() => onClose(id)}
-        className="text-lg hover:opacity-70 focus:outline-none"
-        aria-label="Close"
-      >
-        ×
-      </button>
-    </div>
-  );
-};
-
-export interface ToastContextType {
-  addToast: (toast: Omit<ToastProps, 'id' | 'onClose'>) => void;
+interface ToastContextType {
+  toasts: Toast[];
+  addToast: (toast: Omit<Toast, 'id'>) => void;
   removeToast: (id: string) => void;
 }
 
-export const ToastContext = React.createContext<ToastContextType | null>(null);
+const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
-export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [toasts, setToasts] = React.useState<ToastProps[]>([]);
+export function ToastProvider({ children }: { children: React.ReactNode }) {
+  const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const addToast = React.useCallback((toast: Omit<ToastProps, 'id' | 'onClose'>) => {
-    const id = Math.random().toString(36).substring(2, 9);
-    setToasts(prev => [...prev, { ...toast, id, onClose: removeToast }]);
+  const addToast = useCallback((toast: Omit<Toast, 'id'>) => {
+    const id = Math.random().toString(36).substr(2, 9);
+    const newToast = { ...toast, id };
+    
+    setToasts(prev => [...prev, newToast]);
+    
+    // Auto remove after duration
+    if (toast.duration !== 0) {
+      setTimeout(() => {
+        removeToast(id);
+      }, toast.duration || 5000);
+    }
   }, []);
 
-  const removeToast = React.useCallback((id: string) => {
+  const removeToast = useCallback((id: string) => {
     setToasts(prev => prev.filter(toast => toast.id !== id));
   }, []);
 
   return (
-    <ToastContext.Provider value={{ addToast, removeToast }}>
+    <ToastContext.Provider value={{ toasts, addToast, removeToast }}>
       {children}
-      
-      {/* Toast Container */}
-      <div className="fixed top-4 right-4 z-50 space-y-2 max-w-sm">
-        {toasts.map(toast => (
-          <Toast key={toast.id} {...toast} />
-        ))}
-      </div>
+      <ToastContainer />
     </ToastContext.Provider>
   );
-};
+}
 
-export const useToast = (): ToastContextType => {
-  const context = React.useContext(ToastContext);
-  if (!context) {
+export function useToast() {
+  const context = useContext(ToastContext);
+  if (context === undefined) {
     throw new Error('useToast must be used within a ToastProvider');
   }
   return context;
-};
+}
+
+function ToastContainer() {
+  const { toasts, removeToast } = useToast();
+
+  if (toasts.length === 0) return null;
+
+  return (
+    <div className="fixed top-4 right-4 z-50 space-y-2">
+      {toasts.map((toast) => (
+        <ToastItem
+          key={toast.id}
+          toast={toast}
+          onRemove={() => removeToast(toast.id)}
+        />
+      ))}
+    </div>
+  );
+}
+
+function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: () => void }) {
+  const [isVisible, setIsVisible] = useState(true);
+
+  const handleRemove = () => {
+    setIsVisible(false);
+    setTimeout(onRemove, 300);
+  };
+
+  const variantClasses = {
+    default: 'border-gray-200 bg-white text-gray-900',
+    success: 'border-green-200 bg-green-50 text-green-900',
+    warning: 'border-yellow-200 bg-yellow-50 text-yellow-900',
+    error: 'border-red-200 bg-red-50 text-red-900'
+  };
+
+  const iconClasses = {
+    default: 'text-gray-600',
+    success: 'text-green-600',
+    warning: 'text-yellow-600',
+    error: 'text-red-600'
+  };
+
+  const icons = {
+    default: Info,
+    success: CheckCircle,
+    warning: AlertTriangle,
+    error: XCircle
+  };
+
+  const Icon = icons[toast.variant || 'default'];
+
+  return (
+    <div
+      className={cn(
+        'max-w-sm w-full border rounded-lg shadow-lg transition-all duration-300',
+        variantClasses[toast.variant || 'default'],
+        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+      )}
+    >
+      <div className="p-4">
+        <div className="flex items-start space-x-3">
+          <Icon className={cn('h-5 w-5 mt-0.5 flex-shrink-0', iconClasses[toast.variant || 'default'])} />
+          <div className="flex-1 min-w-0">
+            <h4 className="text-sm font-medium">{toast.title}</h4>
+            {toast.description && (
+              <p className="mt-1 text-sm opacity-90">{toast.description}</p>
+            )}
+          </div>
+          <button
+            onClick={handleRemove}
+            className="flex-shrink-0 p-1 rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-500"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export { Toast };
