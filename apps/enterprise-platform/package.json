@@ -1,0 +1,33 @@
+{
+  "name": "@aicomplyr/enterprise-platform",
+  "version": "1.0.0",
+  "description": "Enterprise policy management platform - app.aicomplyr.io",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf .next"
+  },
+  "dependencies": {
+    "@aicomplyr/shared": "workspace:*",
+    "@aicomplyr/scoring": "workspace:*",
+    "@supabase/supabase-js": "^2.39.0",
+    "@tanstack/react-query": "^5.8.4",
+    "next": "^14.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hook-form": "^7.48.2",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "eslint": "^8.0.0",
+    "eslint-config-next": "^14.0.0",
+    "typescript": "^5.0.0"
+  }
+}
