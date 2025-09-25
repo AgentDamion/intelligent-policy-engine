@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
-import { useAuth } from '@/contexts/AuthContext'
-import { useEnterprise } from '@/contexts/EnterpriseContext'
+import { useAuth } from '../contexts/AuthContext'
+import { useEnterprise } from '../contexts/EnterpriseContext'
 import { 
   Home, 
   FileText, 
@@ -12,7 +12,9 @@ import {
   ChevronDown,
   LogOut,
   Building2,
-  Briefcase
+  Briefcase,
+  Activity,
+  Zap
 } from 'lucide-react'
 import LoadingSpinner from './ui/LoadingSpinner'
 
@@ -20,12 +22,14 @@ const Layout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [enterpriseDropdownOpen, setEnterpriseDropdownOpen] = useState(false)
   const { user, signOut } = useAuth()
-  const { currentEnterprise, workspaces, setCurrentEnterprise } = useEnterprise()
+  const { currentEnterprise, workspaces } = useEnterprise()
   const location = useLocation()
   const navigate = useNavigate()
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
+    { name: 'Enterprise', href: '/enterprise', icon: Activity },
+    { name: 'Enterprise AI', href: '/enterprise-ai', icon: Zap },
     { name: 'Policies', href: '/policies', icon: FileText },
     { name: 'Workspaces', href: '/workspaces', icon: Users },
     { name: 'Settings', href: '/settings', icon: Settings },

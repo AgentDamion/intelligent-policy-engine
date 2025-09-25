@@ -11,6 +11,9 @@ import PoliciesPage from './pages/PoliciesPage'
 import WorkspacesPage from './pages/WorkspacesPage'
 import SettingsPage from './pages/SettingsPage'
 import LoadingSpinner from './components/ui/LoadingSpinner'
+import EnterpriseDashboard from './pages/enterprise/EnterpriseDashboard'
+import EnterpriseDashboardEnhanced from './pages/enterprise/EnterpriseDashboardEnhanced'
+import OnboardingPage from './pages/OnboardingPage'
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -71,22 +74,7 @@ function App() {
         path="/onboarding" 
         element={
           <OnboardingRoute>
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-              <div className="max-w-md w-full">
-                <h1 className="text-2xl font-bold text-center text-gray-900 mb-8">
-                  Welcome to AIComplyr Policy Studio
-                </h1>
-                <p className="text-gray-600 text-center mb-8">
-                  Let's get you started by setting up your enterprise and first workspace.
-                </p>
-                {/* Onboarding components will go here */}
-                <div className="text-center">
-                  <p className="text-sm text-gray-500">
-                    Onboarding flow coming soon...
-                  </p>
-                </div>
-              </div>
-            </div>
+            <OnboardingPage />
           </OnboardingRoute>
         } 
       />
@@ -102,6 +90,8 @@ function App() {
       >
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<DashboardPage />} />
+        <Route path="enterprise" element={<EnterpriseDashboard />} />
+        <Route path="enterprise-ai" element={<EnterpriseDashboardEnhanced />} />
         <Route path="policies" element={<PoliciesPage />} />
         <Route path="workspaces" element={<WorkspacesPage />} />
         <Route path="settings" element={<SettingsPage />} />

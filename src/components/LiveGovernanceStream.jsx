@@ -5,6 +5,8 @@ import {
   Filter, Search, FileText, Zap, TrendingUp,
   ChevronDown, ChevronUp, Download
 } from 'lucide-react'
+import { useGovernanceWebSocket } from '../lib/websocket'
+import { useAuth } from '../contexts/AuthContext'
 
 export const LiveGovernanceStream = ({ 
   isOpen = false,
@@ -13,6 +15,8 @@ export const LiveGovernanceStream = ({
   context = null,
   currentUser = null
 }) => {
+  const { session } = useAuth()
+  const { createConnection } = useGovernanceWebSocket(session)
   const [events, setEvents] = useState([])
   const [filteredEvents, setFilteredEvents] = useState([])
   const [filters, setFilters] = useState({
@@ -89,23 +93,40 @@ export const LiveGovernanceStream = ({
 
     return () => {
       if (wsRef.current) {
-        wsRef.current.close()
+        wsRef.current.disconnect()
       }
     }
-  }, [isOpen, context])
+  }, [isOpen, context, session])
 
   // Filter events based on current filters
   useEffect(() => {
     filterEvents()
   }, [events, filters])
 
-  const connectToGovernanceStream = () => {
+  const connectToGovernanceStream = async () => {
     try {
-      const wsUrl = process.env.REACT_APP_WS_URL || 'ws://localhost:3001'
-      console.log('Attempting WebSocket connection to:', wsUrl)
-      
-      // For now, just set as not connected since we don't have a real WebSocket server
-      setIsConnected(false)
+      if (!session) {
+        console.warn('No session available for WebSocket connection')
+        setIsConnected(false)
+        return
+      }
+
+      const wsConnection = createConnection()
+      wsRef.current = wsConnection
+
+      // Set up message handler
+      wsConnection.onMessage((message) => {
+        if (message.type === 'governance_event') {
+          setEvents(prev => [message.data, ...prev])
+        }
+      })
+
+      // Set up status handler
+      wsConnection.onStatusChange((connected) => {
+        setIsConnected(connected)
+      })
+
+      await wsConnection.connect()
     } catch (error) {
       console.error('Failed to connect to governance stream:', error)
       setIsConnected(false)
