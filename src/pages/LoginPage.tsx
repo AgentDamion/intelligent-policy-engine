@@ -53,7 +53,7 @@ const LoginPage: React.FC = () => {
           {isSignUp ? 'Create your account' : 'Sign in to your account'}
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+          {isSignUp ? 'Already have an account?' : "Don&apos;t have an account?"}{' '}
           <button
             onClick={() => setIsSignUp(!isSignUp)}
             className="font-medium text-primary-600 hover:text-primary-500"

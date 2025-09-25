@@ -52,7 +52,7 @@ const PoliciesPage: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Policies</h1>
-          <p className="text-gray-600">Manage and track your organization's policies</p>
+          <p className="text-gray-600">Manage and track your organization&apos;s policies</p>
         </div>
         <button className="btn-primary flex items-center">
           <Plus className="h-4 w-4 mr-2" />
