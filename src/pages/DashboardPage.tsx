@@ -3,8 +3,6 @@ import { useEnterprise } from '@/contexts/EnterpriseContext'
 import { 
   FileText, 
   Users, 
-  CheckCircle, 
-  AlertTriangle, 
   TrendingUp,
   Building2,
   Briefcase
