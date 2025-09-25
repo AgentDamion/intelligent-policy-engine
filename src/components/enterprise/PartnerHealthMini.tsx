@@ -1,4 +1,3 @@
-import * as React from 'react'
 import type { PartnerHealth } from '../../pages/enterprise/types'
 
 export function PartnerHealthMini({ items }: { items: PartnerHealth[] | null }) {

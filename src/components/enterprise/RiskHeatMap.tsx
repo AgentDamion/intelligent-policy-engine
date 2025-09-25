@@ -1,4 +1,3 @@
-import * as React from 'react'
 import type { HeatMap } from '../../pages/enterprise/types'
 
 export function RiskHeatMap({

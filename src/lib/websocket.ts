@@ -1,5 +1,4 @@
 // WebSocket helper for real-time governance events
-import { supabase } from './supabase'
 
 export interface WebSocketMessage {
   type: 'governance_event' | 'policy_update' | 'compliance_alert' | 'heartbeat' | 'ai_decision' | 'ai_analysis' | 'ai_alert'

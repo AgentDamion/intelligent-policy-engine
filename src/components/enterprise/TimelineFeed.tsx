@@ -1,4 +1,3 @@
-import * as React from 'react'
 import type { TimelineItem } from '../../pages/enterprise/types'
 
 export function TimelineFeed({ items, onOpen }: { items: TimelineItem[] | null; onOpen: (id: string) => void }) {

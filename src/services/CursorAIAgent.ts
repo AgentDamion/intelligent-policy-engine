@@ -61,7 +61,7 @@ export class CursorAIAgent {
   /**
    * Analyze document content with AI
    */
-  private static async analyzeDocument(doc: any) {
+  private static async analyzeDocument(_doc: any) {
     // TODO: Integrate with actual AI model (GPT-4, Claude, etc.)
     // This is where you'll call your AI service
     
@@ -77,7 +77,7 @@ export class CursorAIAgent {
   /**
    * Assess risk level based on analysis
    */
-  private static async assessRisk(analysis: any) {
+  private static async assessRisk(_analysis: any) {
     // TODO: Implement risk assessment logic
     return {
       level: 'low' as const,
@@ -89,9 +89,9 @@ export class CursorAIAgent {
   /**
    * Check compliance against enterprise policies
    */
-  private static async checkCompliance(analysis: any, enterpriseId: string) {
+  private static async checkCompliance(_analysis: any, _enterpriseId: string) {
     // TODO: Check against actual enterprise policies
-    const { data: policies } = await supabase
+    const { data: _policies } = await supabase
       .from('policies')
       .select('*')
       .eq('enterprise_id', enterpriseId)

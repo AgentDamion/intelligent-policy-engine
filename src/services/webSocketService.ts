@@ -12,13 +12,11 @@ export interface AIAgentMessage {
 class WebSocketService {
   private ws: GovernanceWebSocket | null = null
   private subscribers: Map<string, Set<(data: any) => void>> = new Map()
-  private session: any = null
 
   /**
    * Initialize WebSocket connection
    */
   async connect(session: any) {
-    this.session = session
     const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:3001'
     this.ws = new GovernanceWebSocket(wsUrl, session)
     
@@ -91,12 +89,19 @@ class WebSocketService {
   sendToAgent(agentId: string, message: any): boolean {
     if (!this.ws || !this.ws) return false
     
-    this.ws.send({
+    const aiMessage: AIAgentMessage = {
       type: 'ai_decision',
       agentId,
       data: message,
       timestamp: new Date().toISOString()
-    })
+    }
+    // Cast to WebSocketMessage for send method
+    const wsMessage: WebSocketMessage = {
+      type: aiMessage.type,
+      data: { ...aiMessage.data, agentId },
+      timestamp: aiMessage.timestamp
+    }
+    this.ws.send(wsMessage)
     
     return true
   }
@@ -107,10 +112,13 @@ class WebSocketService {
   sendMessage(message: AIAgentMessage): boolean {
     if (!this.ws) return false
     
-    this.ws.send({
-      ...message,
+    // Cast to WebSocketMessage for send method
+    const wsMessage: WebSocketMessage = {
+      type: message.type,
+      data: message.agentId ? { ...message.data, agentId: message.agentId } : message.data,
       timestamp: message.timestamp || new Date().toISOString()
-    })
+    }
+    this.ws.send(wsMessage)
     
     return true
   }

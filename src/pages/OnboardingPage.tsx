@@ -4,11 +4,7 @@ import { useEnterprise } from '../contexts/EnterpriseContext'
 import { supabase } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'
 import {
-  Building2,
-  Users,
-  Briefcase,
   CheckCircle,
-  ArrowRight,
   Loader2
 } from 'lucide-react'
 
@@ -40,17 +36,6 @@ const OnboardingPage: React.FC = () => {
     setOnboardingData(prev => ({ ...prev, [field]: value }))
   }
 
-  const handleNext = () => {
-    if (currentStep < 4) {
-      setCurrentStep(prev => prev + 1)
-    }
-  }
-
-  const handleBack = () => {
-    if (currentStep > 1) {
-      setCurrentStep(prev => prev - 1)
-    }
-  }
 
   const handleSubmit = async () => {
     if (!user) {
