@@ -21,7 +21,6 @@ const OnboardingPage: React.FC = () => {
   const { setCurrentEnterprise } = useEnterprise()
   const navigate = useNavigate()
   
-  const [currentStep, setCurrentStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [onboardingData, setOnboardingData] = useState<OnboardingData>({

@@ -94,7 +94,7 @@ export class CursorAIAgent {
     const { data: _policies } = await supabase
       .from('policies')
       .select('*')
-      .eq('enterprise_id', enterpriseId)
+      .eq('enterprise_id', _enterpriseId)
       .eq('status', 'published')
     
     return {
