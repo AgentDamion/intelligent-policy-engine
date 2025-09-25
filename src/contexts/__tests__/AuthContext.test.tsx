@@ -40,17 +40,38 @@ describe('AuthContext', () => {
   })
 
   it('should handle authentication state changes', async () => {
-    const mockUser = { id: '1', email: 'test@example.com' }
+    const mockUser = { 
+      id: '1', 
+      email: 'test@example.com',
+      app_metadata: {},
+      user_metadata: {},
+      aud: 'authenticated',
+      created_at: new Date().toISOString()
+    }
     
     // Mock the auth state change
     const { supabase } = await import('@/lib/supabase')
     vi.mocked(supabase.auth.getSession).mockResolvedValue({
-      data: { session: { user: mockUser } },
+      data: { 
+        session: { 
+          user: mockUser,
+          access_token: 'mock-access-token',
+          refresh_token: 'mock-refresh-token',
+          expires_in: 3600,
+          token_type: 'bearer'
+        } 
+      },
       error: null,
     })
     
     vi.mocked(supabase.auth.onAuthStateChange).mockReturnValue({
-      data: { subscription: { unsubscribe: vi.fn() } },
+      data: { 
+        subscription: { 
+          id: 'mock-subscription-id',
+          callback: vi.fn(),
+          unsubscribe: vi.fn() 
+        } 
+      },
     })
 
     render(

@@ -1,5 +1,3 @@
-import React from 'react'
-
 interface AIDecision {
   id: string
   agent: string

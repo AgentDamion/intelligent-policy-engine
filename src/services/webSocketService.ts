@@ -1,8 +1,10 @@
 // Enhanced WebSocket Service with AI Agent Support
 import { GovernanceWebSocket, WebSocketMessage } from '../lib/websocket'
 
-export interface AIAgentMessage extends WebSocketMessage {
+export interface AIAgentMessage {
   type: 'ai_decision' | 'ai_analysis' | 'ai_alert' | 'governance_event' | 'policy_update' | 'compliance_alert' | 'heartbeat'
+  data: any
+  timestamp: string
   agentId?: string
   decision?: any
 }
