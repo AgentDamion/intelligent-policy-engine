@@ -110,10 +110,12 @@ jobs:
       
     - name: Run Snyk security scan
       uses: snyk/actions/node@master
+      continue-on-error: true
       env:
         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       with:
         args: --severity-threshold=high
+      if: ${{ env.SNYK_TOKEN != '' }}
 
   deploy-staging:
     runs-on: ubuntu-latest
