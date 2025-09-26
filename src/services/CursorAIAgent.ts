@@ -91,12 +91,13 @@ export class CursorAIAgent {
    */
   private static async checkCompliance(_analysis: any, _enterpriseId: string) {
     // TODO: Check against actual enterprise policies
-    const { data: _policies } = await supabase
-      .from('policies')
-      .select('*')
-      .eq('enterprise_id', _enterpriseId)
-      .eq('status', 'published')
+    // const { data: policies } = await supabase
+    //   .from('policies')
+    //   .select('*')
+    //   .eq('enterprise_id', _enterpriseId)
+    //   .eq('status', 'published')
     
+    // For now, return mock compliance data
     return {
       compliant: true,
       violations: [],
