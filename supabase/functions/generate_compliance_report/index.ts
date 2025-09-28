@@ -2,6 +2,42 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { z } from "https://deno.land/x/zod@v3.20.2/mod.ts"
 
+// Cursor Agent Adapter Configuration
+const CURSOR_AGENT_ADAPTER_URL = Deno.env.get('CURSOR_AGENT_ADAPTER_URL') || 'http://localhost:54321/functions/v1/cursor-agent-adapter'
+
+// Helper function to call Cursor agents
+async function callCursorAgent(agentName: string, input: any, context: any = {}) {
+  try {
+    const response = await fetch(CURSOR_AGENT_ADAPTER_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`
+      },
+      body: JSON.stringify({
+        agentName,
+        action: 'process',
+        input,
+        context
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error(`Agent call failed: ${response.statusText}`)
+    }
+
+    const result = await response.json()
+    if (!result.success) {
+      throw new Error(`Agent error: ${result.error}`)
+    }
+
+    return result.result
+  } catch (error) {
+    console.error(`Error calling ${agentName} agent:`, error)
+    throw error
+  }
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -151,10 +187,11 @@ serve(async (req) => {
       throw new Error('Failed to fetch policy data');
     }
 
-    // 4. Process tool usage data
-    const tools = (toolUsage || []).map(tool => {
-      const complianceResult = evaluateToolCompliance(tool, policies || []);
-      return {
+    // 4. Process tool usage data with real Cursor agents
+    const tools = []
+    for (const tool of (toolUsage || [])) {
+      const complianceResult = await evaluateToolCompliance(tool, policies || [], { supabase });
+      tools.push({
         tool_name: tool.tool_name,
         vendor_name: tool.vendor_name || 'Unknown',
         usage_count: tool.usage_count,
@@ -163,8 +200,8 @@ serve(async (req) => {
         policy_violations: complianceResult.violations,
         recommendations: complianceResult.recommendations,
         last_used: tool.last_used
-      };
-    });
+      });
+    }
 
     // 5. Calculate overall compliance metrics
     const toolsSummary = {
@@ -247,8 +284,45 @@ serve(async (req) => {
   }
 });
 
-// Helper function to evaluate tool compliance against policies
-function evaluateToolCompliance(tool: any, policies: any[]): {
+// Helper function to evaluate tool compliance against policies using real Cursor agents
+async function evaluateToolCompliance(tool: any, policies: any[], context: any = {}): Promise<{
+  status: ToolComplianceStatus;
+  violations: string[];
+  recommendations: string[];
+}> {
+  try {
+    // Call real PolicyAgent for compliance evaluation
+    const policyResult = await callCursorAgent('policy', {
+      tool: tool.tool_name,
+      vendor: tool.vendor_name,
+      usage: tool.usage_type,
+      dataHandling: tool.data_processed,
+      content: `Compliance evaluation for ${tool.tool_name}`,
+      urgency: { level: 0.5 } // Default urgency
+    }, context)
+
+    // Call real AuditAgent for comprehensive audit
+    const auditResult = await callCursorAgent('audit', {
+      tool: tool.tool_name,
+      policies: policies,
+      complianceResult: policyResult
+    }, context)
+
+    return {
+      status: policyResult.decision?.status === 'approved' ? 'approved' :
+              policyResult.decision?.status === 'rejected' ? 'rejected' : 'needs_review',
+      violations: auditResult.violations?.map((v: any) => v.description) || [],
+      recommendations: [...(policyResult.decision?.recommendations || []), ...(auditResult.recommendations || [])]
+    }
+  } catch (error) {
+    console.error('Error in real agent evaluation, falling back to mock:', error)
+    // Fallback to original mock logic if agents fail
+    return fallbackEvaluateToolCompliance(tool, policies)
+  }
+}
+
+// Keep the fallback function for resilience
+function fallbackEvaluateToolCompliance(tool: any, policies: any[]): {
   status: ToolComplianceStatus;
   violations: string[];
   recommendations: string[];
@@ -271,7 +345,7 @@ function evaluateToolCompliance(tool: any, policies: any[]): {
           status = 'needs_review';
         }
       }
-      
+
       if (ruleResult.recommendation) {
         recommendations.push(ruleResult.recommendation);
       }
