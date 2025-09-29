@@ -8,8 +8,8 @@ import PolicyDistributionDashboard from './PolicyDistributionDashboard';
 import HumanOverrideDemo from './HumanOverrideDemo';
 import LiveGovernanceStream from './LiveGovernanceStream';
 import NotificationCenter from './NotificationCenter';
-import EnhancedEnterpriseDashboard from '../app/enterprise/EnhancedEnterpriseDashboard';
-import { ToastProvider } from './ui/Toast';
+// import EnhancedEnterpriseDashboard from '../app/enterprise/EnhancedEnterpriseDashboard';
+// import { ToastProvider } from './ui';
 import { UserContext } from '../contexts/UserContext';
 import { AgentContext } from '../contexts/AgentContext';
 import { WorkflowContext } from '../contexts/WorkflowContext';
@@ -83,7 +83,7 @@ const UnifiedPlatform = () => {
       case 'dashboard':
         return <ContextAwareDashboard />;
       case 'enterprise-governance':
-        return <EnhancedEnterpriseDashboard />;
+        return <div>Enhanced Enterprise Dashboard (temporarily disabled)</div>;
       case 'agency-onboarding':
         return <AgencyOnboardingPortal />;
       case 'policy-distribution':
@@ -100,8 +100,7 @@ const UnifiedPlatform = () => {
   };
 
   return (
-    <ToastProvider>
-      <UserContext.Provider value={userContext}>
+    <UserContext.Provider value={userContext}>
         <AgentContext.Provider value={agentContext}>
           <WorkflowContext.Provider value={workflowContext}>
             <div className={`unified-platform ${theme} ${sidebarCollapsed ? 'collapsed' : ''}`}>
@@ -206,7 +205,6 @@ const UnifiedPlatform = () => {
           </WorkflowContext.Provider>
         </AgentContext.Provider>
       </UserContext.Provider>
-    </ToastProvider>
   );
 };
 
