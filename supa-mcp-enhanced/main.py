@@ -43,42 +43,90 @@ def verify_request_signature(payload: str, signature: str, timestamp: str) -> bo
         return False
 
 def validate_query(query: str) -> tuple[bool, str]:
-    """Validate SQL query for security"""
+    """Validate SQL query for security with AICOMPLYR-specific rules"""
     query_upper = query.upper().strip()
     
     # Check query length
     if len(query) > max_query_length:
         return False, f"Query too long (max {max_query_length} characters)"
     
-    # Check for allowed operations only
-    for operation in allowed_operations:
-        if query_upper.startswith(operation):
-            break
-    else:
-        return False, f"Only {', '.join(allowed_operations)} operations allowed"
+    # Check for allowed operations
+    allowed_ops = [op.strip() for op in allowed_operations]
+    operation_found = False
     
-    # Block dangerous operations
+    for operation in allowed_ops:
+        if query_upper.startswith(operation):
+            operation_found = True
+            break
+    
+    if not operation_found:
+        return False, f"Only {', '.join(allowed_ops)} operations allowed"
+    
+    # AICOMPLYR-specific security rules
     dangerous_keywords = [
-        'DROP', 'DELETE', 'UPDATE', 'INSERT', 'ALTER', 'CREATE', 'TRUNCATE',
-        'EXEC', 'EXECUTE', 'UNION', '--', '/*', '*/', ';', 'xp_', 'sp_'
+        'DROP', 'ALTER', 'CREATE', 'TRUNCATE', 'COPY', 'GRANT', 'REVOKE',
+        'EXEC', 'EXECUTE', 'xp_', 'sp_', '--', '/*', '*/'
     ]
     
     for keyword in dangerous_keywords:
         if keyword in query_upper:
             return False, f"Dangerous keyword '{keyword}' not allowed"
     
+    # Block DDL operations (even if they start with allowed keywords)
+    ddl_keywords = ['CREATE TABLE', 'ALTER TABLE', 'DROP TABLE', 'CREATE INDEX', 'DROP INDEX']
+    for ddl in ddl_keywords:
+        if ddl in query_upper:
+            return False, f"DDL operation '{ddl}' not allowed"
+    
+    # Block COPY FROM PROGRAM (command injection)
+    if 'COPY' in query_upper and 'FROM PROGRAM' in query_upper:
+        return False, "COPY FROM PROGRAM not allowed"
+    
+    # Enforce LIMIT for SELECT queries to prevent large result sets
+    if query_upper.startswith('SELECT') and 'LIMIT' not in query_upper:
+        return False, "SELECT queries must include LIMIT clause (max 500 rows)"
+    
+    # Check LIMIT value
+    if 'LIMIT' in query_upper:
+        import re
+        limit_match = re.search(r'LIMIT\s+(\d+)', query_upper)
+        if limit_match:
+            limit_value = int(limit_match.group(1))
+            if limit_value > 500:
+                return False, "LIMIT cannot exceed 500 rows"
+    
     return True, ""
 
-def log_query(query: str, user_id: str = "unknown", success: bool = True):
-    """Log database queries for audit trail"""
-    log_entry = {
-        "timestamp": datetime.utcnow().isoformat(),
-        "user_id": user_id,
-        "query": query[:100] + "..." if len(query) > 100 else query,
-        "success": success,
-        "ip": "unknown"  # Could be extracted from request headers
-    }
-    print(f"QUERY_LOG: {json.dumps(log_entry)}")
+def log_query(query: str, user_id: str = "unknown", success: bool = True, rows_returned: int = 0, ip: str = "unknown"):
+    """Log database queries to Supabase audit table"""
+    try:
+        # Insert into Supabase audit table
+        audit_data = {
+            "user_id": user_id,
+            "query": query[:1000] + "..." if len(query) > 1000 else query,  # Truncate for storage
+            "rows_returned": rows_returned,
+            "ip": ip,
+            "success": success,
+            "created_at": datetime.utcnow().isoformat()
+        }
+        
+        # Insert into mcp_audit table
+        supa.table("mcp_audit").insert(audit_data).execute()
+        
+        # Also log to console for debugging
+        print(f"QUERY_LOG: {json.dumps(audit_data)}")
+        
+    except Exception as e:
+        # Fallback to console logging if Supabase fails
+        print(f"AUDIT_ERROR: {str(e)}")
+        print(f"QUERY_LOG: {json.dumps({
+            'timestamp': datetime.utcnow().isoformat(),
+            'user_id': user_id,
+            'query': query[:100] + "..." if len(query) > 100 else query,
+            'success': success,
+            'rows_returned': rows_returned,
+            'ip': ip
+        })}")
 
 @server.tool()
 def run_sql(query: str, user_id: str = "anonymous") -> str:
@@ -107,8 +155,11 @@ def run_sql(query: str, user_id: str = "anonymous") -> str:
         data = supa.rpc("exec_sql", {"stmt": query}).execute().data
         execution_time = time.time() - start_time
         
+        # Count rows returned
+        rows_returned = len(data) if isinstance(data, list) else 0
+        
         # Log successful query
-        log_query(query, user_id, True)
+        log_query(query, user_id, True, rows_returned)
         
         # Return results with metadata
         result = {
