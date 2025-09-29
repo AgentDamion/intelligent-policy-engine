@@ -3,6 +3,9 @@ const express = require('express');
 const http = require('http');
 const session = require('express-session');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const compression = require('compression');
 const path = require('path');
 const WebSocket = require('ws');
 const apiRoutes = require('./api/routes');
@@ -38,6 +41,65 @@ if (isProduction) {
     next();
   });
 }
+
+// Security middleware
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https:"],
+      scriptSrc: ["'self'"],
+      connectSrc: ["'self'", "ws:", "wss:"],
+      frameSrc: ["'none'"],
+      objectSrc: ["'none'"],
+      upgradeInsecureRequests: isProduction ? [] : null
+    }
+  },
+  hsts: isProduction ? {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true
+  } : false,
+  noSniff: true,
+  xssFilter: true,
+  referrerPolicy: { policy: "strict-origin-when-cross-origin" }
+}));
+
+// Compression middleware
+app.use(compression());
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: isProduction ? 100 : 1000, // Limit each IP to 100 requests per windowMs in production, 1000 in development
+  message: {
+    error: 'Too many requests from this IP, please try again later.',
+    retryAfter: '15 minutes'
+  },
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  skip: (req) => {
+    // Skip rate limiting for health checks and WebSocket connections
+    return req.path === '/api/health' || req.path === '/ws';
+  }
+});
+
+// Apply rate limiting to all requests
+app.use(limiter);
+
+// API-specific rate limiting (stricter for API endpoints)
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: isProduction ? 50 : 500, // Stricter limits for API endpoints
+  message: {
+    error: 'API rate limit exceeded, please try again later.',
+    retryAfter: '15 minutes'
+  },
+  standardHeaders: true,
+  legacyHeaders: false
+});
 
 // CORS configuration for Railway deployment
 const corsOptions = {
@@ -207,14 +269,65 @@ EventBus.on('context-analysis-complete', (event) => {
   });
 });
 
-// API Routes
+// Enhanced Health Check Endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'healthy', 
+  const healthCheck = {
+    status: 'healthy',
     timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development',
+    version: process.env.npm_package_version || '1.0.0',
     websocketClients: clients.size,
-    environment: process.env.NODE_ENV || 'development'
-  });
+    memory: {
+      used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + ' MB',
+      total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024) + ' MB',
+      external: Math.round(process.memoryUsage().external / 1024 / 1024) + ' MB'
+    },
+    database: {
+      connected: !!process.env.DATABASE_URL,
+      url: process.env.DATABASE_URL ? 'configured' : 'not configured'
+    },
+    services: {
+      websocket: 'active',
+      api: 'active',
+      auth: 'active'
+    }
+  };
+  
+  res.status(200).json(healthCheck);
+});
+
+// Detailed system health check (for monitoring)
+app.get('/api/health/detailed', (req, res) => {
+  const detailedHealth = {
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    system: {
+      uptime: process.uptime(),
+      platform: process.platform,
+      nodeVersion: process.version,
+      memory: process.memoryUsage(),
+      cpu: process.cpuUsage()
+    },
+    application: {
+      environment: process.env.NODE_ENV || 'development',
+      version: process.env.npm_package_version || '1.0.0',
+      websocketClients: clients.size,
+      activeConnections: clients.size
+    },
+    database: {
+      connected: !!process.env.DATABASE_URL,
+      url: process.env.DATABASE_URL ? 'configured' : 'not configured'
+    },
+    security: {
+      helmet: 'enabled',
+      rateLimiting: 'enabled',
+      cors: 'configured',
+      https: isProduction ? 'enabled' : 'disabled'
+    }
+  };
+  
+  res.status(200).json(detailedHealth);
 });
 
 // Agent status endpoint
@@ -351,6 +464,9 @@ app.get('/api', (req, res) => {
     });
 });
 
+// Apply API rate limiting to all API routes
+app.use('/api', apiLimiter);
+
 // Modern Authentication Hub Bridge (PRIORITY - must come first)
 app.use('/api', modernAuthBridge);
 // Auth and session
@@ -452,6 +568,53 @@ if (process.env.NODE_ENV === 'production') {
     }
   });
 }
+
+// Global error handling middleware
+app.use((err, req, res, next) => {
+  console.error('🚨 Unhandled Error:', {
+    error: err.message,
+    stack: err.stack,
+    url: req.url,
+    method: req.method,
+    ip: req.ip,
+    userAgent: req.get('User-Agent'),
+    timestamp: new Date().toISOString()
+  });
+
+  // Don't leak error details in production
+  const errorResponse = {
+    error: isProduction ? 'Internal Server Error' : err.message,
+    timestamp: new Date().toISOString(),
+    requestId: req.id || 'unknown'
+  };
+
+  if (!isProduction) {
+    errorResponse.stack = err.stack;
+    errorResponse.details = {
+      url: req.url,
+      method: req.method,
+      ip: req.ip
+    };
+  }
+
+  res.status(err.status || 500).json(errorResponse);
+});
+
+// 404 handler for API routes
+app.use('/api/*', (req, res) => {
+  res.status(404).json({
+    error: 'API endpoint not found',
+    message: `The requested API endpoint ${req.method} ${req.originalUrl} does not exist`,
+    timestamp: new Date().toISOString(),
+    availableEndpoints: [
+      'GET /api/health',
+      'GET /api/health/detailed',
+      'GET /api/agents/status',
+      'GET /api/governance/events',
+      'GET /api/policies'
+    ]
+  });
+});
 
 // Start the server
 server.listen(PORT, '0.0.0.0', () => {

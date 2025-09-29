@@ -8,7 +8,6 @@ import {
   XCircle, 
   RefreshCw, 
   Download,
-  TrendingUp,
   Shield,
   AlertCircle
 } from 'lucide-react';
@@ -63,8 +62,7 @@ interface ComplianceReportCardProps {
 }
 
 const ComplianceReportCard: React.FC<ComplianceReportCardProps> = ({ 
-  projectId, 
-  onRefresh 
+  projectId
 }) => {
   const [report, setReport] = useState<ComplianceReport | null>(null);
   const [loading, setLoading] = useState(false);

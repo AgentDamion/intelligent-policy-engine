@@ -20,7 +20,7 @@ const Layout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [enterpriseDropdownOpen, setEnterpriseDropdownOpen] = useState(false)
   const { user, signOut } = useAuth()
-  const { currentEnterprise, workspaces, setCurrentEnterprise } = useEnterprise()
+  const { currentEnterprise, workspaces } = useEnterprise()
   const location = useLocation()
   const navigate = useNavigate()
 
