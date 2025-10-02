@@ -1,22 +1,22 @@
-const { PolicyAgent } = require('./policy-agent');
-const AuditAgent = require('./audit-agent');
-const NegotiationAgent = require('./negotiation-agent');
-const PreFlightAgent = require('./pre-flight-agent');
-const SubmissionStateManager = require('./submission-state-manager');
-const ContextAgent = require('./context-agent');
-const { ConflictDetectionAgent } = require('./conflict-detection-agent');
-const PatternRecognitionAgent = require('./pattern-recognition-agent');
-const TriageRouterAgent = require('./triage-router-agent');
-const GuardrailOrchestratorAgent = require('./guardrail-orchestrator-agent');
-const HumanEscalationAgent = require('./human-escalation-agent');
-const MultiTenantOrchestratorAgent = require('./multi-tenant-orchestrator-agent');
+import { PolicyAgent } from './policy-agent.js';
+import AuditAgent from './audit-agent.js';
+import NegotiationAgent from './negotiation-agent.js';
+import PreFlightAgent from './pre-flight-agent.js';
+import SubmissionStateManager from './submission-state-manager.js';
+import ContextAgent from './context-agent.js';
+import { ConflictDetectionAgent } from './conflict-detection-agent.js';
+import PatternRecognitionAgent from './pattern-recognition-agent.js';
+import TriageRouterAgent from './triage-router-agent.js';
+import GuardrailOrchestratorAgent from './guardrail-orchestrator-agent.js';
+import HumanEscalationAgent from './human-escalation-agent.js';
+import MultiTenantOrchestratorAgent from './multi-tenant-orchestrator-agent.js';
 
 // New external data discovery and monitoring agents
-const ToolDiscoveryAgent = require('./tool-discovery-agent');
-const DataExtractionAgent = require('./data-extraction-agent');
-const MonitoringAgent = require('./monitoring-agent');
-const VendorOutreachAgent = require('./vendor-outreach-agent');
-const ComplianceScoringAgent = require('./compliance-scoring-agent');
+import ToolDiscoveryAgent from './tool-discovery-agent.js';
+import DataExtractionAgent from './data-extraction-agent.js';
+import MonitoringAgent from './monitoring-agent.js';
+import VendorOutreachAgent from './vendor-outreach-agent.js';
+import ComplianceScoringAgent from './compliance-scoring-agent.js';
 
 const registry = {
   policy: new PolicyAgent(),
@@ -44,4 +44,4 @@ const registry = {
   }
 };
 
-module.exports = registry;
+export default registry;
