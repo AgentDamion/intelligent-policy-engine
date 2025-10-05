@@ -11,7 +11,7 @@
  * 5. Industry-specific risk analysis (AI-powered)
  */
 
-const { analyzeWithAI } = require('./ai-services');
+const { analyzeWithAI } = require('./ai-services.cjs');
 
 class ContextAgent {
     constructor() {

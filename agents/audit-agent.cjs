@@ -9,7 +9,7 @@
  * 5. Enterprise-grade compliance officer audit trail
  */
 
-const AgentBase = require('./agent-base');
+const AgentBase = require('./agent-base.cjs');
 
 class AuditAgent extends AgentBase {
     constructor() {

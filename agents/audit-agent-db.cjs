@@ -1,4 +1,4 @@
-const { AuditAgent } = require('./audit-agent.js');
+const { AuditAgent } = require('./audit-agent.js.cjs');
 const db = require('../database/connection');
 const { v4: uuidv4 } = require('uuid');
 

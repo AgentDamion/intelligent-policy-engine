@@ -1,4 +1,4 @@
-const { PolicyAgent } = require('./policy-agent.js');
+const { PolicyAgent } = require('./policy-agent.js.cjs');
 const db = require('../database/connection');
 const { v4: uuidv4 } = require('uuid');
 

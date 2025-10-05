@@ -1,6 +1,6 @@
 const axios = require('axios');
 const crypto = require('crypto');
-const { AgentBase } = require('./agent-base');
+const { AgentBase } = require('./agent-base.cjs');
 
 class MonitoringAgent extends AgentBase {
   constructor() {

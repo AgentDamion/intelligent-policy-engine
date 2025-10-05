@@ -9,7 +9,7 @@
  * 4. Visual conflict mapping and recommendations
  */
 
-const { analyzeWithAI } = require('./ai-service');
+const { analyzeWithAI } = require('./ai-service.cjs');
 
 class ConflictDetectionAgent {
     constructor() {

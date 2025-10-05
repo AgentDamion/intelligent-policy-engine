@@ -1,4 +1,4 @@
-const AgentBase = require('./agent-base');
+const AgentBase = require('./agent-base.cjs');
 const EventBus = require('../core/event-bus');
 
 class PatternRecognitionAgent extends AgentBase {

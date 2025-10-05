@@ -1,5 +1,5 @@
 const nodemailer = require('nodemailer');
-const { AgentBase } = require('./agent-base');
+const { AgentBase } = require('./agent-base.cjs');
 
 class VendorOutreachAgent extends AgentBase {
   constructor() {
