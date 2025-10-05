@@ -1,4 +1,4 @@
-const { analyzeWithAI } = require('./agents/ai-services');
+const { analyzeWithAI } = require('./agents/ai-services.cjs');
 
 async function testOpenAI() {
     console.log('Testing OpenAI connection...');

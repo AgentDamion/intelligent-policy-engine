@@ -9,7 +9,7 @@
  * 5. Handles escalation when no solution exists
  */
 
-const AgentBase = require('./agent-base');
+const AgentBase = require('./agent-base.cjs');
 
 class NegotiationAgent extends AgentBase {
     constructor() {

@@ -1,4 +1,4 @@
-const { NegotiationAgent } = require('./negotiation-agent.js');
+const { NegotiationAgent } = require('./negotiation-agent.js.cjs');
 const db = require('../database/connection');
 const { v4: uuidv4 } = require('uuid');
 

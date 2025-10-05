@@ -1,7 +1,7 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 const puppeteer = require('puppeteer');
-const { AgentBase } = require('./agent-base');
+const { AgentBase } = require('./agent-base.cjs');
 
 class DataExtractionAgent extends AgentBase {
   constructor() {

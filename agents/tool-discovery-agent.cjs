@@ -1,6 +1,6 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
-const { AgentBase } = require('./agent-base');
+const { AgentBase } = require('./agent-base.cjs');
 
 class ToolDiscoveryAgent extends AgentBase {
   constructor() {
