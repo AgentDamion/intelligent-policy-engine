@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
 
+// Import platform integrations routes
+const platformIntegrationsRouter = require('./routes/platform-integrations.js');
+
 // Import all your agents
 const { ConflictDetectionAgent } = require('../agents/conflict-detection-agent.js');
 const AuditAgent = require('../agents/audit-agent.js');
@@ -2223,5 +2226,8 @@ router.get('/enterprise/:enterpriseId/seats/:seatId/compliance-report', (req, re
     
     res.json(report);
 });
+
+// Mount platform integrations routes
+router.use('/platform-integrations', platformIntegrationsRouter);
 
 module.exports = router;

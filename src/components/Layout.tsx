@@ -12,7 +12,8 @@ import {
   ChevronDown,
   LogOut,
   Building2,
-  Briefcase
+  Briefcase,
+  Link as LinkIcon
 } from 'lucide-react'
 import LoadingSpinner from './ui/LoadingSpinner'
 
@@ -28,6 +29,7 @@ const Layout: React.FC = () => {
     { name: 'Dashboard', href: '/dashboard', icon: Home },
     { name: 'Policies', href: '/policies', icon: FileText },
     { name: 'Workspaces', href: '/workspaces', icon: Users },
+    { name: 'Platform Integrations', href: '/platform-integrations', icon: LinkIcon },
     { name: 'Settings', href: '/settings', icon: Settings },
   ]
 
