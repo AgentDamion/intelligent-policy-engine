@@ -10,6 +10,7 @@ import DashboardPage from './pages/DashboardPage'
 import PoliciesPage from './pages/PoliciesPage'
 import WorkspacesPage from './pages/WorkspacesPage'
 import SettingsPage from './pages/SettingsPage'
+import { PlatformIntegrationsPage } from './pages/PlatformIntegrationsPage'
 import LoadingSpinner from './components/ui/LoadingSpinner'
 
 // Protected Route Component
@@ -104,6 +105,7 @@ function App() {
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="policies" element={<PoliciesPage />} />
         <Route path="workspaces" element={<WorkspacesPage />} />
+        <Route path="platform-integrations" element={<PlatformIntegrationsPage enterpriseId="enterprise-1" />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
 
