@@ -1,0 +1,21 @@
+{
+  "name": "@aicomplyr/shared",
+  "version": "1.0.0",
+  "description": "Shared Zod schemas and types for the compliance agents.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "zod": "*"
+  },
+  "devDependencies": {
+    "tsup": "*"
+  },
+  "exports": {
+    ".": "./dist/index.js"
+  }
+}
+

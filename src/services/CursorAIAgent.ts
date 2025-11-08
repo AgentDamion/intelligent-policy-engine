@@ -61,16 +61,54 @@ export class CursorAIAgent {
   /**
    * Analyze document content with AI
    */
-  private static async analyzeDocument(_doc: any) {
-    // TODO: Integrate with actual AI model (GPT-4, Claude, etc.)
-    // This is where you'll call your AI service
-    
-    return {
-      confidence: 0.95,
-      reasoning: 'Document meets all compliance requirements',
-      summary: 'Full analysis completed',
-      entities: [],
-      topics: []
+  private static async analyzeDocument(doc: any) {
+    try {
+      // Call the Cursor Agent Adapter for real AI analysis
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/cursor-agent-adapter`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify({
+          agentName: 'policy',
+          action: 'analyze',
+          input: doc,
+          context: {
+            enterprise_id: doc.enterprise_id || 'default',
+            analysis_type: 'document_compliance'
+          }
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`AI analysis failed: ${response.status}`)
+      }
+
+      const result = await response.json()
+      
+      if (result.success) {
+        return {
+          confidence: result.result.decision.confidence || 0.9,
+          reasoning: result.result.decision.reasoning || 'AI analysis completed',
+          summary: result.result.decision.reasoning || 'Document analysis completed',
+          entities: result.result.decision.riskFactors || [],
+          topics: result.result.metadata?.aiMetadata?.keyFactors || []
+        }
+      } else {
+        throw new Error(result.error || 'AI analysis failed')
+      }
+    } catch (error) {
+      console.error('[CursorAIAgent] AI analysis error:', error)
+      // Fallback to basic analysis
+      return {
+        confidence: 0.7,
+        reasoning: 'AI analysis unavailable, using fallback logic',
+        summary: 'Basic document analysis completed',
+        entities: [],
+        topics: []
+      }
     }
   }
   

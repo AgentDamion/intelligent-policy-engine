@@ -923,28 +923,32 @@ async function generateAlerts(
   const alerts: Alert[] = [];
 
   // Generate alerts for violations
-  for (const violation of complianceResults.violations) {
-    const alert: Alert = {
-      organization_id: organizationId,
-      alert_type: 'compliance_violation',
-      severity: violation.severity,
-      title: `Compliance Violation: ${violation.description}`,
-      description: `Policy violation detected in agent activity: ${activity.agent} - ${activity.action}`,
-      entity_type: 'agent_activity',
-      entity_id: activity.id,
-      metadata: {
-        activity_id: activity.id,
-        policy_id: violation.policy_id,
-        violation_id: violation.id,
-        agent: activity.agent,
-        action: activity.action,
-        violation_type: violation.violation_type
-      },
-      status: 'active',
-      created_at: new Date().toISOString()
-    };
+  if (complianceResults.violations && Array.isArray(complianceResults.violations)) {
+    for (const violation of complianceResults.violations) {
+      if (violation && typeof violation === 'object') {
+        const alert: Alert = {
+          organization_id: organizationId,
+          alert_type: 'compliance_violation',
+          severity: violation.severity || 'medium',
+          title: `Compliance Violation: ${violation.description || 'Unknown violation'}`,
+          description: `Policy violation detected in agent activity: ${activity.agent} - ${activity.action}`,
+          entity_type: 'agent_activity',
+          entity_id: activity.id,
+          metadata: {
+            activity_id: activity.id,
+            policy_id: violation.policy_id || 'unknown',
+            violation_id: violation.id || 'unknown',
+            agent: activity.agent,
+            action: activity.action,
+            violation_type: violation.violation_type || 'unknown'
+          },
+          status: 'active',
+          created_at: new Date().toISOString()
+        };
 
-    alerts.push(alert);
+        alerts.push(alert);
+      }
+    }
   }
 
   // Generate risk escalation alert if overall risk is high

@@ -1,4 +1,5 @@
 const { AgentBase } = require('./agent-base');
+const { analyzeWithAI } = require('./ai-service');
 
 class ComplianceScoringAgent extends AgentBase {
   constructor() {
@@ -6,6 +7,25 @@ class ComplianceScoringAgent extends AgentBase {
     this.complianceRules = new Map();
     this.riskFactors = new Map();
     this.scoringHistory = new Map();
+    
+    // Risk tier thresholds for LLM-based assessment
+    this.riskTierThresholds = {
+      minimal: { min: 0, max: 20 },
+      low: { min: 21, max: 40 },
+      medium: { min: 41, max: 60 },
+      high: { min: 61, max: 80 },
+      critical: { min: 81, max: 100 }
+    };
+    
+    // Dimension weights (total = 100)
+    this.dimensionWeights = {
+      dataSensitivity: 25,
+      externalExposure: 20,
+      modelTransparency: 15,
+      misuseVectors: 15,
+      legalIPRisk: 15,
+      operationalCriticality: 10
+    };
     
     this.initializeComplianceRules();
     this.initializeRiskFactors();
@@ -366,25 +386,344 @@ class ComplianceScoringAgent extends AgentBase {
     });
   }
 
+  /**
+   * Call LLM for analysis - wrapper around ai-service
+   * @param {string} prompt - The prompt to send to the LLM
+   * @param {Object} options - LLM options (temperature, maxTokens)
+   * @returns {Promise<string>} LLM response
+   */
+  async callLLM(prompt, options = {}) {
+    try {
+      const result = await analyzeWithAI(prompt, {
+        temperature: options.temperature || 0.3,
+        maxTokens: options.maxTokens || 1500
+      });
+      return result.response;
+    } catch (error) {
+      this.log(`LLM call failed: ${error.message}`, 'error');
+      throw error;
+    }
+  }
+
+  /**
+   * Calculate 6-dimensional risk scores using LLM
+   * @param {Object} context - Tool metadata and usage context
+   * @returns {Promise<Object>} Dimension scores (0-100 scale)
+   */
+  async calculateDimensionScores(context) {
+    const prompt = `Analyze this AI tool across 6 risk dimensions (score 0-100 for each):
+
+**Tool Information:**
+- Name: ${context.toolName || context.name || 'Unknown'}
+- Vendor: ${context.vendorName || context.vendor || 'Unknown'}
+- Use Case: ${context.useCase || context.usage || 'Not specified'}
+- Data Types: ${context.dataTypes?.join(', ') || context.dataHandling || 'Not specified'}
+- User Role: ${context.userRole || 'General user'}
+- Deployment: ${context.deployment || 'Cloud-based'}
+
+**Score each dimension (0=no risk, 100=critical risk):**
+
+1. **Data Sensitivity & Privacy** (0-100)
+   - Does it process PII, PHI, or regulated data?
+   - What encryption/anonymization exists?
+   - Risk of data leakage to unauthorized parties?
+
+2. **External Exposure & Decision Impact** (0-100)
+   - Is output customer-facing or public?
+   - Does it drive high-stakes decisions (medical, legal, financial)?
+   - Are human review mechanisms in place?
+
+3. **Model Transparency** (0-100)
+   - Black box vs. interpretable model?
+   - Can decisions be explained to regulators?
+   - Ability to audit model behavior?
+
+4. **Misuse / Adversarial Vectors** (0-100)
+   - Vulnerability to prompt injection attacks?
+   - Risk of hallucinations or false outputs?
+   - Input/output filtering strength?
+
+5. **Legal / IP Risk** (0-100)
+   - Potential copyright/trademark violations?
+   - Risk of defamation or misinformation?
+   - Regulatory compliance gaps?
+
+6. **Operational Criticality** (0-100)
+   - Business impact if tool fails or is unavailable?
+   - Error tolerance (can mistakes be tolerated)?
+   - Backup systems in place?
+
+**Output format (JSON):**
+{
+  "dataSensitivity": <score>,
+  "externalExposure": <score>,
+  "modelTransparency": <score>,
+  "misuseVectors": <score>,
+  "legalIPRisk": <score>,
+  "operationalCriticality": <score>,
+  "rationale": {
+    "dataSensitivity": "<brief explanation>",
+    "externalExposure": "<brief explanation>",
+    "modelTransparency": "<brief explanation>",
+    "misuseVectors": "<brief explanation>",
+    "legalIPRisk": "<brief explanation>",
+    "operationalCriticality": "<brief explanation>"
+  }
+}`;
+
+    try {
+      const aiResponse = await this.callLLM(prompt, { 
+        temperature: 0.3,
+        maxTokens: 1500 
+      });
+
+      return this.parseDimensionScores(aiResponse);
+    } catch (error) {
+      this.log(`Dimension scoring failed, using fallback: ${error.message}`, 'error');
+      // Fallback to default medium-risk scores
+      return {
+        dataSensitivity: 50,
+        externalExposure: 50,
+        modelTransparency: 50,
+        misuseVectors: 50,
+        legalIPRisk: 50,
+        operationalCriticality: 50,
+        rationale: {
+          dataSensitivity: 'Default score (LLM unavailable)',
+          externalExposure: 'Default score (LLM unavailable)',
+          modelTransparency: 'Default score (LLM unavailable)',
+          misuseVectors: 'Default score (LLM unavailable)',
+          legalIPRisk: 'Default score (LLM unavailable)',
+          operationalCriticality: 'Default score (LLM unavailable)'
+        }
+      };
+    }
+  }
+
+  /**
+   * Parse dimension scores from AI response
+   * @param {string} aiResponse - Raw LLM response
+   * @returns {Object} Parsed dimension scores
+   */
+  parseDimensionScores(aiResponse) {
+    try {
+      // Try to extract JSON
+      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        return {
+          dataSensitivity: this.clampScore(parsed.dataSensitivity),
+          externalExposure: this.clampScore(parsed.externalExposure),
+          modelTransparency: this.clampScore(parsed.modelTransparency),
+          misuseVectors: this.clampScore(parsed.misuseVectors),
+          legalIPRisk: this.clampScore(parsed.legalIPRisk),
+          operationalCriticality: this.clampScore(parsed.operationalCriticality),
+          rationale: parsed.rationale || {}
+        };
+      }
+    } catch (e) {
+      this.log(`Failed to parse JSON dimension scores: ${e.message}`, 'error');
+    }
+
+    // Fallback: extract numbers from text
+    return {
+      dataSensitivity: this.extractScore(aiResponse, 'data sensitivity'),
+      externalExposure: this.extractScore(aiResponse, 'external exposure'),
+      modelTransparency: this.extractScore(aiResponse, 'transparency'),
+      misuseVectors: this.extractScore(aiResponse, 'misuse'),
+      legalIPRisk: this.extractScore(aiResponse, 'legal'),
+      operationalCriticality: this.extractScore(aiResponse, 'operational'),
+      rationale: {}
+    };
+  }
+
+  /**
+   * Calculate risk tier from dimension scores
+   * Uses weighted algorithm aligned with NIST AI RMF
+   * @param {Object} dimensionScores - The 6 dimension scores
+   * @returns {string} Risk tier (minimal/low/medium/high/critical)
+   */
+  calculateRiskTier(dimensionScores) {
+    const weights = {
+      dataSensitivity: 0.25,        // Highest weight - data protection critical
+      externalExposure: 0.20,       // Customer-facing = higher risk
+      modelTransparency: 0.15,      // Explainability for regulatory compliance
+      misuseVectors: 0.15,          // Security concerns
+      legalIPRisk: 0.15,            // Regulatory violations
+      operationalCriticality: 0.10  // Business continuity
+    };
+
+    const weightedScore = 
+      dimensionScores.dataSensitivity * weights.dataSensitivity +
+      dimensionScores.externalExposure * weights.externalExposure +
+      dimensionScores.modelTransparency * weights.modelTransparency +
+      dimensionScores.misuseVectors * weights.misuseVectors +
+      dimensionScores.legalIPRisk * weights.legalIPRisk +
+      dimensionScores.operationalCriticality * weights.operationalCriticality;
+
+    // Tier thresholds based on industry standards
+    if (weightedScore < 20) return 'minimal';   // Internal productivity tools
+    if (weightedScore < 40) return 'low';       // Low-stakes content generation
+    if (weightedScore < 60) return 'medium';    // Customer-facing, moderate risk
+    if (weightedScore < 80) return 'high';      // Regulated data, high stakes
+    return 'critical';                          // Medical/legal decisions, PII
+  }
+
+  /**
+   * Generate tier-specific audit checklist
+   * @param {string} tier - Risk tier
+   * @param {Object} dimensionScores - Dimension scores for additional requirements
+   * @returns {Array<string>} Audit checklist items
+   */
+  generateAuditChecklist(tier, dimensionScores) {
+    // Base requirements for all tiers
+    const baseChecklist = [
+      'usage_tracking',
+      'basic_logging',
+      'access_controls',
+      'data_retention_policy'
+    ];
+
+    // Tier-specific requirements
+    const tierChecklists = {
+      minimal: [
+        'annual_review'
+      ],
+      low: [
+        'quarterly_review',
+        'content_spot_checks',
+        'user_feedback_monitoring'
+      ],
+      medium: [
+        'monthly_review',
+        'enhanced_monitoring',
+        'human_review_workflow',
+        'data_protection_audit',
+        'incident_response_plan'
+      ],
+      high: [
+        'bi_weekly_review',
+        'explainability_documentation',
+        'bias_testing',
+        'legal_compliance_sign_off',
+        'third_party_audit',
+        'regulatory_filing',
+        'risk_assessment_update'
+      ],
+      critical: [
+        'continuous_monitoring',
+        'real_time_oversight',
+        'full_model_audit',
+        'adversarial_testing',
+        'liability_insurance_verification',
+        'regulatory_pre_approval',
+        'weekly_compliance_check',
+        'emergency_shutdown_plan'
+      ]
+    };
+
+    // Dimension-specific additions (add if score > 70)
+    const dimensionSpecific = [];
+    if (dimensionScores.dataSensitivity > 70) {
+      dimensionSpecific.push('data_privacy_impact_assessment', 'encryption_audit');
+    }
+    if (dimensionScores.externalExposure > 70) {
+      dimensionSpecific.push('public_content_review', 'brand_safety_check');
+    }
+    if (dimensionScores.modelTransparency > 70) {
+      dimensionSpecific.push('black_box_validation', 'interpretability_study');
+    }
+    if (dimensionScores.misuseVectors > 70) {
+      dimensionSpecific.push('security_penetration_test', 'prompt_injection_defense');
+    }
+    if (dimensionScores.legalIPRisk > 70) {
+      dimensionSpecific.push('ip_clearance', 'legal_risk_review');
+    }
+    if (dimensionScores.operationalCriticality > 70) {
+      dimensionSpecific.push('business_continuity_plan', 'failover_testing');
+    }
+
+    return [
+      ...baseChecklist,
+      ...tierChecklists[tier],
+      ...dimensionSpecific
+    ];
+  }
+
+  /**
+   * Helper: Clamp score to 0-100
+   * @param {number|string} score - Score to clamp
+   * @returns {number} Clamped score
+   */
+  clampScore(score) {
+    const num = typeof score === 'number' ? score : parseInt(score) || 50;
+    return Math.max(0, Math.min(100, num));
+  }
+
+  /**
+   * Helper: Extract score from text
+   * @param {string} text - Text to search
+   * @param {string} keyword - Keyword to find score for
+   * @returns {number} Extracted score or default 50
+   */
+  extractScore(text, keyword) {
+    const regex = new RegExp(`${keyword}[:\\s-]*([0-9]{1,3})`, 'i');
+    const match = text.match(regex);
+    return match ? this.clampScore(parseInt(match[1])) : 50;
+  }
+
   async assessCompliance(toolData, vendorData, extractionData) {
     try {
       this.log(`Starting compliance assessment for tool: ${toolData.name}`);
       
       const startTime = Date.now();
       
-      // Perform compliance scoring
+      // Step 1: Calculate LLM-based dimension scores
+      const context = {
+        toolName: toolData.name,
+        vendorName: vendorData?.name,
+        useCase: toolData.useCase || extractionData?.usage,
+        dataTypes: toolData.dataTypes || extractionData?.dataTypes,
+        dataHandling: toolData.dataHandling || extractionData?.dataHandling,
+        userRole: toolData.userRole,
+        deployment: toolData.deployment
+      };
+      
+      const dimensionScores = await this.calculateDimensionScores(context);
+      
+      // Step 2: Determine risk tier from dimension scores
+      const riskTier = this.calculateRiskTier(dimensionScores);
+      
+      // Step 3: Generate audit checklist based on tier and dimensions
+      const auditChecklist = this.generateAuditChecklist(riskTier, dimensionScores);
+      
+      // Step 4: Perform traditional compliance scoring
       const complianceScores = await this.calculateComplianceScores(toolData, vendorData, extractionData);
       
-      // Perform risk assessment
+      // Step 5: Perform traditional risk assessment
       const riskAssessment = await this.performRiskAssessment(toolData, vendorData, extractionData);
       
-      // Calculate overall compliance score
-      const overallComplianceScore = this.calculateOverallComplianceScore(complianceScores);
+      // Step 6: Calculate overall compliance score
+      const baseComplianceScore = this.calculateOverallComplianceScore(complianceScores);
       
-      // Determine risk level
+      // Step 7: Apply tier multipliers to adjust compliance score
+      const tierMultipliers = {
+        minimal: 0.5,   // More lenient scoring
+        low: 0.75,
+        medium: 1.0,    // Standard scoring
+        high: 1.5,      // Stricter requirements
+        critical: 2.0   // Most stringent
+      };
+      
+      const tierMultiplier = tierMultipliers[riskTier];
+      const adjustedComplianceScore = Math.max(0, 
+        baseComplianceScore - (100 - baseComplianceScore) * (tierMultiplier - 1)
+      );
+      
+      // Step 8: Determine risk level (use traditional method)
       const riskLevel = this.determineRiskLevel(riskAssessment);
       
-      // Generate recommendations
+      // Step 9: Generate recommendations (include dimension-based recommendations)
       const recommendations = this.generateRecommendations(complianceScores, riskAssessment);
       
       const processingTime = Date.now() - startTime;
@@ -396,13 +735,23 @@ class ComplianceScoringAgent extends AgentBase {
         vendorName: vendorData?.name,
         assessmentDate: new Date().toISOString(),
         processingTime,
+        // Traditional compliance results
         complianceScores,
-        overallComplianceScore,
+        baseComplianceScore: Math.round(baseComplianceScore),
+        overallComplianceScore: Math.round(adjustedComplianceScore),
         riskAssessment,
         riskLevel,
         recommendations,
+        // NEW: LLM-based risk profile
+        riskProfile: {
+          tier: riskTier,
+          dimensionScores: dimensionScores,
+          auditChecklist: auditChecklist,
+          tierMultiplier: tierMultiplier
+        },
         metadata: {
-          assessmentVersion: '1.0',
+          assessmentVersion: '2.0',
+          llmEnabled: true,
           rulesApplied: Array.from(this.complianceRules.keys()),
           riskFactorsApplied: Array.from(this.riskFactors.keys())
         }
@@ -412,6 +761,7 @@ class ComplianceScoringAgent extends AgentBase {
       this.scoringHistory.set(result.toolId, result);
       
       this.log(`Compliance assessment completed for ${toolData.name} in ${processingTime}ms`);
+      this.log(`Risk Tier: ${riskTier.toUpperCase()}, Adjusted Score: ${result.overallComplianceScore}`);
       
       return result;
       

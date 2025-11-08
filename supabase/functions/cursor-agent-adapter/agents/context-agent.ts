@@ -1,15 +1,55 @@
-import { Agent } from '../cursor-agent-registry.js'
+import { Agent } from '../cursor-agent-registry.ts'
+import { aiClient, AIRequest } from '../shared/ai-client.ts'
 
 export class ContextAgent implements Agent {
   async process(input: any, context: any): Promise<any> {
-    console.log('🎯 ContextAgent analyzing user context')
+    console.log('🎯 ContextAgent analyzing user context with AI')
+
+    // Prepare AI request for context analysis
+    const aiRequest: AIRequest = {
+      prompt: this.buildContextPrompt(input),
+      context: {
+        input,
+        enterpriseId: context.enterprise_id,
+        tenantId: context.tenantId,
+        timestamp: context.timestamp,
+        currentTime: new Date().toISOString()
+      },
+      agentType: 'context',
+      enterpriseId: context.enterprise_id,
+      temperature: 0.3,
+      maxTokens: 1000
+    }
+
+    // Get AI analysis
+    const aiResponse = await aiClient.processRequest(aiRequest)
+    
+    // Parse AI response
+    let aiAnalysis
+    try {
+      aiAnalysis = JSON.parse(aiResponse.content)
+    } catch {
+      // Fallback if AI doesn't return valid JSON
+      aiAnalysis = {
+        urgency_analysis: this.analyzeUrgency(input),
+        user_context: this.analyzeUserContext(input),
+        situational_factors: this.analyzeSituationalFactors(input),
+        recommendations: this.generateContextRecommendations(input),
+        confidence: aiResponse.confidence
+      }
+    }
 
     const contextAnalysis = {
-      urgency: this.analyzeUrgency(input),
-      userContext: this.analyzeUserContext(input),
-      situationalFactors: this.analyzeSituationalFactors(input),
-      recommendations: this.generateContextRecommendations(input),
-      confidence: 0.85
+      urgency: aiAnalysis.urgency_analysis || this.analyzeUrgency(input),
+      userContext: aiAnalysis.user_context || this.analyzeUserContext(input),
+      situationalFactors: aiAnalysis.situational_factors || this.analyzeSituationalFactors(input),
+      recommendations: aiAnalysis.recommendations || this.generateContextRecommendations(input),
+      confidence: aiAnalysis.confidence || aiResponse.confidence,
+      aiMetadata: {
+        provider: aiResponse.metadata.provider,
+        model: aiResponse.metadata.model,
+        processingTime: Date.now() - new Date(context.timestamp).getTime()
+      }
     }
 
     return contextAnalysis
@@ -17,6 +57,24 @@ export class ContextAgent implements Agent {
 
   getInfo() {
     return { name: 'ContextAgent', type: 'ContextAnalysis' }
+  }
+
+  private buildContextPrompt(input: any): string {
+    return `Analyze the user context for this request:
+
+User Input: ${JSON.stringify(input, null, 2)}
+
+Current Time: ${new Date().toISOString()}
+
+Analyze:
+1. Urgency level and time pressure
+2. User role and experience level
+3. Situational factors (time of day, day of week, business hours)
+4. Emotional state and stress indicators
+5. Client-facing implications
+6. Recommendations for handling this request
+
+Provide structured analysis with confidence scoring.`
   }
 
   private analyzeUrgency(input: any): any {

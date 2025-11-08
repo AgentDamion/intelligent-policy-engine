@@ -1,7 +1,14 @@
 // Enhanced Policy Agent with Better Risk Calculation
-// Replace your entire Policy Agent file with this version
+// Integrated with Risk Profile Taxonomy Framework
+
+const RiskProfileTaxonomyAgent = require('./risk-profile-taxonomy-agent');
 
 class PolicyAgent {
+    constructor() {
+        // Initialize Risk Profile Taxonomy Agent
+        this.riskProfileTaxonomy = new RiskProfileTaxonomyAgent();
+    }
+
     async process(data) {
       try {
         // Safe access to urgency level (keeping your existing logic)
@@ -10,23 +17,44 @@ class PolicyAgent {
                             data.context?.urgency?.level || 
                             0.5; // default fallback
         
-
+        // NEW: Assess tool using Risk Profile Taxonomy
+        const taxonomyAssessment = await this.riskProfileTaxonomy.assessTool(
+          {
+            name: data.tool,
+            vendor: data.vendor,
+            usage: data.usage,
+            dataHandling: data.dataHandling,
+            modelType: data.modelType || data.type,
+            industry: data.industry
+          },
+          {
+            name: data.vendor,
+            vendor: data.vendor
+          },
+          {
+            usage: data.usage,
+            dataHandling: data.dataHandling,
+            audience: data.audience,
+            purpose: data.purpose || this.inferPurpose(data.usage),
+            industry: data.industry
+          }
+        );
         
-        // Enhanced risk calculation
+        // Enhanced risk calculation with taxonomy weighting
         const riskScore = this.calculateEnhancedRiskScore({
           tool: data.tool,
           vendor: data.vendor,
           usage: data.usage,
           dataHandling: data.dataHandling,
           urgencyLevel
-        });
+        }, taxonomyAssessment);
         
         const decision = this.makeEnhancedDecision(riskScore, urgencyLevel);
         const riskLevel = this.getRiskLevel(riskScore);
         const riskFactors = this.getRiskFactors(data);
         const reasoning = this.getDecisionReasoning(riskScore, decision);
         
-        // Return the complex structure your system expects
+        // Return the complex structure your system expects (enhanced with taxonomy data)
         return {
           request: {
             originalContent: data.contextOutput?.originalContent || "Request processed",
@@ -52,7 +80,12 @@ class PolicyAgent {
           risk: {
             score: riskScore,
             factors: riskFactors,
-            level: riskLevel
+            level: riskLevel,
+            // NEW: Risk Profile Taxonomy Integration
+            profile: taxonomyAssessment.riskProfile,
+            profileDimensions: taxonomyAssessment.dimensionScores,
+            taxonomyScore: taxonomyAssessment.aggregateScore,
+            riskMultiplier: taxonomyAssessment.riskMultiplier
           },
           decision: {
             decision: decision,
@@ -61,14 +94,22 @@ class PolicyAgent {
             requires_escalation: decision === "rejected"
           },
           conditions: {
-            guardrails: this.getGuardrails(riskScore, data)
+            guardrails: this.getGuardrails(riskScore, data, taxonomyAssessment),
+            recommendedControls: taxonomyAssessment.recommendedControls
           },
           monitoring: {
             requirements: this.getMonitoringRequirements(riskScore),
-            escalation: riskScore > 0.7
+            escalation: riskScore > 0.7,
+            auditRequirements: taxonomyAssessment.auditRequirements
           },
           escalation: riskScore > 0.7,
-          next_steps: this.getNextSteps(decision)
+          next_steps: this.getNextSteps(decision),
+          // NEW: Full taxonomy assessment for audit trail
+          taxonomyAssessment: {
+            riskProfile: taxonomyAssessment.riskProfile,
+            rationale: taxonomyAssessment.rationale,
+            assessedAt: taxonomyAssessment.assessedAt
+          }
         };
         
       } catch (error) {
@@ -86,11 +127,14 @@ class PolicyAgent {
       }
     }
     
-    // ENHANCED RISK CALCULATION - This is the key improvement
-    calculateEnhancedRiskScore({ tool, vendor, usage, dataHandling, urgencyLevel }) {
+    // ENHANCED RISK CALCULATION - Integrated with Risk Profile Taxonomy
+    calculateEnhancedRiskScore({ tool, vendor, usage, dataHandling, urgencyLevel }, taxonomyAssessment = null) {
       let score = 0.1; // Lower base score than before
       
-
+      // Apply taxonomy risk multiplier if available
+      const riskMultiplier = taxonomyAssessment ? taxonomyAssessment.riskMultiplier : 1.0;
+      console.log(`\n  📊 Risk Profile: ${taxonomyAssessment?.riskProfile?.toUpperCase() || 'NONE'} (Multiplier: ${riskMultiplier}x)`);
+      console.log(`  📊 Taxonomy Score: ${taxonomyAssessment?.aggregateScore || 'N/A'}/100\n`);
       
       // VENDOR RISK (Major factor)
       const vendorLower = vendor?.toLowerCase() || "";
@@ -160,8 +204,12 @@ class PolicyAgent {
       }
       score += toolRisk;
       
-      const finalScore = Math.min(score, 1.0); // Cap at 1.0
-      console.log(`    - TOTAL RISK SCORE: ${finalScore.toFixed(3)}`);
+      // Apply taxonomy risk multiplier to base score
+      const baseScore = score;
+      const finalScore = Math.min(baseScore * riskMultiplier, 1.0); // Cap at 1.0
+      console.log(`    - BASE RISK SCORE: ${baseScore.toFixed(3)}`);
+      console.log(`    - TAXONOMY MULTIPLIER: ${riskMultiplier}x`);
+      console.log(`    - FINAL RISK SCORE: ${finalScore.toFixed(3)}`);
       
       return finalScore;
     }
@@ -216,7 +264,7 @@ class PolicyAgent {
       }
     }
     
-    getGuardrails(riskScore, data) {
+    getGuardrails(riskScore, data, taxonomyAssessment = null) {
       const guardrails = ["content_review"];
       
       if (riskScore > 0.5) {
@@ -226,7 +274,13 @@ class PolicyAgent {
         guardrails.push("data_protection_review");
       }
       
-      return guardrails;
+      // Add taxonomy-recommended controls
+      if (taxonomyAssessment && taxonomyAssessment.recommendedControls) {
+        guardrails.push(...taxonomyAssessment.recommendedControls);
+      }
+      
+      // Remove duplicates
+      return [...new Set(guardrails)];
     }
     
     getMonitoringRequirements(riskScore) {
@@ -257,6 +311,101 @@ class PolicyAgent {
       if (usage?.toLowerCase().includes("analysis")) return "data_analysis";
       if (usage?.toLowerCase().includes("generation")) return "content_generation";
       return "general_purpose";
+    }
+
+    /**
+     * Enhanced policy evaluation with tier-specific thresholds
+     * @param {Object} context - Request context
+     * @param {Object} complianceResult - Result from ComplianceScoringAgent
+     * @returns {Object} Policy decision with tier-specific requirements
+     */
+    async evaluatePolicy(context, complianceResult) {
+      const { riskProfile } = complianceResult;
+
+      // Tier-specific approval thresholds
+      const approvalThresholds = {
+        minimal: 60,   // Auto-approve at 60+ compliance
+        low: 65,
+        medium: 70,
+        high: 80,
+        critical: 90   // Requires 90+ for critical tools
+      };
+
+      const threshold = approvalThresholds[riskProfile.tier];
+      const complianceScore = complianceResult.overallComplianceScore || complianceResult.complianceScore;
+
+      let decision = 'REJECTED';
+      if (complianceScore >= threshold) {
+        decision = riskProfile.tier === 'critical' ? 'HUMAN_IN_LOOP' : 'APPROVED';
+      } else if (complianceScore >= threshold - 10) {
+        decision = 'HUMAN_IN_LOOP';
+      }
+
+      return {
+        decision,
+        confidence: this.calculateConfidence(complianceResult, riskProfile),
+        rationale: this.generateRationale(decision, riskProfile, complianceResult),
+        requiredControls: this.mapTierToControls(riskProfile.tier),
+        riskProfile: riskProfile,  // Pass through for database storage
+        approvalThreshold: threshold,
+        complianceScore: complianceScore
+      };
+    }
+
+    /**
+     * Map risk tier to required controls
+     * @param {string} tier - Risk tier (minimal/low/medium/high/critical)
+     * @returns {Array<string>} Required control measures
+     */
+    mapTierToControls(tier) {
+      const controlMappings = {
+        minimal: ['basic_usage_logging'],
+        low: ['content_review', 'periodic_audits'],
+        medium: ['enhanced_monitoring', 'data_protection', 'human_oversight'],
+        high: ['explainability_requirements', 'bias_testing', 'legal_review', 'audit_trails'],
+        critical: ['full_model_audit', 'continuous_monitoring', 'regulatory_approval', 'liability_coverage']
+      };
+
+      return controlMappings[tier] || [];
+    }
+
+    /**
+     * Calculate confidence for policy decision
+     * @param {Object} complianceResult - Compliance assessment result
+     * @param {Object} riskProfile - Risk profile from assessment
+     * @returns {number} Confidence score (0-1)
+     */
+    calculateConfidence(complianceResult, riskProfile) {
+      // Base confidence from compliance assessment
+      let confidence = complianceResult.confidence || 0.8;
+      
+      // Adjust based on risk tier
+      if (riskProfile.tier === 'critical' || riskProfile.tier === 'high') {
+        confidence *= 0.9; // More cautious with high-risk tools
+      } else if (riskProfile.tier === 'minimal' || riskProfile.tier === 'low') {
+        confidence *= 1.05; // More confident with low-risk tools
+      }
+      
+      return Math.min(Math.max(confidence, 0), 1);
+    }
+
+    /**
+     * Generate rationale for decision
+     * @param {string} decision - Policy decision
+     * @param {Object} riskProfile - Risk profile
+     * @param {Object} complianceResult - Compliance result
+     * @returns {string} Human-readable rationale
+     */
+    generateRationale(decision, riskProfile, complianceResult) {
+      const score = complianceResult.overallComplianceScore || complianceResult.complianceScore;
+      
+      if (decision === 'APPROVED') {
+        return `Tool approved for ${riskProfile.tier} risk tier. Compliance score of ${score} meets threshold. Required controls: ${this.mapTierToControls(riskProfile.tier).join(', ')}.`;
+      } else if (decision === 'HUMAN_IN_LOOP') {
+        return `${riskProfile.tier} risk tier requires human review. Compliance score: ${score}. Audit checklist: ${riskProfile.auditChecklist.slice(0, 3).join(', ')}...`;
+      } else {
+        return `Tool rejected for ${riskProfile.tier} risk tier. Compliance score of ${score} below required threshold. Additional controls needed.`;
+      }
     }
   }
   
@@ -315,3 +464,8 @@ class PolicyAgent {
   }
   
   module.exports = { PolicyAgent, ContextAgent, AuditAgent };
+  
+  // Export standalone if needed
+  if (typeof module !== 'undefined' && module.exports && !module.parent) {
+    module.exports = PolicyAgent;
+  }

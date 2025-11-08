@@ -1,4 +1,4 @@
-import { Agent } from '../cursor-agent-registry.js'
+import { Agent } from '../cursor-agent-registry.ts'
 
 export class MonitoringAgent implements Agent {
   async process(input: any, context: any): Promise<any> {

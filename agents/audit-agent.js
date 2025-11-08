@@ -42,6 +42,45 @@ class AuditAgent extends AgentBase {
             escalation_decision: 'Escalation Decision',
             workflow_routing: 'Workflow Routing'
         };
+
+        // Risk Profile Checklists - Base + Tier-Specific
+        this.riskProfileChecklists = {
+            base: [
+                'usage_tracking',
+                'error_logging',
+                'access_controls',
+                'basic_documentation'
+            ],
+            minimal: [],
+            low: [
+                'content_review',
+                'quarterly_spot_checks'
+            ],
+            medium: [
+                'human_review',
+                'output_validation',
+                'data_protection_review',
+                'user_feedback_tracking'
+            ],
+            high: [
+                'explainability_review',
+                'bias_testing',
+                'legal_sign_off',
+                'performance_monitoring',
+                'data_protection_audit'
+            ],
+            critical: [
+                'full_model_audit',
+                'continuous_monitoring',
+                'human_in_the_loop_validation',
+                'regular_bias_testing',
+                'explainability_certification',
+                'legal_compliance_audit',
+                'external_audit',
+                'penetration_testing',
+                'incident_response_plan'
+            ]
+        };
     }
 
     /**
@@ -71,6 +110,11 @@ class AuditAgent extends AgentBase {
             throw new Error('No active audit session. Call startAuditSession() first.');
         }
 
+        // Extract risk profile data if available
+        const riskProfileTier = decision.risk?.profile || decision.taxonomyAssessment?.riskProfile || null;
+        const dimensionScores = decision.risk?.profileDimensions || decision.taxonomyAssessment?.dimensionScores || null;
+        const auditChecklistRequired = riskProfileTier ? this.generateAuditChecklist(riskProfileTier, decision) : [];
+
         const auditEntry = {
             entry_id: this.generateEntryId(),
             session_id: this.currentSession.session_id,
@@ -88,10 +132,16 @@ class AuditAgent extends AgentBase {
             risk_level: this.extractRiskLevel(decision),
             status: this.extractStatus(decision),
             processing_time_ms: this.calculateProcessingTime(),
+            // NEW: Risk Profile Taxonomy Data
+            risk_profile_tier: riskProfileTier,
+            dimension_scores: dimensionScores,
+            audit_checklist_required: auditChecklistRequired,
+            compliance_controls_applied: decision.conditions?.recommendedControls || [],
             metadata: {
                 user_agent: 'AICombly.io Compliance System',
                 version: '1.0.0',
-                environment: 'production'
+                environment: 'production',
+                taxonomy_enabled: !!riskProfileTier
             }
         };
 
@@ -285,6 +335,81 @@ class AuditAgent extends AgentBase {
         this.currentSession = null;
         
         return completedSession;
+    }
+
+    /**
+     * Generate hybrid audit checklist based on risk profile tier
+     * Combines base checklist + tier-specific requirements
+     * Enhanced to support both rule-based and LLM-based profiles
+     */
+    generateAuditChecklist(riskProfile, toolMetadata = {}) {
+        const checklist = [...this.riskProfileChecklists.base];
+        
+        // Add tier-specific items
+        const tierSpecific = this.riskProfileChecklists[riskProfile] || [];
+        checklist.push(...tierSpecific);
+        
+        // Add dimension-specific items based on high-risk dimensions
+        // Support both old format (risk?.profileDimensions) and new format (risk?.dimensionScores)
+        const dimensions = toolMetadata.risk?.profileDimensions || 
+                          toolMetadata.risk?.dimensionScores ||
+                          toolMetadata.dimensionScores;
+        
+        if (dimensions) {
+            // Data sensitivity items (check both riskLevel and score)
+            if (this.isDimensionHighRisk(dimensions.dataSensitivity)) {
+                checklist.push('data_encryption_audit', 'data_minimization_review', 'retention_policy_compliance', 'pii_handling_review');
+            }
+            
+            // External exposure items
+            if (this.isDimensionHighRisk(dimensions.externalExposure)) {
+                checklist.push('customer_impact_assessment', 'output_quality_review', 'brand_reputation_check');
+            }
+            
+            // Model transparency items
+            if (this.isDimensionHighRisk(dimensions.modelTransparency)) {
+                checklist.push('explainability_documentation_review', 'model_card_validation', 'decision_traceability_audit');
+            }
+            
+            // Misuse vectors items
+            if (this.isDimensionHighRisk(dimensions.misuseVectors)) {
+                checklist.push('security_testing', 'adversarial_testing', 'input_validation_review', 'prompt_injection_testing');
+            }
+            
+            // Legal/IP risk items (support both legalRisk and legalIPRisk)
+            const legalDimension = dimensions.legalRisk || dimensions.legalIPRisk;
+            if (this.isDimensionHighRisk(legalDimension)) {
+                checklist.push('legal_compliance_review', 'ip_rights_clearance', 'liability_assessment', 'regulatory_impact_review');
+            }
+            
+            // Operational criticality items
+            if (this.isDimensionHighRisk(dimensions.operationalCriticality)) {
+                checklist.push('sla_monitoring', 'availability_testing', 'disaster_recovery_plan', 'failover_validation');
+            }
+        }
+        
+        // Remove duplicates and return
+        return [...new Set(checklist)];
+    }
+
+    /**
+     * Helper: Check if a dimension is high risk
+     * Supports both object format (with riskLevel) and numeric format (score)
+     */
+    isDimensionHighRisk(dimension) {
+        if (!dimension) return false;
+        
+        // Check if it's an object with riskLevel property
+        if (typeof dimension === 'object' && dimension.riskLevel) {
+            return dimension.riskLevel === 'high' || dimension.riskLevel === 'critical';
+        }
+        
+        // Check if it's a numeric score (>70 is high risk)
+        if (typeof dimension === 'number') {
+            return dimension > 70;
+        }
+        
+        return false;
     }
 
     /**

@@ -35,7 +35,7 @@ enabled = true
 [auth]
 enabled = true
 site_url = "http://localhost:3000"
-additional_redirect_urls = ["https://aicomplyr.io", "https://app.aicomplyr.io"]
+additional_redirect_urls = ["https://dqemokpnzasbeytdbzei.supabase.co", "https://app.dqemokpnzasbeytdbzei.supabase.co"]
 jwt_expiry = 3600
 
 [edge_runtime]

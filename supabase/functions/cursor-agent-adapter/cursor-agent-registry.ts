@@ -2,20 +2,21 @@
 // Note: In a real implementation, these would need to be converted to Deno-compatible versions
 // or use a bridge pattern to call the Node.js agents
 
-import { PolicyAgent } from './agents/policy-agent.js'
-import { AuditAgent } from './agents/audit-agent.js'
-import { ContextAgent } from './agents/context-agent.js'
-import { ConflictDetectionAgent } from './agents/conflict-detection-agent.js'
-import { NegotiationAgent } from './agents/negotiation-agent.js'
-import { ComplianceScoringAgent } from './agents/compliance-scoring-agent.js'
-import { PatternRecognitionAgent } from './agents/pattern-recognition-agent.js'
-import { GuardrailOrchestratorAgent } from './agents/guardrail-orchestrator-agent.js'
-import { HumanEscalationAgent } from './agents/human-escalation-agent.js'
-import { MultiTenantOrchestratorAgent } from './agents/multi-tenant-orchestrator-agent.js'
-import { ToolDiscoveryAgent } from './agents/tool-discovery-agent.js'
-import { DataExtractionAgent } from './agents/data-extraction-agent.js'
-import { MonitoringAgent } from './agents/monitoring-agent.js'
-import { VendorOutreachAgent } from './agents/vendor-outreach-agent.js'
+import { PolicyAgent } from './agents/policy-agent.ts'
+import { AuditAgent } from './agents/audit-agent.ts'
+import { ContextAgent } from './agents/context-agent.ts'
+import { ConflictDetectionAgent } from './agents/conflict-detection-agent.ts'
+import { NegotiationAgent } from './agents/negotiation-agent.ts'
+import { ComplianceScoringAgent } from './agents/compliance-scoring-agent.ts'
+import { PatternRecognitionAgent } from './agents/pattern-recognition-agent.ts'
+import { GuardrailOrchestratorAgent } from './agents/guardrail-orchestrator-agent.ts'
+import { HumanEscalationAgent } from './agents/human-escalation-agent.ts'
+import { MultiTenantOrchestratorAgent } from './agents/multi-tenant-orchestrator-agent.ts'
+import { ToolDiscoveryAgent } from './agents/tool-discovery-agent.ts'
+import { DataExtractionAgent } from './agents/data-extraction-agent.ts'
+import { MonitoringAgent } from './agents/monitoring-agent.ts'
+import { VendorOutreachAgent } from './agents/vendor-outreach-agent.ts'
+import { SandboxAgent } from './agents/sandbox-agent.ts'
 
 export interface Agent {
   process(input: any, context: any): Promise<any>
@@ -34,6 +35,7 @@ export class AgentRegistry {
     this.agents.set('policy', new PolicyAgent())
     this.agents.set('audit', new AuditAgent())
     this.agents.set('context', new ContextAgent())
+    this.agents.set('sandbox', new SandboxAgent()) // NEW: Policy Sandbox Agent
     this.agents.set('conflict-detection', new ConflictDetectionAgent())
     this.agents.set('negotiation', new NegotiationAgent())
     this.agents.set('compliance-scoring', new ComplianceScoringAgent())

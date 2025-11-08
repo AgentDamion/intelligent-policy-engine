@@ -1,0 +1,23 @@
+{
+  "name": "@aicomplyr/policy-engine",
+  "version": "1.0.0",
+  "description": "Deterministic core for Policy Rule evaluation.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@aicomplyr/shared": "workspace:*",
+    "semver": "*"
+  },
+  "devDependencies": {
+    "tsup": "*",
+    "vitest": "*"
+  },
+  "exports": {
+    ".": "./dist/index.js"
+  }
+}
+
