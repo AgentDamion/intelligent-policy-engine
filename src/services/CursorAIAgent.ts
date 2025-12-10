@@ -60,48 +60,96 @@ export class CursorAIAgent {
   
   /**
    * Analyze document content with AI
+   * Now uses async worker pattern instead of direct Edge Function call
    */
   private static async analyzeDocument(doc: any) {
     try {
-      // Call the Cursor Agent Adapter for real AI analysis
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/cursor-agent-adapter`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY
-        },
-        body: JSON.stringify({
+      // Use async worker pattern: submit task to agent_task_requests table
+      const { submitAgentTask } = await import('./AgentTaskService')
+      
+      const response = await submitAgentTask({
+        prompt: `Analyze this document for compliance: ${JSON.stringify(doc)}`,
+        context: {
           agentName: 'policy',
           action: 'analyze',
           input: doc,
-          context: {
-            enterprise_id: doc.enterprise_id || 'default',
-            analysis_type: 'document_compliance'
-          }
-        })
+          enterprise_id: doc.enterprise_id || 'default',
+          analysis_type: 'document_compliance'
+        }
       })
 
-      if (!response.ok) {
-        throw new Error(`AI analysis failed: ${response.status}`)
-      }
+      if (response.status === 'completed' && response.response_payload) {
+        const answer = response.response_payload.answer || ''
+        
+        // Try to parse the answer as JSON, fallback to text
+        let parsedResult
+        try {
+          parsedResult = JSON.parse(answer)
+        } catch {
+          // If not JSON, create a structured response from the answer text
+          parsedResult = {
+            decision: {
+              confidence: 0.9,
+              reasoning: answer
+            },
+            metadata: {
+              aiMetadata: {
+                keyFactors: []
+              }
+            }
+          }
+        }
 
-      const result = await response.json()
-      
-      if (result.success) {
         return {
-          confidence: result.result.decision.confidence || 0.9,
-          reasoning: result.result.decision.reasoning || 'AI analysis completed',
-          summary: result.result.decision.reasoning || 'Document analysis completed',
-          entities: result.result.decision.riskFactors || [],
-          topics: result.result.metadata?.aiMetadata?.keyFactors || []
+          confidence: parsedResult.decision?.confidence || 0.9,
+          reasoning: parsedResult.decision?.reasoning || answer,
+          summary: parsedResult.decision?.reasoning || answer,
+          entities: parsedResult.decision?.riskFactors || [],
+          topics: parsedResult.metadata?.aiMetadata?.keyFactors || []
         }
       } else {
-        throw new Error(result.error || 'AI analysis failed')
+        throw new Error(response.response_payload?.error || 'AI analysis failed')
       }
     } catch (error) {
       console.error('[CursorAIAgent] AI analysis error:', error)
-      // Fallback to basic analysis
+      
+      // Fallback: Try old Edge Function method if worker fails
+      try {
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/cursor-agent-adapter`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY
+          },
+          body: JSON.stringify({
+            agentName: 'policy',
+            action: 'analyze',
+            input: doc,
+            context: {
+              enterprise_id: doc.enterprise_id || 'default',
+              analysis_type: 'document_compliance'
+            }
+          })
+        })
+
+        if (response.ok) {
+          const result = await response.json()
+          if (result.success) {
+            return {
+              confidence: result.result.decision.confidence || 0.9,
+              reasoning: result.result.decision.reasoning || 'AI analysis completed',
+              summary: result.result.decision.reasoning || 'Document analysis completed',
+              entities: result.result.decision.riskFactors || [],
+              topics: result.result.metadata?.aiMetadata?.keyFactors || []
+            }
+          }
+        }
+      } catch (fallbackError) {
+        console.warn('[CursorAIAgent] Fallback method also failed:', fallbackError)
+      }
+      
+      // Final fallback to basic analysis
       return {
         confidence: 0.7,
         reasoning: 'AI analysis unavailable, using fallback logic',

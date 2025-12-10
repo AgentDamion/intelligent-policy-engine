@@ -17,6 +17,8 @@ import { DataExtractionAgent } from './agents/data-extraction-agent.ts'
 import { MonitoringAgent } from './agents/monitoring-agent.ts'
 import { VendorOutreachAgent } from './agents/vendor-outreach-agent.ts'
 import { SandboxAgent } from './agents/sandbox-agent.ts'
+import { ProofRequirementsAgent } from './agents/proof-requirements-agent.ts'
+import { AgoOrchestratorAgent } from './agents/ago-orchestrator-agent.ts'
 
 export interface Agent {
   process(input: any, context: any): Promise<any>
@@ -47,6 +49,8 @@ export class AgentRegistry {
     this.agents.set('data-extraction', new DataExtractionAgent())
     this.agents.set('monitoring', new MonitoringAgent())
     this.agents.set('vendor-outreach', new VendorOutreachAgent())
+    this.agents.set('proof-requirements', new ProofRequirementsAgent())
+    this.agents.set('ago-orchestrator', new AgoOrchestratorAgent())
   }
 
   getAgent(name: string): Agent | undefined {
