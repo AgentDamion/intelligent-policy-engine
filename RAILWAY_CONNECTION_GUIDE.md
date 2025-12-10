@@ -53,7 +53,7 @@ Railway automatically provides `DATABASE_URL` when you add a Postgres service. T
    ```
    postgresql://postgres:password@hostname.railway.app:3000/railway
    ```
-   **Important**: Port should be `3000`, not `5432` [[memory:4543327]]
+   **Important**: Port should be `3000`, not `5432`
 
 ### For Supabase (Agent Worker)
 
