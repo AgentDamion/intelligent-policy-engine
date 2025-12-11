@@ -14,6 +14,11 @@ export interface PlannerQueryBuilder {
   maybeSingle(): Promise<PostgrestResponse<any>>
   in?(column: string, values: unknown[]): PlannerQueryBuilder
   insert?(values: any): Promise<PostgrestResponse<any>>
+  // Allow query builder to be awaited directly for array results
+  then<TResult1 = PostgrestResponse<any[]>, TResult2 = never>(
+    onfulfilled?: ((value: PostgrestResponse<any[]>) => TResult1 | PromiseLike<TResult1>) | null,
+    onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null
+  ): Promise<TResult1 | TResult2>
 }
 
 export interface PostgrestResponse<T> {
@@ -160,12 +165,14 @@ async function fetchOpenBreakers(
   capabilityId: string,
   orgId: string,
 ): Promise<Set<string>> {
-  const { data, error } = await client
+  const query = client
     .from('breaker_states')
     .select('implementation_id')
     .eq('capability_id', capabilityId)
     .eq('state', 'open')
     .or(`enterprise_id.eq.${orgId},enterprise_id.is.null`)
+  
+  const { data, error } = await query as Promise<PostgrestResponse<BreakerRow[]>>
 
   if (error) {
     throw new PlannerError(`Failed to fetch breaker states: ${error.message}`)
@@ -180,11 +187,13 @@ async function fetchImplementations(
   capabilityId: string,
   orgId: string,
 ): Promise<ImplementationRow[]> {
-  const { data, error } = await client
+  const query = client
     .from('capability_implementations')
     .select('*')
     .eq('capability_id', capabilityId)
     .or(`enterprise_id.eq.${orgId},enterprise_id.is.null`)
+  
+  const { data, error } = await query as Promise<PostgrestResponse<ImplementationRow[]>>
 
   if (error) {
     throw new PlannerError(`Failed to fetch implementations: ${error.message}`)
