@@ -37,9 +37,17 @@ export async function submitAgentTask(
 ): Promise<AgentTaskResponse> {
   try {
     // 1. Insert task into queue
+    // Get current user if not provided in request
+    let userId = request.user_id
+    if (!userId) {
+      const { data: { user } } = await supabase.auth.getUser()
+      userId = user?.id
+    }
+
     const { data: task, error: insertError } = await supabase
       .from('agent_task_requests')
       .insert({
+        user_id: userId,
         status: 'pending',
         request_payload: {
           prompt: request.prompt,
@@ -61,7 +69,28 @@ export async function submitAgentTask(
 
     // 2. Set up Realtime subscription for this specific task
     return new Promise((resolve, reject) => {
-      const channel = supabase
+      let timeoutId: NodeJS.Timeout | null = null
+      let channel: ReturnType<typeof supabase.channel> | null = null
+
+      // Helper function to cleanup resources
+      const cleanup = () => {
+        if (timeoutId !== null) {
+          clearTimeout(timeoutId)
+          timeoutId = null
+        }
+        if (channel !== null) {
+          channel.unsubscribe()
+          channel = null
+        }
+      }
+
+      // Timeout after 60 seconds
+      timeoutId = setTimeout(() => {
+        cleanup()
+        reject(new Error('Task timeout: No response after 60 seconds'))
+      }, 60000)
+
+      channel = supabase
         .channel(`agent-task-${taskId}`)
         .on(
           'postgres_changes',
@@ -81,10 +110,10 @@ export async function submitAgentTask(
 
             // Resolve when task is completed or failed
             if (updatedTask.status === 'completed') {
-              channel.unsubscribe()
+              cleanup()
               resolve(updatedTask)
             } else if (updatedTask.status === 'failed') {
-              channel.unsubscribe()
+              cleanup()
               reject(new Error(updatedTask.response_payload?.error || 'Task failed'))
             }
             // If still processing, wait for next update
@@ -94,16 +123,10 @@ export async function submitAgentTask(
           if (status === 'SUBSCRIBED') {
             console.log(`✅ Subscribed to task ${taskId}`)
           } else if (status === 'CHANNEL_ERROR') {
-            channel.unsubscribe()
+            cleanup()
             reject(new Error('Failed to subscribe to task updates'))
           }
         })
-
-      // Timeout after 60 seconds
-      setTimeout(() => {
-        channel.unsubscribe()
-        reject(new Error('Task timeout: No response after 60 seconds'))
-      }, 60000)
     })
   } catch (error) {
     console.error('[AgentTaskService] Error submitting task:', error)

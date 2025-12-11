@@ -7,6 +7,7 @@
 
 CREATE TABLE IF NOT EXISTS public.agent_task_requests (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
     status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'failed')),
     request_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
     response_payload JSONB DEFAULT NULL,
@@ -17,6 +18,7 @@ CREATE TABLE IF NOT EXISTS public.agent_task_requests (
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_agent_task_requests_status ON public.agent_task_requests(status);
 CREATE INDEX IF NOT EXISTS idx_agent_task_requests_created_at ON public.agent_task_requests(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_agent_task_requests_user_id ON public.agent_task_requests(user_id);
 
 -- Create trigger to automatically update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -42,21 +44,39 @@ CREATE POLICY "Service role full access"
     USING (auth.role() = 'service_role')
     WITH CHECK (auth.role() = 'service_role');
 
--- Policy: Authenticated users can insert and read their own tasks
+-- Policy: Authenticated users can insert tasks (user_id will be set automatically)
 CREATE POLICY "Users can insert tasks"
     ON public.agent_task_requests
     FOR INSERT
     TO authenticated
-    WITH CHECK (true);
+    WITH CHECK (user_id = auth.uid() OR user_id IS NULL);
 
+-- Policy: Users can only read their own tasks
 CREATE POLICY "Users can read their own tasks"
     ON public.agent_task_requests
     FOR SELECT
     TO authenticated
-    USING (true);
+    USING (user_id = auth.uid());
+
+-- Trigger to automatically set user_id from auth.uid() if not provided (defense in depth)
+CREATE OR REPLACE FUNCTION set_user_id_on_insert()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.user_id IS NULL THEN
+        NEW.user_id = auth.uid();
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER set_agent_task_requests_user_id
+    BEFORE INSERT ON public.agent_task_requests
+    FOR EACH ROW
+    EXECUTE FUNCTION set_user_id_on_insert();
 
 -- Add comment for documentation
 COMMENT ON TABLE public.agent_task_requests IS 'Stores agent task requests that are processed by background workers';
+COMMENT ON COLUMN public.agent_task_requests.user_id IS 'User who created the task (references auth.users)';
 COMMENT ON COLUMN public.agent_task_requests.status IS 'Task status: pending, processing, completed, or failed';
 COMMENT ON COLUMN public.agent_task_requests.request_payload IS 'JSON payload containing the task request (e.g., prompt, parameters)';
 COMMENT ON COLUMN public.agent_task_requests.response_payload IS 'JSON payload containing the task response/result';
