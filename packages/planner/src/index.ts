@@ -172,7 +172,7 @@ async function fetchOpenBreakers(
     .eq('state', 'open')
     .or(`enterprise_id.eq.${orgId},enterprise_id.is.null`)
   
-  const { data, error } = await query as Promise<PostgrestResponse<BreakerRow[]>>
+  const { data, error } = await (query as any)
 
   if (error) {
     throw new PlannerError(`Failed to fetch breaker states: ${error.message}`)
@@ -193,7 +193,7 @@ async function fetchImplementations(
     .eq('capability_id', capabilityId)
     .or(`enterprise_id.eq.${orgId},enterprise_id.is.null`)
   
-  const { data, error } = await query as Promise<PostgrestResponse<ImplementationRow[]>>
+  const { data, error } = await (query as any)
 
   if (error) {
     throw new PlannerError(`Failed to fetch implementations: ${error.message}`)
