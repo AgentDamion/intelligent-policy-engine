@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 
 export function SignInPanel() {
+  const platformOrigin = (import.meta as any).env?.VITE_PLATFORM_ORIGIN || window.location.origin
   const emailRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
@@ -41,7 +42,7 @@ export function SignInPanel() {
       if (useMagicLink) {
         const { error } = await supabase.auth.signInWithOtp({
           email,
-          options: { emailRedirectTo: window.location.origin },
+          options: { emailRedirectTo: `${platformOrigin}/login` },
         })
         if (error) throw error
         toast.success('Magic link sent. Check your email.')
@@ -71,7 +72,7 @@ export function SignInPanel() {
     const supabaseProvider = provider === 'microsoft' ? 'azure' : 'google'
     const { error } = await supabase.auth.signInWithOAuth({
       provider: supabaseProvider as any,
-      options: { redirectTo: window.location.origin },
+      options: { redirectTo: `${platformOrigin}/login` },
     })
     if (error) toast.error(error.message)
   }

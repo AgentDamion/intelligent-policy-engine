@@ -68,8 +68,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   const resetPassword = async (email: string) => {
+    const platformOrigin = (import.meta as any).env?.VITE_PLATFORM_ORIGIN || window.location.origin
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: `${platformOrigin}/reset-password`,
     })
     return { error }
   }
