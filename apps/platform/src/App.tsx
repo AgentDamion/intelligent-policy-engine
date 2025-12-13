@@ -1,7 +1,8 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
 import { useEnterprise } from './contexts/EnterpriseContext'
+import { ensureOnPlatformOrigin } from './utils/platformOrigin'
 
 // Components
 import Layout from './components/Layout'
@@ -15,6 +16,7 @@ import EnterpriseDashboard from './pages/enterprise/EnterpriseDashboard'
 import EnterpriseDashboardEnhanced from './pages/enterprise/EnterpriseDashboardEnhanced'
 import OnboardingPage from './pages/OnboardingPage'
 import AuthHubPage from './pages/auth/AuthHubPage'
+import AgenticPage from './pages/AgenticPage'
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -65,6 +67,11 @@ const OnboardingRoute: React.FC<{ children: React.ReactNode }> = ({ children }) 
 }
 
 function App() {
+  // If a Supabase callback ever lands on the marketing domain, bounce to the platform.
+  useEffect(() => {
+    ensureOnPlatformOrigin()
+  }, [])
+
   return (
     <Routes>
       {/* Public Routes */}
@@ -92,6 +99,7 @@ function App() {
       >
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<DashboardPage />} />
+        <Route path="agentic" element={<AgenticPage />} />
         <Route path="enterprise" element={<EnterpriseDashboard />} />
         <Route path="enterprise-ai" element={<EnterpriseDashboardEnhanced />} />
         <Route path="policies" element={<PoliciesPage />} />

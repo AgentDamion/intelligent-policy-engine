@@ -10,7 +10,8 @@
   },
   "dependencies": {
     "@aicomplyr/shared": "workspace:*",
-    "semver": "*"
+    "semver": "*",
+    "zod": "*"
   },
   "devDependencies": {
     "tsup": "*",

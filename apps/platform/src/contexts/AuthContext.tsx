@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
+import { getPlatformOrigin } from '@/utils/platformOrigin'
 
 interface AuthContextType {
   user: User | null
@@ -56,9 +57,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   const signUp = async (email: string, password: string) => {
+    const platformOrigin = getPlatformOrigin()
     const { error } = await supabase.auth.signUp({
       email,
       password,
+      options: platformOrigin ? { emailRedirectTo: `${platformOrigin}/login` } : undefined,
     })
     return { error }
   }
@@ -68,8 +71,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   const resetPassword = async (email: string) => {
+    const platformOrigin = getPlatformOrigin()
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: `${platformOrigin}/reset-password`,
     })
     return { error }
   }
