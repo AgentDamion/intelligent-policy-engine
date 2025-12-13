@@ -72,7 +72,7 @@ export const AgentActivityPanel: React.FC<AgentActivityPanelProps> = ({
     }
   }
 
-  const getActionDescription = (action: string, agentName: string): string => {
+  const getActionDescription = (action: string): string => {
     const actionMap: Record<string, string> = {
       'validate': 'Validating policy structure and rules',
       'simulate_policy_execution': 'Simulating policy execution with AI',
@@ -164,7 +164,7 @@ export const AgentActivityPanel: React.FC<AgentActivityPanelProps> = ({
                   </div>
 
                   <div className="text-sm text-gray-700">
-                    {getActionDescription(activity.action, activity.agentName)}
+                    {getActionDescription(activity.action)}
                   </div>
 
                   {activity.confidence !== undefined && activity.status === 'completed' && (
