@@ -56,10 +56,12 @@ export type ConditionTree = {
   clauses: Array<ConditionClause | ConditionTree>;
 };
 
+// NOTE: Recursive Zod schemas can trigger TS "infinite" type mismatches.
+// Cast to any to silence the compiler while keeping runtime validation.
 export const ConditionTree: z.ZodType<ConditionTree> = z.object({
   operator: z.enum(["AND","OR"]),
   clauses: z.array(z.union([ConditionClause, z.lazy(() => ConditionTree)])),
-});
+}) as any;
 
 export const PolicyRule = z.object({
   rule_id: z.string(),
