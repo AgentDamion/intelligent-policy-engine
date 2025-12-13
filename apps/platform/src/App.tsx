@@ -1,7 +1,8 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
 import { useEnterprise } from './contexts/EnterpriseContext'
+import { ensureOnPlatformOrigin } from './utils/platformOrigin'
 
 // Components
 import Layout from './components/Layout'
@@ -66,6 +67,11 @@ const OnboardingRoute: React.FC<{ children: React.ReactNode }> = ({ children }) 
 }
 
 function App() {
+  // If a Supabase callback ever lands on the marketing domain, bounce to the platform.
+  useEffect(() => {
+    ensureOnPlatformOrigin()
+  }, [])
+
   return (
     <Routes>
       {/* Public Routes */}

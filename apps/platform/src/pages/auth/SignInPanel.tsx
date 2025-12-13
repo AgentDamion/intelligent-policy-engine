@@ -8,9 +8,10 @@ import { track } from '@/utils/analytics'
 import { supabase } from '@/lib/supabase'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
+import { getPlatformOrigin } from '@/utils/platformOrigin'
 
 export function SignInPanel() {
-  const platformOrigin = (import.meta as any).env?.VITE_PLATFORM_ORIGIN || window.location.origin
+  const platformOrigin = getPlatformOrigin()
   const emailRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
   const [email, setEmail] = useState('')

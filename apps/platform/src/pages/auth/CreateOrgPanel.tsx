@@ -6,6 +6,7 @@ import { track } from '@/utils/analytics'
 import { supabase } from '@/lib/supabase'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
+import { getPlatformOrigin } from '@/utils/platformOrigin'
 
 type Props = { onBack?: () => void }
 
@@ -18,6 +19,7 @@ type Props = { onBack?: () => void }
 export function CreateOrgPanel({ onBack }: Props) {
   const emailRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
+  const platformOrigin = getPlatformOrigin()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -42,7 +44,11 @@ export function CreateOrgPanel({ onBack }: Props) {
     setLoading(true)
     try {
       track('auth.signup_submitted')
-      const { data, error } = await supabase.auth.signUp({ email, password })
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: platformOrigin ? { emailRedirectTo: `${platformOrigin}/login` } : undefined,
+      })
       if (error) throw error
 
       // If email confirmation is enabled, there may be no session yet.
