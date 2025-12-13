@@ -14,7 +14,8 @@ import {
   Building2,
   Briefcase,
   Activity,
-  Zap
+  Zap,
+  Sparkles
 } from 'lucide-react'
 import LoadingSpinner from './ui/LoadingSpinner'
 import { SpineLayout } from './agentic/spine/SpineLayout'
@@ -29,6 +30,7 @@ const Layout: React.FC = () => {
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
+    { name: 'Agentic', href: '/agentic', icon: Sparkles },
     { name: 'Enterprise', href: '/enterprise', icon: Activity },
     { name: 'Enterprise AI', href: '/enterprise-ai', icon: Zap },
     { name: 'Policies', href: '/policies', icon: FileText },

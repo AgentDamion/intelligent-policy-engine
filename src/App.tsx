@@ -15,6 +15,7 @@ import EnterpriseDashboard from './pages/enterprise/EnterpriseDashboard'
 import EnterpriseDashboardEnhanced from './pages/enterprise/EnterpriseDashboardEnhanced'
 import OnboardingPage from './pages/OnboardingPage'
 import AuthHubPage from './pages/auth/AuthHubPage'
+import AgenticPage from './pages/AgenticPage'
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -92,6 +93,7 @@ function App() {
       >
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<DashboardPage />} />
+        <Route path="agentic" element={<AgenticPage />} />
         <Route path="enterprise" element={<EnterpriseDashboard />} />
         <Route path="enterprise-ai" element={<EnterpriseDashboardEnhanced />} />
         <Route path="policies" element={<PoliciesPage />} />
