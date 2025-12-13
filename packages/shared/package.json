@@ -4,6 +4,7 @@
   "description": "Shared Zod schemas and types for the compliance agents.",
   "type": "module",
   "main": "./dist/index.js",
+  "types": "./types/index.d.ts",
   "scripts": {
     "build": "tsup",
     "test": "vitest"
@@ -15,7 +16,10 @@
     "tsup": "*"
   },
   "exports": {
-    ".": "./dist/index.js"
+    ".": {
+      "types": "./types/index.d.ts",
+      "default": "./dist/index.js"
+    }
   }
 }
 
