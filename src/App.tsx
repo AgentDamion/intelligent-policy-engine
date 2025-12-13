@@ -14,6 +14,7 @@ import LoadingSpinner from './components/ui/LoadingSpinner'
 import EnterpriseDashboard from './pages/enterprise/EnterpriseDashboard'
 import EnterpriseDashboardEnhanced from './pages/enterprise/EnterpriseDashboardEnhanced'
 import OnboardingPage from './pages/OnboardingPage'
+import AuthHubPage from './pages/auth/AuthHubPage'
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -67,7 +68,8 @@ function App() {
   return (
     <Routes>
       {/* Public Routes */}
-      <Route path="/login" element={<LoginPage />} />
+      <Route path="/login" element={<AuthHubPage />} />
+      <Route path="/login-legacy" element={<LoginPage />} />
       
       {/* Onboarding Routes */}
       <Route 
