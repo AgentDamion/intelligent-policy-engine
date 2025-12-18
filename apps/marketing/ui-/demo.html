@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AICOMPLYR - Context-Aware React Components Demo</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .demo-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .demo-header h1 {
+            margin: 0 0 16px 0;
+            font-size: 36px;
+            font-weight: 700;
+        }
+        
+        .demo-header p {
+            margin: 0;
+            font-size: 18px;
+            opacity: 0.9;
+        }
+        
+        .demo-content {
+            padding: 40px;
+        }
+        
+        .component-section {
+            margin-bottom: 40px;
+        }
+        
+        .component-section h2 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 16px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+        
+        .component-description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        .component-features {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .component-features h3 {
+            color: #333;
+            margin: 0 0 12px 0;
+            font-size: 16px;
+        }
+        
+        .feature-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .feature-list li {
+            padding: 4px 0;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .feature-list li::before {
+            content: '✅';
+            font-size: 12px;
+        }
+        
+        .setup-instructions {
+            background: #e8f5e8;
+            border: 1px solid #27ae60;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 40px;
+        }
+        
+        .setup-instructions h3 {
+            color: #2d5a2d;
+            margin: 0 0 16px 0;
+        }
+        
+        .setup-steps {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .setup-steps li {
+            padding: 8px 0;
+            color: #2d5a2d;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        
+        .setup-steps li::before {
+            content: counter(step-counter);
+            counter-increment: step-counter;
+            background: #27ae60;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        
+        .setup-steps {
+            counter-reset: step-counter;
+        }
+        
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            overflow-x: auto;
+            margin: 12px 0;
+        }
+        
+        .highlight {
+            background: #667eea;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="demo-header">
+            <h1>🦜 AICOMPLYR</h1>
+            <p>Context-Aware React Component System</p>
+        </div>
+        
+        <div class="demo-content">
+            <div class="component-section">
+                <h2>📋 Component Overview</h2>
+                <div class="component-description">
+                    This React component system enables seamless switching between Enterprise admin and Agency seat views 
+                    within the same user session. The system maintains state during context switching and provides 
+                    context-specific navigation, dashboards, and notifications.
+                </div>
+            </div>
+            
+            <div class="component-section">
+                <h2>🎛️ ContextSwitcher Component</h2>
+                <div class="component-description">
+                    A dropdown component that allows users to switch between different enterprise and agency contexts 
+                    without losing their current session state.
+                </div>
+                <div class="component-features">
+                    <h3>Key Features:</h3>
+                    <ul class="feature-list">
+                        <li>Groups contexts by type (Enterprise vs Agency)</li>
+                        <li>Search functionality for large context lists</li>
+                        <li>Visual indicators for current context</li>
+                        <li>Smooth animations and transitions</li>
+                        <li>Responsive design for mobile devices</li>
+                        <li>Dark mode support</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="component-section">
+                <h2>📊 ContextAwareDashboard Component</h2>
+                <div class="component-description">
+                    Renders different dashboard layouts based on the current context - Enterprise Command Center for 
+                    enterprise users and Agency Workflow Hub for agency users.
+                </div>
+                <div class="component-features">
+                    <h3>Enterprise Features:</h3>
+                    <ul class="feature-list">
+                        <li>Policy Management dashboard</li>
+                        <li>Seat Management overview</li>
+                        <li>Audit Center with real-time metrics</li>
+                        <li>Analytics and compliance reporting</li>
+                    </ul>
+                    
+                    <h3>Agency Features:</h3>
+                    <ul class="feature-list">
+                        <li>Submissions tracking</li>
+                        <li>Client Compliance monitoring</li>
+                        <li>Tool Management interface</li>
+                        <li>Quick Actions for common tasks</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="component-section">
+                <h2>🧭 ContextAwareNavigation Component</h2>
+                <div class="component-description">
+                    Provides context-specific navigation menus that adapt based on the user's current context and permissions.
+                </div>
+                <div class="component-features">
+                    <h3>Navigation Features:</h3>
+                    <ul class="feature-list">
+                        <li>Dynamic menu items based on context</li>
+                        <li>Permission-based navigation</li>
+                        <li>Badge indicators for notifications</li>
+                        <li>Mobile-responsive sidebar</li>
+                        <li>User profile and logout integration</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="component-section">
+                <h2>🔔 NotificationCenter Component</h2>
+                <div class="component-description">
+                    Aggregates notifications from all user contexts and provides filtering by context type and priority.
+                </div>
+                <div class="component-features">
+                    <h3>Notification Features:</h3>
+                    <ul class="feature-list">
+                        <li>Context-aware notification filtering</li>
+                        <li>Priority-based visual indicators</li>
+                        <li>Real-time notification updates</li>
+                        <li>Mark as read functionality</li>
+                        <li>Context badges for each notification</li>
+                        <li>Time-based sorting and display</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="setup-instructions">
+                <h3>🚀 Setup Instructions</h3>
+                <ol class="setup-steps">
+                    <li>
+                        <strong>Install Dependencies:</strong>
+                        <div class="code-block">
+npm install react react-dom
+                        </div>
+                    </li>
+                    <li>
+                        <strong>Copy Component Files:</strong>
+                        <div class="code-block">
+Copy all .jsx and .css files from ui/components/ to your React project
+                        </div>
+                    </li>
+                    <li>
+                        <strong>Import Components:</strong>
+                        <div class="code-block">
+import App from './components/App.jsx';
+import ContextSwitcher from './components/ContextSwitcher.jsx';
+import ContextAwareDashboard from './components/ContextAwareDashboard.jsx';
+import ContextAwareNavigation from './components/ContextAwareNavigation.jsx';
+import NotificationCenter from './components/NotificationCenter.jsx';
+                        </div>
+                    </li>
+                    <li>
+                        <strong>Set Up Mock Data:</strong>
+                        <div class="code-block">
+// Replace mock data with real API calls
+const userContexts = [
+  {
+    id: 'enterprise-1',
+    name: 'Your Enterprise',
+    type: 'enterprise',
+    role: 'Admin'
+  },
+  {
+    id: 'agency-1', 
+    name: 'Your Agency',
+    type: 'agency',
+    role: 'User'
+  }
+];
+                        </div>
+                    </li>
+                    <li>
+                        <strong>Integrate with Backend:</strong>
+                        <div class="code-block">
+// Connect to your AICOMPLYR backend APIs
+// Update API endpoints in components
+// Add authentication and authorization
+                        </div>
+                    </li>
+                </ol>
+            </div>
+            
+            <div class="component-section">
+                <h2>🎯 Usage Examples</h2>
+                <div class="component-description">
+                    Here are some common usage patterns for the context-aware components:
+                </div>
+                
+                <h3>Basic App Integration:</h3>
+                <div class="code-block">
+import React from 'react';
+import App from './components/App.jsx';
+
+function MyApp() {
+  return (
+    &lt;div className="my-app"&gt;
+      &lt;App /&gt;
+    &lt;/div&gt;
+  );
+}
+                </div>
+                
+                <h3>Standalone ContextSwitcher:</h3>
+                <div class="code-block">
+import ContextSwitcher from './components/ContextSwitcher.jsx';
+
+function Header() {
+  const [currentContext, setCurrentContext] = useState(userContexts[0]);
+  
+  return (
+    &lt;header&gt;
+      &lt;ContextSwitcher
+        userContexts={userContexts}
+        currentContext={currentContext}
+        onContextChange={setCurrentContext}
+      /&gt;
+    &lt;/header&gt;
+  );
+}
+                </div>
+                
+                <h3>Custom Dashboard Integration:</h3>
+                <div class="code-block">
+import ContextAwareDashboard from './components/ContextAwareDashboard.jsx';
+
+function DashboardPage() {
+  const handleNavigate = (route) =&gt; {
+    // Handle navigation to different pages
+    console.log('Navigating to:', route);
+  };
+  
+  return (
+    &lt;ContextAwareDashboard
+      currentContext={currentContext}
+      onNavigate={handleNavigate}
+    /&gt;
+  );
+}
+                </div>
+            </div>
+            
+            <div class="component-section">
+                <h2>🔧 Customization</h2>
+                <div class="component-description">
+                    The components are designed to be easily customizable for your specific needs:
+                </div>
+                <ul class="feature-list">
+                    <li>Modify color schemes in CSS variables</li>
+                    <li>Add new context types beyond Enterprise/Agency</li>
+                    <li>Customize dashboard cards and metrics</li>
+                    <li>Extend navigation with additional menu items</li>
+                    <li>Integrate with your authentication system</li>
+                    <li>Add real-time updates via WebSocket</li>
+                </ul>
+            </div>
+            
+            <div class="component-section">
+                <h2>📱 Responsive Design</h2>
+                <div class="component-description">
+                    All components are fully responsive and work seamlessly across desktop, tablet, and mobile devices:
+                </div>
+                <ul class="feature-list">
+                    <li>Mobile-first design approach</li>
+                    <li>Collapsible sidebar on mobile</li>
+                    <li>Touch-friendly interface elements</li>
+                    <li>Optimized for different screen sizes</li>
+                    <li>Dark mode support across all devices</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

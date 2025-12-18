@@ -1,0 +1,486 @@
+/* Seat Management Dashboard Styles */
+
+.seat-management-dashboard {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Loading and Error States */
+.seat-management-loading,
+.seat-management-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f4f6;
+  border-top: 4px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.seat-management-error {
+  color: #dc2626;
+}
+
+.error-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+/* obsolete: retry-btn replaced by btn-primary */
+
+/* Seat Overview Cards */
+.seat-overview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.seat-metric-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.seat-metric-card:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.metric-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.metric-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.metric-info {
+  flex: 1;
+}
+
+.metric-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+  margin: 0 0 0.5rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.metric-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+  line-height: 1;
+}
+
+.metric-total {
+  font-size: 1.25rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.metric-trend {
+  font-size: 0.875rem;
+  color: #059669;
+  margin-top: 0.5rem;
+  font-weight: 500;
+}
+
+/* Variant Colors */
+.seat-metric-card.border-yellow-200 {
+  border-color: #fde68a;
+  background-color: #fffbeb;
+}
+
+.seat-metric-card.border-green-200 {
+  border-color: #bbf7d0;
+  background-color: #f0fdf4;
+}
+
+.seat-metric-card.border-red-200 {
+  border-color: #fecaca;
+  background-color: #fef2f2;
+}
+
+.seat-metric-card.border-blue-200 {
+  border-color: #bfdbfe;
+  background-color: #eff6ff;
+}
+
+/* Seat Management Header */
+.seat-management-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.header-left {
+  flex: 1;
+}
+
+.section-title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 0.5rem 0;
+}
+
+.section-subtitle {
+  color: #6b7280;
+  margin: 0;
+  font-size: 1rem;
+}
+
+.header-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+/* obsolete: bulk-action-btn replaced by btn-success */
+
+/* obsolete: create-seat-btn replaced by btn-primary */
+
+.btn-icon {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+/* Seat Grid */
+.seat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Seat Card */
+.seat-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.seat-card:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.seat-card-selected {
+  border-color: #3b82f6;
+  background-color: #eff6ff;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Seat Header */
+.seat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.seat-selection {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.seat-checkbox {
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid #d1d5db;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  accent-color: #3b82f6;
+}
+
+.seat-info {
+  flex: 1;
+}
+
+.seat-name {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.25rem 0;
+}
+
+.seat-admin {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Seat Status */
+.seat-status {
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.status-active {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.status-inactive {
+  background-color: #f3f4f6;
+  color: #6b7280;
+}
+
+.status-pending {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.status-suspended {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.status-default {
+  background-color: #f3f4f6;
+  color: #6b7280;
+}
+
+/* Seat Metrics */
+.seat-metrics {
+  margin-bottom: 1rem;
+}
+
+.metric-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.metric-row:last-child {
+  border-bottom: none;
+}
+
+.metric-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.metric-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.text-green-600 {
+  color: #059669;
+}
+
+.text-yellow-600 {
+  color: #d97706;
+}
+
+.text-red-600 {
+  color: #dc2626;
+}
+
+/* Seat Actions */
+.seat-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.action-btn {
+  flex: 1;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.action-manage {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.action-manage:hover {
+  background-color: #e5e7eb;
+}
+
+.action-details {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.action-details:hover {
+  background-color: #bfdbfe;
+}
+
+/* No Seats State */
+.no-seats-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: white;
+  border: 2px dashed #d1d5db;
+  border-radius: 0.75rem;
+}
+
+.no-seats-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.no-seats-state h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.5rem 0;
+}
+
+.no-seats-state p {
+  color: #6b7280;
+  margin: 0 0 1.5rem 0;
+  font-size: 1rem;
+}
+
+/* obsolete: create-first-seat-btn replaced by btn-primary */
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .seat-management-dashboard {
+    padding: 1rem;
+  }
+
+  .seat-overview {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .seat-management-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .seat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .seat-card {
+    padding: 1rem;
+  }
+
+  .seat-actions {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .bulk-action-btn,
+  .create-seat-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .seat-management-dashboard {
+    background-color: #111827;
+    color: #f9fafb;
+  }
+
+  .seat-metric-card,
+  .seat-card,
+  .no-seats-state {
+    background-color: #1f2937;
+    border-color: #374151;
+  }
+
+  .metric-title {
+    color: #9ca3af;
+  }
+
+  .metric-value {
+    color: #f9fafb;
+  }
+
+  .section-title {
+    color: #f9fafb;
+  }
+
+  .section-subtitle {
+    color: #9ca3af;
+  }
+
+  .seat-name {
+    color: #f9fafb;
+  }
+
+  .seat-admin {
+    color: #9ca3af;
+  }
+
+  .metric-label {
+    color: #9ca3af;
+  }
+
+  .metric-value {
+    color: #f9fafb;
+  }
+
+  .no-seats-state h3 {
+    color: #f9fafb;
+  }
+
+  .no-seats-state p {
+    color: #9ca3af;
+  }
+} 

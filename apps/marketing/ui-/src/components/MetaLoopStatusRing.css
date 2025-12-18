@@ -1,0 +1,357 @@
+/* MetaLoopStatusRing.css - Enhanced with geometric animations */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* Status Ring Container with geometric styling */
+.metaloop-status-ring {
+  position: relative;
+  display: inline-block;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 50%;
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
+.metaloop-status-ring:hover {
+  transform: scale(1.05);
+  box-shadow: 
+    0 4px 8px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+/* Connection Indicator with geometric pulse */
+.connection-indicator {
+  animation: connectionPulse 2s ease-in-out infinite;
+  border-radius: 50%;
+  box-shadow: 
+    0 1px 2px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.8);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.connection-indicator:hover {
+  transform: scale(1.2);
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.9);
+}
+
+@keyframes connectionPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+/* Status-specific styles with geometric enhancements */
+.metaloop-status-ring.idle {
+  filter: drop-shadow(0 2px 4px rgba(107, 114, 128, 0.1));
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.metaloop-status-ring.idle:hover {
+  filter: drop-shadow(0 4px 8px rgba(107, 114, 128, 0.2));
+  transform: scale(1.05);
+}
+
+.metaloop-status-ring.thinking {
+  filter: drop-shadow(0 2px 8px rgba(75, 75, 255, 0.2));
+  animation: thinkingGlow 2s ease-in-out infinite;
+}
+
+@keyframes thinkingGlow {
+  0%, 100% {
+    filter: drop-shadow(0 2px 8px rgba(75, 75, 255, 0.2));
+  }
+  50% {
+    filter: drop-shadow(0 4px 12px rgba(75, 75, 255, 0.4));
+  }
+}
+
+.metaloop-status-ring.success {
+  filter: drop-shadow(0 2px 8px rgba(37, 183, 165, 0.2));
+  animation: successPulse 1s ease-out;
+}
+
+@keyframes successPulse {
+  0% {
+    transform: scale(1);
+    filter: drop-shadow(0 2px 8px rgba(37, 183, 165, 0.2));
+  }
+  50% {
+    transform: scale(1.1);
+    filter: drop-shadow(0 4px 12px rgba(37, 183, 165, 0.4));
+  }
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 2px 8px rgba(37, 183, 165, 0.2));
+  }
+}
+
+.metaloop-status-ring.alert {
+  filter: drop-shadow(0 2px 8px rgba(241, 140, 37, 0.2));
+  animation: alertFlash 1s ease-in-out infinite;
+}
+
+@keyframes alertFlash {
+  0%, 100% {
+    filter: drop-shadow(0 2px 8px rgba(241, 140, 37, 0.2));
+  }
+  50% {
+    filter: drop-shadow(0 4px 12px rgba(241, 140, 37, 0.4));
+  }
+}
+
+/* SVG Icon Animations with geometric easing */
+.metaloop-status-ring.thinking svg {
+  animation: thinkingRotate 2s linear infinite;
+  transform-origin: center;
+}
+
+.metaloop-status-ring.success svg {
+  animation: checkmarkDraw 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.metaloop-status-ring.alert svg {
+  animation: exclamationPulse 1s ease-in-out infinite;
+}
+
+@keyframes thinkingRotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes checkmarkDraw {
+  0% {
+    stroke-dasharray: 0 100;
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  100% {
+    stroke-dasharray: 100 0;
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes exclamationPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+/* Tooltip Styles with geometric design */
+.metaloop-status-ring .tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+  color: white;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500; /* Medium weight for UI elements */
+  white-space: nowrap;
+  z-index: 10;
+  pointer-events: none;
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 
+    0 4px 6px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: 'Inter', sans-serif;
+  line-height: 1.4;
+}
+
+.metaloop-status-ring:hover .tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-4px);
+}
+
+.metaloop-status-ring .tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: #1f2937;
+  border-radius: 0 0 2px 2px;
+}
+
+/* Focus States with geometric outlines */
+.metaloop-status-ring:focus {
+  outline: 2px solid #4B4BFF;
+  outline-offset: 2px;
+  border-radius: 50%;
+}
+
+.metaloop-status-ring:focus-visible {
+  outline: 3px solid #4B4BFF;
+  outline-offset: 3px;
+}
+
+/* Responsive Design with geometric scaling */
+@media (max-width: 768px) {
+  .metaloop-status-ring {
+    transform: scale(0.9);
+  }
+  
+  .metaloop-status-ring:hover {
+    transform: scale(0.95);
+  }
+  
+  .metaloop-status-ring .tooltip {
+    font-size: 0.6875rem; /* 11px on mobile */
+    padding: 0.375rem 0.625rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .metaloop-status-ring {
+    transform: scale(0.8);
+  }
+  
+  .metaloop-status-ring:hover {
+    transform: scale(0.85);
+  }
+  
+  .metaloop-status-ring .tooltip {
+    font-size: 0.625rem; /* 10px on mobile */
+    padding: 0.25rem 0.5rem;
+  }
+}
+
+/* Dark Mode Support with geometric shadows */
+@media (prefers-color-scheme: dark) {
+  .metaloop-status-ring {
+    box-shadow: 
+      0 2px 4px rgba(0, 0, 0, 0.3),
+      0 0 0 1px rgba(255, 255, 255, 0.05);
+  }
+  
+  .metaloop-status-ring:hover {
+    box-shadow: 
+      0 4px 8px rgba(0, 0, 0, 0.4),
+      0 0 0 1px rgba(255, 255, 255, 0.1);
+  }
+  
+  .metaloop-status-ring .tooltip {
+    background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+    box-shadow: 
+      0 4px 6px rgba(0, 0, 0, 0.3),
+      0 0 0 1px rgba(255, 255, 255, 0.1);
+  }
+  
+  .metaloop-status-ring .tooltip::after {
+    border-top-color: #374151;
+  }
+  
+  .metaloop-status-ring:focus {
+    outline-color: #6366f1;
+  }
+  
+  .connection-indicator {
+    box-shadow: 
+      0 1px 2px rgba(0, 0, 0, 0.3),
+      0 0 0 1px rgba(255, 255, 255, 0.1);
+  }
+  
+  .connection-indicator:hover {
+    box-shadow: 
+      0 2px 4px rgba(0, 0, 0, 0.4),
+      0 0 0 1px rgba(255, 255, 255, 0.2);
+  }
+}
+
+/* High Contrast Mode with geometric borders */
+@media (prefers-contrast: high) {
+  .metaloop-status-ring {
+    filter: contrast(1.2);
+    border: 2px solid currentColor;
+    border-radius: 50%;
+  }
+  
+  .metaloop-status-ring:focus {
+    outline-width: 3px;
+    outline-offset: 3px;
+  }
+  
+  .connection-indicator {
+    border: 2px solid currentColor;
+    border-radius: 50%;
+  }
+  
+  .metaloop-status-ring .tooltip {
+    border: 2px solid currentColor;
+    border-radius: 0.5rem;
+  }
+}
+
+/* Reduced Motion with geometric fallbacks */
+@media (prefers-reduced-motion: reduce) {
+  .metaloop-status-ring {
+    transition: none;
+  }
+  
+  .metaloop-status-ring:hover {
+    transform: none;
+  }
+  
+  .metaloop-status-ring.thinking svg {
+    animation: none;
+  }
+  
+  .metaloop-status-ring.success svg {
+    animation: none;
+  }
+  
+  .metaloop-status-ring.alert svg {
+    animation: none;
+  }
+  
+  .connection-indicator {
+    animation: none;
+  }
+  
+  .metaloop-status-ring.thinking {
+    animation: none;
+  }
+  
+  .metaloop-status-ring.success {
+    animation: none;
+  }
+  
+  .metaloop-status-ring.alert {
+    animation: none;
+  }
+  
+  .metaloop-status-ring .tooltip {
+    transition: opacity 0.2s ease;
+  }
+  
+  .metaloop-status-ring:hover .tooltip {
+    transform: translateX(-50%);
+  }
+} 

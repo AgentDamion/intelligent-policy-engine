@@ -1,0 +1,360 @@
+.context-switcher {
+  position: relative;
+  display: inline-block;
+}
+
+/* context-switcher-trigger styling now handled by component utilities */
+
+.context-switcher-trigger:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.context-switcher-trigger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.current-context {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.context-icon {
+  font-size: 20px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.context-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.context-name {
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.context-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge-enterprise {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.badge-agency {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.badge-user {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.dropdown-arrow {
+  font-size: 12px;
+  transition: transform 0.3s ease;
+}
+
+.context-switcher-trigger[aria-expanded="true"] .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+.loading-indicator {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: translateY(-50%) rotate(0deg); }
+  100% { transform: translateY(-50%) rotate(360deg); }
+}
+
+.context-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(102, 126, 234, 0.1);
+  z-index: 1000;
+  overflow: hidden;
+  animation: dropdownSlideIn 0.3s ease;
+}
+
+@keyframes dropdownSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-header {
+  padding: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.context-search {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #f8f9fa;
+  transition: border-color 0.3s ease;
+}
+
+.context-search:focus {
+  outline: none;
+  border-color: #667eea;
+  background: white;
+}
+
+.context-sections {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.context-section {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.context-section:last-child {
+  border-bottom: none;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #f8f9fa;
+  font-weight: 600;
+  font-size: 12px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.section-icon {
+  font-size: 14px;
+}
+
+.context-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  text-align: left;
+}
+
+.context-option:hover:not(:disabled) {
+  background: #f8f9fa;
+}
+
+.context-option:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.context-option.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.context-option.active .context-details .context-role {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.context-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.context-details .context-name {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.context-details .context-role {
+  font-size: 12px;
+  color: #666;
+}
+
+.active-indicator {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.dropdown-footer {
+  padding: 12px 16px;
+  border-top: 1px solid #f0f0f0;
+  background: #f8f9fa;
+}
+
+/* manage-contexts-btn now uses btn-secondary */
+
+/* Loading State */
+.loading-state {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  color: white;
+  min-width: 200px;
+}
+
+.loading-state .loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.loading-state span {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Error State */
+.error-state {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+  border-radius: 12px;
+  color: white;
+  min-width: 200px;
+}
+
+.error-icon {
+  font-size: 16px;
+}
+
+.error-message {
+  font-size: 12px;
+  font-weight: 500;
+  flex: 1;
+}
+
+/* obsolete: retry-btn replaced by btn-primary */
+
+/* No Context State */
+.no-context-state {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+  border-radius: 12px;
+  color: white;
+  min-width: 200px;
+}
+
+.no-context-icon {
+  font-size: 16px;
+}
+
+.no-context-state span:last-child {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .context-switcher-trigger {
+    min-width: 160px;
+    padding: 6px 12px;
+  }
+  
+  .context-name {
+    font-size: 12px;
+  }
+  
+  .context-badge {
+    font-size: 8px;
+    padding: 1px 4px;
+  }
+  
+  .context-dropdown {
+    left: -50%;
+    right: -50%;
+    min-width: 280px;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .context-dropdown {
+    background: #1a1a1a;
+    border-color: #333;
+  }
+  
+  .context-search {
+    background: #2a2a2a;
+    border-color: #444;
+    color: white;
+  }
+  
+  .context-search:focus {
+    background: #333;
+  }
+  
+  .section-header {
+    background: #2a2a2a;
+    color: #ccc;
+  }
+  
+  .context-option:hover {
+    background: #2a2a2a;
+  }
+  
+  .dropdown-footer {
+    background: #2a2a2a;
+    border-top-color: #333;
+  }
+  
+  .context-details .context-role {
+    color: #aaa;
+  }
+} 

@@ -1,0 +1,460 @@
+/* File: ui/components/HierarchicalContextSwitcher.css */
+
+.hierarchical-context-switcher {
+  position: relative;
+  display: inline-block;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.hierarchical-context-switcher.error {
+  border: 1px solid #ef4444;
+  border-radius: 8px;
+  padding: 8px 12px;
+  background-color: #fef2f2;
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #dc2626;
+  font-size: 14px;
+}
+
+/* obsolete: retry-btn replaced by btn-primary */
+
+.context-switcher-trigger {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 200px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.context-switcher-trigger:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.context-switcher-trigger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.loading-spinner {
+  animation: spin 1s linear infinite;
+  font-size: 16px;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.context-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.context-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex: 1;
+  min-width: 0;
+}
+
+.context-name {
+  font-weight: 600;
+  color: #111827;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
+
+.context-role {
+  font-size: 12px;
+  color: #6b7280;
+  text-transform: capitalize;
+}
+
+.dropdown-arrow {
+  font-size: 12px;
+  color: #6b7280;
+  transition: transform 0.2s ease;
+}
+
+.hierarchical-context-switcher.open .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+.context-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  margin-top: 4px;
+  min-width: 300px;
+  max-height: 500px;
+  overflow: hidden;
+  animation: dropdownSlideIn 0.2s ease;
+}
+
+@keyframes dropdownSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-header {
+  padding: 16px;
+  border-bottom: 1px solid #f3f4f6;
+  background: #fafafa;
+}
+
+.search-container {
+  margin-bottom: 12px;
+}
+
+/* context-search now styled via input-modern */
+
+.filter-tabs {
+  display: flex;
+  gap: 4px;
+  background: #f3f4f6;
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.filter-tab {
+  flex: 1;
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-tab.active {
+  background: #ffffff;
+  color: #111827;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.filter-tab:hover:not(.active) {
+  color: #374151;
+}
+
+.context-list {
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.context-section {
+  margin-bottom: 16px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #f9fafb;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.section-icon {
+  font-size: 14px;
+}
+
+.context-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  width: 100%;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  text-align: left;
+}
+
+.context-option:hover {
+  background-color: #f9fafb;
+}
+
+.context-option.active {
+  background-color: #eff6ff;
+  border-left: 3px solid #3b82f6;
+}
+
+.context-option:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.context-details {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.context-subtitle {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-top: 2px;
+}
+
+.context-badge {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.badge-owner {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.badge-admin {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.badge-super-admin {
+  background-color: #fce7f3;
+  color: #be185d;
+}
+
+.badge-enterprise {
+  background-color: #e0e7ff;
+  color: #3730a3;
+}
+
+.badge-seat-admin {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.badge-seat-user {
+  background-color: #f3e8ff;
+  color: #7c3aed;
+}
+
+.badge-agency {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.active-indicator {
+  color: #10b981;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.no-contexts {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 16px;
+  color: #6b7280;
+  text-align: center;
+}
+
+.no-contexts-icon {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.no-contexts-text {
+  font-size: 14px;
+}
+
+.dropdown-footer {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid #f3f4f6;
+  background: #fafafa;
+}
+
+/* manage/create context buttons now use btn-secondary/btn-primary */
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .context-switcher-trigger {
+    min-width: 160px;
+    padding: 10px 12px;
+  }
+
+  .context-name {
+    max-width: 120px;
+  }
+
+  .context-dropdown {
+    min-width: 280px;
+    right: -40px;
+  }
+
+  .dropdown-footer {
+    flex-direction: column;
+  }
+
+  .manage-contexts-btn,
+  .create-context-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .context-switcher-trigger {
+    min-width: 140px;
+    padding: 8px 10px;
+  }
+
+  .context-name {
+    max-width: 100px;
+    font-size: 13px;
+  }
+
+  .context-role {
+    font-size: 11px;
+  }
+
+  .context-dropdown {
+    min-width: 260px;
+    right: -60px;
+  }
+
+  .context-option {
+    padding: 10px 12px;
+  }
+
+  .context-badge {
+    font-size: 9px;
+    padding: 1px 6px;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .context-switcher-trigger {
+    background: #1f2937;
+    border-color: #374151;
+    color: #f9fafb;
+  }
+
+  .context-switcher-trigger:hover {
+    border-color: #4b5563;
+    background: #111827;
+  }
+
+  .context-dropdown {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  .dropdown-header {
+    background: #111827;
+    border-bottom-color: #374151;
+  }
+
+  .context-search {
+    background: #374151;
+    border-color: #4b5563;
+    color: #f9fafb;
+  }
+
+  .context-search:focus {
+    border-color: #60a5fa;
+  }
+
+  .filter-tabs {
+    background: #374151;
+  }
+
+  .filter-tab {
+    color: #9ca3af;
+  }
+
+  .filter-tab.active {
+    background: #4b5563;
+    color: #f9fafb;
+  }
+
+  .section-header {
+    background: #111827;
+    border-bottom-color: #374151;
+    color: #d1d5db;
+  }
+
+  .context-option:hover {
+    background-color: #374151;
+  }
+
+  .context-option.active {
+    background-color: #1e3a8a;
+  }
+
+  .context-name {
+    color: #f9fafb;
+  }
+
+  .context-role {
+    color: #9ca3af;
+  }
+
+  .context-subtitle {
+    color: #6b7280;
+  }
+
+  .dropdown-footer {
+    background: #111827;
+    border-top-color: #374151;
+  }
+
+  .manage-contexts-btn {
+    background: #374151;
+    border-color: #4b5563;
+    color: #f9fafb;
+  }
+
+  .manage-contexts-btn:hover {
+    background: #4b5563;
+    border-color: #6b7280;
+  }
+} 

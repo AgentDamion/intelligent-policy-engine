@@ -1,0 +1,174 @@
+// File: ui/components/DashboardContent.jsx
+
+import React from 'react';
+
+const DashboardContent = ({ activeSection = 'dashboard' }) => {
+  const getContent = () => {
+    switch (activeSection) {
+      case 'dashboard':
+        return (
+          <div className="space-y-6">
+            {/* Welcome Section */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center space-x-4">
+                <div className="h-12 w-12 rounded-full bg-gradient-to-r from-teal-500 to-blue-600 flex items-center justify-center">
+                  <span className="text-white text-xl">🐦</span>
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">
+                    Welcome to your Governance Intelligence Console
+                  </h1>
+                  <p className="text-gray-600 mt-1">
+                    Manage your compliance policies, monitor audit trails, and leverage AI-powered governance insights.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center">
+                  <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                    <span className="text-blue-600 text-lg">📊</span>
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Active Policies</p>
+                    <p className="text-2xl font-bold text-gray-900">24</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center">
+                  <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
+                    <span className="text-green-600 text-lg">✅</span>
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Compliance Score</p>
+                    <p className="text-2xl font-bold text-gray-900">94%</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center">
+                  <div className="h-8 w-8 rounded-full bg-yellow-100 flex items-center justify-center">
+                    <span className="text-yellow-600 text-lg">📋</span>
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Pending Reviews</p>
+                    <p className="text-2xl font-bold text-gray-900">7</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center">
+                  <div className="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center">
+                    <span className="text-purple-600 text-lg">🤝</span>
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Partners</p>
+                    <p className="text-2xl font-bold text-gray-900">12</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Recent Activity */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                    <span className="text-blue-600 text-sm">📝</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-900">Policy "FDA Compliance Standard" updated</p>
+                    <p className="text-xs text-gray-500">2 hours ago</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-3">
+                  <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
+                    <span className="text-green-600 text-sm">✅</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-900">Compliance review completed</p>
+                    <p className="text-xs text-gray-500">4 hours ago</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-3">
+                  <div className="h-8 w-8 rounded-full bg-yellow-100 flex items-center justify-center">
+                    <span className="text-yellow-600 text-sm">⚠️</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-900">New audit log entry detected</p>
+                    <p className="text-xs text-gray-500">6 hours ago</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'policy-engine':
+        return (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Policy Engine</h2>
+            <p className="text-gray-600">AI-powered policy creation and management tools will be available here.</p>
+          </div>
+        );
+
+      case 'inventory':
+        return (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Inventory</h2>
+            <p className="text-gray-600">Manage your compliance assets, documents, and resources.</p>
+          </div>
+        );
+
+      case 'audit-log':
+        return (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Audit Log</h2>
+            <p className="text-gray-600">Comprehensive audit trail and compliance monitoring.</p>
+          </div>
+        );
+
+      case 'partners':
+        return (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Partners</h2>
+            <p className="text-gray-600">Manage partner relationships and collaboration tools.</p>
+          </div>
+        );
+
+      case 'settings':
+        return (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Settings</h2>
+            <p className="text-gray-600">Configure your account, preferences, and system settings.</p>
+          </div>
+        );
+
+      default:
+        return (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Dashboard</h2>
+            <p className="text-gray-600">Welcome to your Governance Intelligence Console.</p>
+          </div>
+        );
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {getContent()}
+    </div>
+  );
+};
+
+export default DashboardContent; 

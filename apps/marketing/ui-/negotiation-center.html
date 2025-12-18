@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Negotiation & Conflict Resolution Center - aicomplyr.io</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background: #f8fafc; margin: 0; font-family: 'Inter', sans-serif; }
+        .dashboard-container { display: flex; min-height: 100vh; }
+        .main-content { flex: 1; display: flex; flex-direction: column; }
+        .header { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 1.5rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .logo-bg { background: #181c24; border-radius: 50%; padding: 0.5rem; display: flex; align-items: center; justify-content: center; min-width: 40px; min-height: 40px; }
+        .hummingbird-logo { width: 32px; height: 32px; }
+        .brand-name { color: #1e3a8a; font-size: 1.3rem; font-weight: 700; }
+        .header-title { font-size: 1.8rem; font-weight: 700; color: #1e3a8a; margin-left: 2rem; }
+        .content-area { flex: 1; display: flex; padding: 2rem; gap: 2rem; }
+        .main-panel { flex: 1; background: #fff; border-radius: 1rem; box-shadow: 0 2px 8px rgba(30,58,138,0.06); padding: 2rem; }
+        .sidebar { width: 320px; background: #fff; border-radius: 1rem; box-shadow: 0 2px 8px rgba(30,58,138,0.06); padding: 1.5rem; }
+        .tabs { display: flex; border-bottom: 1px solid #e2e8f0; margin-bottom: 2rem; }
+        .tab { padding: 1rem 1.5rem; cursor: pointer; border-bottom: 3px solid transparent; font-weight: 500; color: #64748b; transition: all 0.15s; }
+        .tab.active { color: #0ea5e9; border-bottom-color: #0ea5e9; }
+        .tab:hover { color: #0ea5e9; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .negotiation-card { border: 1px solid #e2e8f0; border-radius: 0.8rem; padding: 1.5rem; margin-bottom: 1.5rem; background: #fff; }
+        .negotiation-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+        .negotiation-title { font-size: 1.2rem; font-weight: 600; color: #1e3a8a; }
+        .status-badge { padding: 0.3rem 0.8rem; border-radius: 1rem; font-size: 0.9rem; font-weight: 500; }
+        .status-open { background: #dbeafe; color: #1d4ed8; }
+        .status-compromise { background: #fef3c7; color: #d97706; }
+        .status-escalated { background: #fee2e2; color: #dc2626; }
+        .negotiation-meta { display: flex; gap: 2rem; margin-bottom: 1rem; color: #64748b; font-size: 0.9rem; }
+        .meta-item { display: flex; align-items: center; gap: 0.4rem; }
+        .timeline { background: #f8fafc; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem; }
+        .timeline-title { font-weight: 600; color: #1e3a8a; margin-bottom: 0.8rem; }
+        .timeline-item { display: flex; align-items: flex-start; gap: 0.8rem; margin-bottom: 0.8rem; padding-bottom: 0.8rem; border-bottom: 1px solid #e2e8f0; }
+        .timeline-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .timeline-icon { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; flex-shrink: 0; }
+        .timeline-icon.comment { background: #dbeafe; color: #1d4ed8; }
+        .timeline-icon.action { background: #dcfce7; color: #059669; }
+        .timeline-icon.alert { background: #fef3c7; color: #d97706; }
+        .timeline-content { flex: 1; }
+        .timeline-time { font-size: 0.8rem; color: #94a3b8; margin-bottom: 0.2rem; }
+        .timeline-text { color: #334155; font-size: 0.9rem; }
+        .ai-suggestion { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem; }
+        .ai-suggestion h4 { color: #0369a1; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem; }
+        .ai-suggestion p { color: #0c4a6e; font-size: 0.9rem; line-height: 1.4; }
+        .action-buttons { display: flex; gap: 0.8rem; }
+        .btn { padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 500; cursor: pointer; transition: all 0.15s; border: none; font-size: 0.9rem; display: flex; align-items: center; gap: 0.4rem; }
+        .btn-success { background: #059669; color: #fff; }
+        .btn-success:hover { background: #047857; }
+        .btn-warning { background: #d97706; color: #fff; }
+        .btn-warning:hover { background: #b45309; }
+        .btn-secondary { background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
+        .btn-secondary:hover { background: #e2e8f0; }
+        .conflicts-table { width: 100%; border-collapse: collapse; }
+        .conflicts-table th, .conflicts-table td { padding: 1rem; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        .conflicts-table th { background: #f8fafc; font-weight: 600; color: #1e3a8a; }
+        .conflicts-table tr:hover { background: #f8fafc; }
+        .conflict-summary { max-width: 300px; }
+        .parties-involved { display: flex; gap: 0.3rem; }
+        .party-badge { background: #e0f2fe; color: #0369a1; padding: 0.2rem 0.5rem; border-radius: 0.3rem; font-size: 0.8rem; }
+        .resolve-btn { background: #059669; color: #fff; border: none; border-radius: 0.3rem; padding: 0.4rem 0.8rem; cursor: pointer; font-size: 0.8rem; }
+        .resolve-btn:hover { background: #047857; }
+        .sidebar-title { font-size: 1.1rem; font-weight: 600; color: #1e3a8a; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .notification-item { background: #f8fafc; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem; border-left: 4px solid #0ea5e9; }
+        .notification-item.alert { border-left-color: #d97706; }
+        .notification-item.resolved { border-left-color: #059669; }
+        .notification-title { font-weight: 600; color: #1e3a8a; margin-bottom: 0.3rem; font-size: 0.9rem; }
+        .notification-text { color: #64748b; font-size: 0.8rem; margin-bottom: 0.5rem; }
+        .notification-time { color: #94a3b8; font-size: 0.7rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+        .stat-card { background: #f8fafc; border-radius: 0.5rem; padding: 1rem; text-align: center; }
+        .stat-number { font-size: 1.5rem; font-weight: 700; color: #1e3a8a; }
+        .stat-label { color: #64748b; font-size: 0.8rem; margin-top: 0.2rem; }
+        @media (max-width: 768px) { .content-area { flex-direction: column; } .sidebar { width: 100%; } }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <div class="header-left">
+                    <div class="logo-bg">
+                        <img src="logo-hummingbird.png" alt="aicomplyr.io logo" class="hummingbird-logo" />
+                    </div>
+                    <span class="brand-name">aicomplyr.io</span>
+                    <span class="header-title">Negotiation & Conflict Resolution Center</span>
+                </div>
+            </div>
+            <!-- Content Area -->
+            <div class="content-area">
+                <div class="main-panel">
+                    <!-- Tabs -->
+                    <div class="tabs">
+                        <div class="tab active" onclick="switchTab('negotiations')">
+                            <i class="fas fa-handshake"></i> Active Negotiations
+                        </div>
+                        <div class="tab" onclick="switchTab('conflicts')">
+                            <i class="fas fa-exclamation-triangle"></i> Policy Conflicts
+                        </div>
+                        <div class="tab" onclick="switchTab('requests')">
+                            <i class="fas fa-user-cog"></i> Client-Specific Requests
+                        </div>
+                        <div class="tab" onclick="switchTab('escalations')">
+                            <i class="fas fa-arrow-up"></i> Escalations
+                        </div>
+                    </div>
+                    <!-- Active Negotiations Tab -->
+                    <div class="tab-content active" id="negotiationsTab">
+                        <div class="negotiation-card">
+                            <div class="negotiation-header">
+                                <div class="negotiation-title">Midjourney AI Image Generation - Pfizer Marketing</div>
+                                <div class="status-badge status-compromise">Compromise Proposed</div>
+                            </div>
+                            <div class="negotiation-meta">
+                                <div class="meta-item"><i class="fas fa-building"></i> Pfizer Marketing</div>
+                                <div class="meta-item"><i class="fas fa-calendar"></i> 2 days ago</div>
+                                <div class="meta-item"><i class="fas fa-users"></i> 3 parties involved</div>
+                            </div>
+                            <div class="timeline">
+                                <div class="timeline-title">Timeline</div>
+                                <div class="timeline-item">
+                                    <div class="timeline-icon comment"><i class="fas fa-comment"></i></div>
+                                    <div class="timeline-content">
+                                        <div class="timeline-time">2 hours ago</div>
+                                        <div class="timeline-text">Legal team requested additional review for AI-generated medical imagery</div>
+                                    </div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-icon action"><i class="fas fa-check"></i></div>
+                                    <div class="timeline-content">
+                                        <div class="timeline-time">1 day ago</div>
+                                        <div class="timeline-text">Marketing team approved initial request with conditions</div>
+                                    </div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-icon alert"><i class="fas fa-exclamation"></i></div>
+                                    <div class="timeline-content">
+                                        <div class="timeline-time">2 days ago</div>
+                                        <div class="timeline-text">Request submitted for AI-generated marketing materials</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ai-suggestion">
+                                <h4><i class="fas fa-lightbulb"></i> AI Proposed Compromise</h4>
+                                <p>Approve with added content review and tighter deadlines. Require human oversight for medical imagery and add FDA compliance checks.</p>
+                            </div>
+                            <div class="action-buttons">
+                                <button class="btn btn-success" onclick="acceptCompromise(1)">
+                                    <i class="fas fa-check"></i> Accept Compromise
+                                </button>
+                                <button class="btn btn-warning" onclick="escalate(1)">
+                                    <i class="fas fa-arrow-up"></i> Escalate
+                                </button>
+                                <button class="btn btn-secondary" onclick="addComment(1)">
+                                    <i class="fas fa-comment"></i> Add Comment
+                                </button>
+                            </div>
+                        </div>
+                        <div class="negotiation-card">
+                            <div class="negotiation-header">
+                                <div class="negotiation-title">ChatGPT Content Creation - Novartis Oncology</div>
+                                <div class="status-badge status-open">Open</div>
+                            </div>
+                            <div class="negotiation-meta">
+                                <div class="meta-item"><i class="fas fa-building"></i> Novartis Oncology</div>
+                                <div class="meta-item"><i class="fas fa-calendar"></i> 1 day ago</div>
+                                <div class="meta-item"><i class="fas fa-users"></i> 2 parties involved</div>
+                            </div>
+                            <div class="timeline">
+                                <div class="timeline-title">Timeline</div>
+                                <div class="timeline-item">
+                                    <div class="timeline-icon comment"><i class="fas fa-comment"></i></div>
+                                    <div class="timeline-content">
+                                        <div class="timeline-time">3 hours ago</div>
+                                        <div class="timeline-text">Compliance team reviewing AI disclosure requirements</div>
+                                    </div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-icon alert"><i class="fas fa-exclamation"></i></div>
+                                    <div class="timeline-content">
+                                        <div class="timeline-time">1 day ago</div>
+                                        <div class="timeline-text">Request submitted for AI-assisted content creation</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ai-suggestion">
+                                <h4><i class="fas fa-lightbulb"></i> AI Proposed Compromise</h4>
+                                <p>Approve with mandatory AI disclosure labels and human review for all oncology-related content.</p>
+                            </div>
+                            <div class="action-buttons">
+                                <button class="btn btn-success" onclick="acceptCompromise(2)">
+                                    <i class="fas fa-check"></i> Accept Compromise
+                                </button>
+                                <button class="btn btn-warning" onclick="escalate(2)">
+                                    <i class="fas fa-arrow-up"></i> Escalate
+                                </button>
+                                <button class="btn btn-secondary" onclick="addComment(2)">
+                                    <i class="fas fa-comment"></i> Add Comment
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Policy Conflicts Tab -->
+                    <div class="tab-content" id="conflictsTab">
+                        <table class="conflicts-table">
+                            <thead>
+                                <tr>
+                                    <th>Policy Name</th>
+                                    <th>Conflict Summary</th>
+                                    <th>Parties Involved</th>
+                                    <th>Date</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>FDA Social Media Policy</td>
+                                    <td class="conflict-summary">Conflicting requirements between marketing and legal teams for AI-generated content disclosure</td>
+                                    <td>
+                                        <div class="parties-involved">
+                                            <span class="party-badge">Marketing</span>
+                                            <span class="party-badge">Legal</span>
+                                        </div>
+                                    </td>
+                                    <td>2024-01-15</td>
+                                    <td><button class="resolve-btn" onclick="resolveConflict(1)">Resolve</button></td>
+                                </tr>
+                                <tr>
+                                    <td>AI Usage Policy</td>
+                                    <td class="conflict-summary">Disagreement on approval levels for AI-generated medical imagery</td>
+                                    <td>
+                                        <div class="parties-involved">
+                                            <span class="party-badge">Creative</span>
+                                            <span class="party-badge">Compliance</span>
+                                        </div>
+                                    </td>
+                                    <td>2024-01-14</td>
+                                    <td><button class="resolve-btn" onclick="resolveConflict(2)">Resolve</button></td>
+                                </tr>
+                                <tr>
+                                    <td>Off-label Avoidance</td>
+                                    <td class="conflict-summary">Different interpretations of off-label promotion guidelines</td>
+                                    <td>
+                                        <div class="parties-involved">
+                                            <span class="party-badge">Sales</span>
+                                            <span class="party-badge">Regulatory</span>
+                                        </div>
+                                    </td>
+                                    <td>2024-01-13</td>
+                                    <td><button class="resolve-btn" onclick="resolveConflict(3)">Resolve</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Client-Specific Requests Tab -->
+                    <div class="tab-content" id="requestsTab">
+                        <div class="negotiation-card">
+                            <div class="negotiation-header">
+                                <div class="negotiation-title">Custom AI Policy - Roche Diagnostics</div>
+                                <div class="status-badge status-open">Open</div>
+                            </div>
+                            <div class="negotiation-meta">
+                                <div class="meta-item"><i class="fas fa-building"></i> Roche Diagnostics</div>
+                                <div class="meta-item"><i class="fas fa-calendar"></i> 3 days ago</div>
+                                <div class="meta-item"><i class="fas fa-users"></i> 4 parties involved</div>
+                            </div>
+                            <div class="ai-suggestion">
+                                <h4><i class="fas fa-lightbulb"></i> Client-Specific Requirements</h4>
+                                <p>Roche requires additional safeguards for diagnostic-related AI content and specific FDA pre-market approval processes.</p>
+                            </div>
+                            <div class="action-buttons">
+                                <button class="btn btn-success" onclick="acceptRequest(1)">
+                                    <i class="fas fa-check"></i> Accept Request
+                                </button>
+                                <button class="btn btn-secondary" onclick="modifyRequest(1)">
+                                    <i class="fas fa-edit"></i> Modify Request
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Escalations Tab -->
+                    <div class="tab-content" id="escalationsTab">
+                        <div class="negotiation-card">
+                            <div class="negotiation-header">
+                                <div class="negotiation-title">Critical Compliance Issue - Acme Agency</div>
+                                <div class="status-badge status-escalated">Escalated</div>
+                            </div>
+                            <div class="negotiation-meta">
+                                <div class="meta-item"><i class="fas fa-building"></i> Acme Agency</div>
+                                <div class="meta-item"><i class="fas fa-calendar"></i> 1 day ago</div>
+                                <div class="meta-item"><i class="fas fa-exclamation-triangle"></i> High Priority</div>
+                            </div>
+                            <div class="ai-suggestion">
+                                <h4><i class="fas fa-exclamation-triangle"></i> Escalation Reason</h4>
+                                <p>Potential FDA violation detected in AI-generated marketing materials. Requires immediate executive review and legal intervention.</p>
+                            </div>
+                            <div class="action-buttons">
+                                <button class="btn btn-warning" onclick="reviewEscalation(1)">
+                                    <i class="fas fa-eye"></i> Review
+                                </button>
+                                <button class="btn btn-secondary" onclick="deescalate(1)">
+                                    <i class="fas fa-arrow-down"></i> De-escalate
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Sidebar -->
+                <div class="sidebar">
+                    <div class="sidebar-title">
+                        <i class="fas fa-bell"></i> Notifications
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number">5</div>
+                            <div class="stat-label">Active Negotiations</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">3</div>
+                            <div class="stat-label">Unresolved Conflicts</div>
+                        </div>
+                    </div>
+                    <div class="notification-item alert">
+                        <div class="notification-title">New Policy Conflict Detected</div>
+                        <div class="notification-text">FDA Social Media Policy conflict between Marketing and Legal teams</div>
+                        <div class="notification-time">2 hours ago</div>
+                    </div>
+                    <div class="notification-item">
+                        <div class="notification-title">Compromise Accepted</div>
+                        <div class="notification-text">Pfizer Marketing AI request compromise was accepted</div>
+                        <div class="notification-time">1 day ago</div>
+                    </div>
+                    <div class="notification-item resolved">
+                        <div class="notification-title">Conflict Resolved</div>
+                        <div class="notification-text">Novartis AI disclosure policy conflict has been resolved</div>
+                        <div class="notification-time">3 days ago</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Tab switching
+        function switchTab(tabName) {
+            // Update tab styles
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            // Update content
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(tabName + 'Tab').classList.add('active');
+        }
+        // Negotiation actions
+        function acceptCompromise(id) {
+            if (confirm('Are you sure you want to accept this compromise?')) {
+                // Call negotiation agent
+                console.log('Accepting compromise for negotiation:', id);
+                alert('Compromise accepted successfully!');
+                // Update UI
+                updateNegotiationStatus(id, 'resolved');
+            }
+        }
+        function escalate(id) {
+            if (confirm('Are you sure you want to escalate this negotiation?')) {
+                console.log('Escalating negotiation:', id);
+                alert('Negotiation escalated to management!');
+                updateNegotiationStatus(id, 'escalated');
+            }
+        }
+        function addComment(id) {
+            const comment = prompt('Enter your comment:');
+            if (comment) {
+                console.log('Adding comment to negotiation:', id, comment);
+                alert('Comment added successfully!');
+                // Add to timeline
+                addTimelineItem(id, 'comment', comment);
+            }
+        }
+        function resolveConflict(id) {
+            if (confirm('Are you sure you want to resolve this conflict?')) {
+                console.log('Resolving conflict:', id);
+                alert('Conflict resolved successfully!');
+                // Remove from table
+                removeConflictRow(id);
+            }
+        }
+        function acceptRequest(id) {
+            if (confirm('Are you sure you want to accept this client request?')) {
+                console.log('Accepting client request:', id);
+                alert('Client request accepted!');
+            }
+        }
+        function modifyRequest(id) {
+            const modification = prompt('Enter modification details:');
+            if (modification) {
+                console.log('Modifying client request:', id, modification);
+                alert('Request modified successfully!');
+            }
+        }
+        function reviewEscalation(id) {
+            console.log('Reviewing escalation:', id);
+            alert('Opening escalation review panel...');
+        }
+        function deescalate(id) {
+            if (confirm('Are you sure you want to de-escalate this issue?')) {
+                console.log('De-escalating issue:', id);
+                alert('Issue de-escalated successfully!');
+                updateNegotiationStatus(id, 'open');
+            }
+        }
+        // UI update functions
+        function updateNegotiationStatus(id, status) {
+            const card = document.querySelector(`[onclick*="${id}"]`).closest('.negotiation-card');
+            const statusBadge = card.querySelector('.status-badge');
+            statusBadge.className = `status-badge status-${status}`;
+            statusBadge.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+        }
+        function addTimelineItem(id, type, text) {
+            const card = document.querySelector(`[onclick*="${id}"]`).closest('.negotiation-card');
+            const timeline = card.querySelector('.timeline');
+            const newItem = document.createElement('div');
+            newItem.className = 'timeline-item';
+            newItem.innerHTML = `
+                <div class="timeline-icon ${type}"><i class="fas fa-${type === 'comment' ? 'comment' : 'check'}"></i></div>
+                <div class="timeline-content">
+                    <div class="timeline-time">Just now</div>
+                    <div class="timeline-text">${text}</div>
+                </div>
+            `;
+            timeline.appendChild(newItem);
+        }
+        function removeConflictRow(id) {
+            const row = document.querySelector(`[onclick*="${id}"]`).closest('tr');
+            row.remove();
+        }
+        // Load real data from negotiation agent
+        function loadNegotiationData() {
+            // This would connect to negotiation-agent.js
+            console.log('Loading negotiation data from agent...');
+            // Placeholder for real data loading
+        }
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadNegotiationData();
+        });
+    </script>
+</body>
+</html>

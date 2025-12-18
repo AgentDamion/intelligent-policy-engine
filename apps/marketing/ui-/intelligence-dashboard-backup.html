@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>AIComplyr Intelligence Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f2f7;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      color: #f18c25;
+    }
+    .metric-card {
+      background: white;
+      padding: 20px;
+      margin: 10px;
+      border-radius: 8px;
+      display: inline-block;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .big-number {
+      font-size: 48px;
+      font-weight: bold;
+      color: #2563eb;
+    }
+    .workflow-bar {
+      background: #e0e0e0;
+      height: 30px;
+      margin: 10px 0;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .workflow-fill {
+      background: #f18c25;
+      height: 100%;
+      transition: width 0.3s ease;
+    }
+    .live-feed-entry {
+      margin-bottom: 8px;
+      font-family: monospace;
+      background: white;
+      padding: 8px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧠 AIComplyr Intelligence Dashboard</h1>
+  
+  <div id="metrics"></div>
+  <div id="workflows"></div>
+  <div id="live-feed"></div>
+  
+  <script>
+    const ws = new WebSocket('ws://localhost:3001');
+    const liveFeed = [];
+    
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      updateLiveFeed(data);
+    };
+    
+    ws.onerror = (error) => {
+      console.log('WebSocket error:', error);
+    };
+    
+    async function fetchMetrics() {
+      try {
+        const res = await fetch('/api/dashboard/metrics/workflows');
+        const data = await res.json();
+        renderMetrics(data);
+      } catch (error) {
+        console.error('Error fetching metrics:', error);
+      }
+    }
+    
+    fetchMetrics();
+    setInterval(fetchMetrics, 5000);
+    
+    function renderMetrics(data) {
+      const metricsDiv = document.getElementById('metrics');
+      metricsDiv.innerHTML = `
+        <div class="metric-card">
+          <h3>Active Agents</h3>
+          <div class="big-number">${data.activeAgents || 0}</div>
+          <p>AI agents currently running</p>
+        </div>
+        <div class="metric-card">
+          <h3>Total Decisions</h3>
+          <div class="big-number">${data.totalDecisions || 0}</div>
+          <p>Compliance decisions made</p>
+        </div>
+        <div class="metric-card">
+          <h3>Avg Response Time</h3>
+          <div class="big-number">${data.avgResponseTime || 0}ms</div>
+          <p>Processing speed</p>
+        </div>
+      `;
+      
+      renderWorkflows(data.workflowBreakdown || {});
+    }
+    
+    function renderWorkflows(workflows) {
+      const workflowsDiv = document.getElementById('workflows');
+      const total = Object.values(workflows).reduce((sum, val) => sum + val, 0);
+      
+      workflowsDiv.innerHTML = '<h2>Workflow Distribution</h2>' +
+        Object.entries(workflows).map(([name, percentage]) => `
+          <div><b>${name}</b> - ${percentage}%</div>
+          <div class="workflow-bar">
+            <div class="workflow-fill" style="width: ${percentage}%"></div>
+          </div>
+        `).join('');
+    }
+    
+    function updateLiveFeed(data) {
+      liveFeed.unshift({
+        time: new Date().toLocaleTimeString(),
+        type: data.type || 'update',
+        data: JSON.stringify(data.data || data).substring(0, 100) + '...'
+      });
+      
+      if (liveFeed.length > 10) liveFeed.pop();
+      renderLiveFeed();
+    }
+    
+    function renderLiveFeed() {
+      const liveDiv = document.getElementById('live-feed');
+      liveDiv.innerHTML = '<h2>Live Agent Activity</h2>' +
+        liveFeed.map(entry => `
+          <div class="live-feed-entry">
+            [${entry.time}] <b>${entry.type}</b> - ${entry.data}
+          </div>
+        `).join('');
+    }
+  </script>
+</body>
+</html>

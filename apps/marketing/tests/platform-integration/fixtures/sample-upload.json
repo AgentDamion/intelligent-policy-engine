@@ -1,0 +1,32 @@
+{
+  "file": {
+    "name": "compliance-report.pdf",
+    "content": "JVBERi0xLjQK...BASE64_OR_TEXT_SAMPLE...",
+    "mime_type": "application/pdf",
+    "size": 12345
+  },
+  "metadata": {
+    "aicomplyr": {
+      "version": "1.0",
+      "generated_at": "2025-01-01T00:00:00Z",
+      "project_id": "proj_123",
+      "organization_id": "org_abc"
+    },
+    "compliance": {
+      "status": "compliant",
+      "score": 98,
+      "risk_level": "low",
+      "last_checked": "2025-01-01T00:00:00Z"
+    },
+    "ai_tools": [],
+    "policy_checks": [],
+    "violations": [],
+    "references": {
+      "detailed_report_url": "https://example.com/report",
+      "audit_trail_url": "https://example.com/audit"
+    }
+  },
+  "overwrite": true
+}
+
+

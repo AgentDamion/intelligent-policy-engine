@@ -1,0 +1,111 @@
+/* Responsive Logo Styles */
+
+/* Mobile First - Base styles */
+.logo-container {
+  transition: transform 0.2s ease-in-out;
+}
+
+.logo-container:hover {
+  transform: scale(1.05);
+}
+
+.logo-container:active {
+  transform: scale(0.98);
+}
+
+/* MetaLoop Logo Responsive */
+.metaloop-logo {
+  display: flex;
+  align-items: center;
+}
+
+.metaloop-logo .logo-text {
+  display: none; /* Hidden by default on mobile */
+}
+
+/* Tablet and up - show text */
+@media (min-width: 640px) {
+  .metaloop-logo .logo-text {
+    display: block;
+    margin-left: 0.75rem;
+    font-weight: 600;
+    color: #1f2937;
+    font-size: 14px;
+  }
+}
+
+/* Desktop - larger text */
+@media (min-width: 1024px) {
+  .metaloop-logo .logo-text {
+    font-size: 16px;
+  }
+}
+
+/* aicomplyr Logo Responsive */
+.aicomplyr-logo {
+  display: flex;
+  align-items: center;
+}
+
+/* Mobile - abbreviated version */
+@media (max-width: 639px) {
+  .aicomplyr-logo svg {
+    width: 40px;
+    height: 20px;
+  }
+}
+
+/* Tablet and up - full version */
+@media (min-width: 640px) {
+  .aicomplyr-logo svg {
+    width: 96px; /* 24px * 4 */
+    height: 24px;
+  }
+}
+
+/* Header Navigation Responsive */
+.header-navigation {
+  display: none; /* Hidden on mobile */
+}
+
+@media (min-width: 768px) {
+  .header-navigation {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+  }
+}
+
+/* Logo hover effects */
+.logo-container {
+  cursor: pointer;
+  user-select: none;
+}
+
+.logo-container:hover {
+  filter: brightness(1.1);
+}
+
+.logo-container:focus {
+  outline: 2px solid #14B8A6;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .logo-container {
+    transition: none;
+  }
+  
+  .logo-container:hover {
+    transform: none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .logo-container:hover {
+    filter: contrast(1.2);
+  }
+} 
