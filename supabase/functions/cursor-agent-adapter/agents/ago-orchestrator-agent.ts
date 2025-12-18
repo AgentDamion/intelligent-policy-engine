@@ -57,6 +57,9 @@ export class AgoOrchestratorAgent implements Agent {
         case 'getVelocityMetrics':
           return await this.getVelocityMetrics(params.enterpriseId || context.enterprise_id, context);
         
+        case 'vera-chat':
+          return await this.handleVERAChat(params, context);
+        
         default:
           // Fall through to task-based routing
           break;
@@ -128,6 +131,25 @@ export class AgoOrchestratorAgent implements Agent {
 
     // Load VERA mode early
     const veraMode = await this.loadEnterpriseVeraMode(enterpriseId);
+
+    // PRD: Create or get governance thread for this submission
+    const threadId = await this.getOrCreateGovernanceThread({
+      enterpriseId,
+      submissionId,
+      title: `Tool Usage Review: ${submission.brand || 'Unknown Brand'}`,
+      description: `Evaluating AI tool usage for submission ${submissionId.slice(0, 8)}`,
+      priority: 'normal',
+    });
+
+    // Record evaluation start action
+    if (threadId) {
+      await this.recordGovernanceAction({
+        threadId,
+        actionType: 'evaluate',
+        rationale: `Starting automated evaluation in ${veraMode} mode`,
+        metadata: { veraMode, submissionId },
+      });
+    }
 
     // 2. Load tool usage events for this submission
     const events = await this.loadToolUsageEventsForSubmission(enterpriseId, submissionId);
@@ -260,6 +282,21 @@ ${JSON.stringify({
 
       await this.writeProofBundle(proofBundle, context);
 
+      // PRD: Record draft decision action on governance thread
+      if (threadId) {
+        await this.recordGovernanceAction({
+          threadId,
+          actionType: 'draft_decision',
+          rationale: `Shadow mode draft: ${proofBundle.draft_decision} - ${proofBundle.draft_reasoning}`,
+          newStatus: 'resolved', // Shadow mode auto-resolves
+          metadata: { 
+            draftDecision: proofBundle.draft_decision, 
+            proofBundleId: proofBundle.proofBundleId 
+          },
+        });
+        await this.linkProofBundleToThread(threadId, proofBundle.proofBundleId);
+      }
+
       return {
         taskId: task.taskId,
         enterpriseId,
@@ -270,6 +307,7 @@ ${JSON.stringify({
         explanation: `Shadow Mode: ${proofBundle.draft_decision === 'would_block' ? 'Would block' : 'Would allow'} - ${proofBundle.draft_reasoning}`,
         proofBundleId: proofBundle.proofBundleId,
         requiresHumanReview: false,
+        governanceThreadId: threadId,
       };
     }
 
@@ -283,10 +321,35 @@ ${JSON.stringify({
 
         await this.writeProofBundle(proofBundle, context);
 
-        // Escalate if low confidence
-        if (parsed.requiresHumanReview || (llmResponse.confidence || 0) < 0.8) {
-          console.log(`[AgoOrchestratorAgent] Low confidence block, should escalate: ${proofBundle.proofBundleId}`);
-          // TODO: Call human-escalation agent if needed
+        // PRD: Record reject action or escalate if low confidence
+        const shouldEscalate = parsed.requiresHumanReview || (llmResponse.confidence || 0) < 0.8;
+        
+        if (threadId) {
+          if (shouldEscalate) {
+            await this.recordGovernanceAction({
+              threadId,
+              actionType: 'escalate',
+              rationale: `Non-compliant with low confidence (${Math.round((llmResponse.confidence || 0) * 100)}%) - escalating for human review: ${proofBundle.draft_reasoning}`,
+              newStatus: 'pending_human',
+              metadata: { 
+                confidence: llmResponse.confidence,
+                proofBundleId: proofBundle.proofBundleId,
+                policyDecision: parsed.policyDecision,
+              },
+            });
+          } else {
+            await this.recordGovernanceAction({
+              threadId,
+              actionType: 'reject',
+              rationale: `Blocked due to policy violation: ${proofBundle.draft_reasoning}`,
+              newStatus: 'resolved',
+              metadata: { 
+                proofBundleId: proofBundle.proofBundleId,
+                policyDecision: parsed.policyDecision,
+              },
+            });
+          }
+          await this.linkProofBundleToThread(threadId, proofBundle.proofBundleId);
         }
 
         return {
@@ -298,7 +361,8 @@ ${JSON.stringify({
           policyDecision: 'NON_COMPLIANT',
           explanation: `Blocked: ${proofBundle.draft_reasoning}`,
           proofBundleId: proofBundle.proofBundleId,
-          requiresHumanReview: parsed.requiresHumanReview || false,
+          requiresHumanReview: shouldEscalate,
+          governanceThreadId: threadId,
         };
       }
 
@@ -307,6 +371,24 @@ ${JSON.stringify({
       // No draft_decision needed for verified seals
 
       await this.writeProofBundle(proofBundle, context);
+
+      // PRD: Record auto-clear or approve action
+      if (threadId) {
+        const isAutoCleared = parsed.policyDecision === 'AUTO_COMPLIANT';
+        await this.recordGovernanceAction({
+          threadId,
+          actionType: isAutoCleared ? 'auto_clear' : 'approve',
+          rationale: isAutoCleared 
+            ? `Auto-cleared: Request meets all policy requirements`
+            : `Approved: ${(parsed.policyReasons || []).join('; ')}`,
+          newStatus: 'resolved',
+          metadata: { 
+            proofBundleId: proofBundle.proofBundleId,
+            policyDecision: parsed.policyDecision,
+          },
+        });
+        await this.linkProofBundleToThread(threadId, proofBundle.proofBundleId);
+      }
 
       return {
         taskId: task.taskId,
@@ -318,12 +400,28 @@ ${JSON.stringify({
         explanation: (parsed.policyReasons || []).join('; '),
         proofBundleId: proofBundle.proofBundleId,
         requiresHumanReview: parsed.requiresHumanReview || false,
+        governanceThreadId: threadId,
       };
     }
 
     // Disabled Mode: Pass through (existing behavior)
     proofBundle.is_draft_seal = false;
     await this.writeProofBundle(proofBundle, { flowRunId: task.flowRunId });
+
+    // PRD: Still create governance record even in disabled mode for audit trail
+    if (threadId) {
+      await this.recordGovernanceAction({
+        threadId,
+        actionType: 'approve',
+        rationale: 'Governance disabled - request passed through without evaluation',
+        newStatus: 'resolved',
+        metadata: { 
+          proofBundleId: proofBundle.proofBundleId,
+          veraMode: 'disabled',
+        },
+      });
+      await this.linkProofBundleToThread(threadId, proofBundle.proofBundleId);
+    }
 
     return {
       taskId: task.taskId,
@@ -335,6 +433,7 @@ ${JSON.stringify({
       explanation: (parsed.policyReasons || []).join('; '),
       proofBundleId: proofBundle.proofBundleId,
       requiresHumanReview: parsed.requiresHumanReview || false,
+      governanceThreadId: threadId,
     };
   }
 
@@ -684,6 +783,257 @@ ${JSON.stringify(auditData, null, 2)}`,
 
   // === New Action Handlers for VERA ===
 
+  /**
+   * Handle VERA Chat queries
+   * Accepts user queries and returns policy explanations, decision reasoning, or compliance guidance
+   */
+  private async handleVERAChat(
+    params: { query?: string; context?: any; input?: { query?: string; context?: any } },
+    context: any
+  ): Promise<any> {
+    try {
+      const enterpriseId = context.enterprise_id || params.context?.enterprise_id;
+      
+      // Extract query from params - handle both direct query and nested input.query
+      const query = params.query || params.input?.query || '';
+
+      // Validate query
+      if (!query || typeof query !== 'string' || query.trim().length === 0) {
+        throw new AgoError(
+          'VERA Chat requires a non-empty query string',
+          'INVALID_INPUT'
+        );
+      }
+
+      console.log(`[AgoOrchestratorAgent] Processing VERA Chat query for enterprise: ${enterpriseId}`, {
+        query: query.substring(0, 100), // Log first 100 chars
+        queryLength: query.length
+      });
+
+      // For now, return a simple mock response
+      // TODO: Implement full VERA Chat logic with Policy Agent integration
+      const mockResponse = {
+        answer: `Hello! I am VERA. I received your message: "${query}". My systems are coming online.`,
+        queryType: 'general' as const,
+        policyReferences: [] as string[],
+        relatedTools: [] as any[],
+        confidence: 0.95,
+        suggestedActions: [] as string[],
+        metadata: {
+          enterprise_id: enterpriseId,
+          timestamp: new Date().toISOString(),
+          response_type: 'mock'
+        }
+      };
+
+      return mockResponse;
+
+    } catch (error) {
+      console.error('[AgoOrchestratorAgent] Error in handleVERAChat:', error);
+      
+      // Return graceful error response
+      if (error instanceof AgoError) {
+        throw error;
+      }
+      
+      throw new AgoError(
+        `VERA Chat processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        'VERA_CHAT_ERROR'
+      );
+    }
+  }
+
+  // === VERA Real-time Event Publishing ===
+
+  /**
+   * Publish a VERA event to Supabase Realtime channel
+   * Channels: vera-decisions, vera-alerts, vera-proofs
+   */
+  private async publishVERAEvent(
+    channel: 'vera-decisions' | 'vera-alerts' | 'vera-proofs',
+    eventType: string,
+    payload: any,
+    enterpriseId: string
+  ): Promise<void> {
+    const channelName = `${channel}:${enterpriseId}`;
+    let realtimeChannel: any = null;
+    
+    try {
+      console.log(`[AgoOrchestratorAgent] Publishing VERA event to ${channelName}`, {
+        eventType,
+        payloadKeys: Object.keys(payload)
+      });
+
+      // Create and subscribe to Supabase Realtime channel
+      // Subscription is required before sending broadcasts
+      realtimeChannel = this.supabase.channel(channelName);
+      
+      // Subscribe to the channel first
+      const subscriptionStatus = await realtimeChannel.subscribe();
+      
+      if (subscriptionStatus !== 'SUBSCRIBED') {
+        throw new Error(`Failed to subscribe to ${channelName}: ${subscriptionStatus}`);
+      }
+      
+      console.log(`[AgoOrchestratorAgent] Successfully subscribed to ${channelName}, status: ${subscriptionStatus}`);
+      
+      // Now send the broadcast event
+      await realtimeChannel.send({
+        type: 'broadcast',
+        event: eventType,
+        payload: {
+          enterprise_id: enterpriseId,
+          timestamp: new Date().toISOString(),
+          ...payload
+        }
+      });
+
+      console.log(`[AgoOrchestratorAgent] Successfully published event to ${channelName}`);
+    } catch (error) {
+      console.error(`[AgoOrchestratorAgent] Failed to publish VERA event to ${channelName}:`, error);
+      console.error(`[AgoOrchestratorAgent] Error details:`, {
+        message: error instanceof Error ? error.message : String(error),
+        channel: channelName,
+        eventType,
+        enterpriseId
+      });
+      // Don't throw - event publishing failures shouldn't break main flows
+      // Consider adding fallback mechanism (e.g., database logging) in the future
+    } finally {
+      // Clean up: unsubscribe from channel after sending
+      // This prevents resource leaks in long-running edge functions
+      if (realtimeChannel) {
+        try {
+          await this.supabase.removeChannel(realtimeChannel);
+        } catch (cleanupError) {
+          console.warn(`[AgoOrchestratorAgent] Failed to cleanup channel ${channelName}:`, cleanupError);
+        }
+      }
+    }
+  }
+
+  /**
+   * Publish a VERA decision event
+   * Used when a governance decision is made (approve, reject, escalate)
+   */
+  async publishVERADecision(
+    enterpriseId: string,
+    decision: {
+      decisionId: string;
+      decisionType: 'approved' | 'rejected' | 'escalated' | 'auto_cleared' | 'needs_review';
+      toolName?: string;
+      toolVendor?: string;
+      confidence: number;
+      reasoning?: string;
+      policyReferences?: string[];
+      isDraftSeal?: boolean;  // True if in Shadow Mode
+    }
+  ): Promise<void> {
+    await this.publishVERAEvent(
+      'vera-decisions',
+      'decision',
+      {
+        decision_id: decision.decisionId,
+        decision_type: decision.decisionType,
+        tool_name: decision.toolName,
+        tool_vendor: decision.toolVendor,
+        confidence: decision.confidence,
+        reasoning: decision.reasoning,
+        policy_references: decision.policyReferences || [],
+        is_draft_seal: decision.isDraftSeal || false
+      },
+      enterpriseId
+    );
+
+    // Also update vera_state with the latest decision
+    try {
+      await this.supabase.rpc('increment_vera_decision_counter', {
+        p_enterprise_id: enterpriseId,
+        p_decision_type: decision.decisionType,
+        p_decision_id: decision.decisionId
+      });
+    } catch (error) {
+      console.warn('[AgoOrchestratorAgent] Failed to update vera_state:', error);
+    }
+  }
+
+  /**
+   * Publish a VERA alert event
+   * Used for policy violations, security incidents, or compliance warnings
+   */
+  async publishVERAAlert(
+    enterpriseId: string,
+    alert: {
+      alertId: string;
+      severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
+      alertType: 'policy_violation' | 'security_incident' | 'compliance_warning' | 'dlp_trigger' | 'anomaly_detected';
+      title: string;
+      description: string;
+      affectedTool?: string;
+      affectedPartner?: string;
+      recommendedActions?: string[];
+      requiresHumanReview?: boolean;
+    }
+  ): Promise<void> {
+    await this.publishVERAEvent(
+      'vera-alerts',
+      'alert',
+      {
+        alert_id: alert.alertId,
+        severity: alert.severity,
+        alert_type: alert.alertType,
+        title: alert.title,
+        description: alert.description,
+        affected_tool: alert.affectedTool,
+        affected_partner: alert.affectedPartner,
+        recommended_actions: alert.recommendedActions || [],
+        requires_human_review: alert.requiresHumanReview || false
+      },
+      enterpriseId
+    );
+  }
+
+  /**
+   * Publish a VERA proof event
+   * Used when a Proof Bundle is generated or verified
+   */
+  async publishVERAProof(
+    enterpriseId: string,
+    proof: {
+      proofBundleId: string;
+      proofType: 'generated' | 'verified' | 'invalidated';
+      epsId?: string;
+      epsHash?: string;
+      status: 'draft' | 'verified' | 'blocked' | 'pending_verification';
+      veraMode: 'shadow' | 'enforcement' | 'disabled';
+      decisionSummary?: {
+        totalDecisions: number;
+        autoCleared: number;
+        escalated: number;
+        blocked: number;
+      };
+      certificateUrl?: string;
+      qrCode?: string;
+    }
+  ): Promise<void> {
+    await this.publishVERAEvent(
+      'vera-proofs',
+      'proof',
+      {
+        proof_bundle_id: proof.proofBundleId,
+        proof_type: proof.proofType,
+        eps_id: proof.epsId,
+        eps_hash: proof.epsHash,
+        status: proof.status,
+        vera_mode: proof.veraMode,
+        decision_summary: proof.decisionSummary,
+        certificate_url: proof.certificateUrl,
+        qr_code: proof.qrCode
+      },
+      enterpriseId
+    );
+  }
+
   private async evaluateToolUsage(
     input: EvaluateToolUsageInput,
     context: any
@@ -931,6 +1281,133 @@ ${JSON.stringify(auditData, null, 2)}`,
       revenue_protected_usd: revenueProtected,
       days_saved: daysSaved,
     };
+  }
+
+  // === GOVERNANCE THREAD INTEGRATION ===
+  // PRD-aligned governance workflow using governance_threads and governance_actions
+
+  /**
+   * Create a governance thread for a submission
+   * Called when a new submission needs to be evaluated
+   */
+  private async createGovernanceThread(input: {
+    enterpriseId: string;
+    submissionId: string;
+    title?: string;
+    description?: string;
+    priority?: 'low' | 'normal' | 'high' | 'urgent';
+  }): Promise<string | null> {
+    try {
+      const { data, error } = await this.supabase.rpc('create_governance_thread', {
+        p_enterprise_id: input.enterpriseId,
+        p_thread_type: 'tool_request',
+        p_subject_id: input.submissionId,
+        p_subject_type: 'submission',
+        p_title: input.title || `Submission Review: ${input.submissionId.slice(0, 8)}`,
+        p_description: input.description || 'AI tool usage submission requiring governance review',
+        p_priority: input.priority || 'normal',
+        p_submission_id: input.submissionId,
+        p_actor_type: 'agent',
+        p_agent_name: 'ago-orchestrator',
+        p_metadata: {},
+      });
+
+      if (error) {
+        console.error('[AgoOrchestratorAgent] Failed to create governance thread:', error);
+        return null;
+      }
+
+      console.log(`[AgoOrchestratorAgent] Created governance thread: ${data}`);
+      return data;
+    } catch (err) {
+      console.error('[AgoOrchestratorAgent] Error creating governance thread:', err);
+      return null;
+    }
+  }
+
+  /**
+   * Record a governance action on a thread
+   * Used to track agent decisions with before/after state
+   */
+  private async recordGovernanceAction(input: {
+    threadId: string;
+    actionType: 'evaluate' | 'approve' | 'reject' | 'escalate' | 'auto_clear' | 'draft_decision';
+    rationale: string;
+    newStatus?: 'open' | 'pending_human' | 'resolved' | 'cancelled';
+    metadata?: Record<string, unknown>;
+  }): Promise<string | null> {
+    try {
+      const { data, error } = await this.supabase.rpc('record_governance_action', {
+        p_thread_id: input.threadId,
+        p_action_type: input.actionType,
+        p_actor_type: 'agent',
+        p_agent_name: 'ago-orchestrator',
+        p_rationale: input.rationale,
+        p_new_status: input.newStatus || null,
+        p_metadata: input.metadata || {},
+      });
+
+      if (error) {
+        console.error('[AgoOrchestratorAgent] Failed to record governance action:', error);
+        return null;
+      }
+
+      console.log(`[AgoOrchestratorAgent] Recorded governance action: ${input.actionType} -> ${data}`);
+      return data;
+    } catch (err) {
+      console.error('[AgoOrchestratorAgent] Error recording governance action:', err);
+      return null;
+    }
+  }
+
+  /**
+   * Link a proof bundle to a governance thread
+   */
+  private async linkProofBundleToThread(threadId: string, proofBundleId: string): Promise<void> {
+    try {
+      const { error } = await this.supabase
+        .from('governance_threads')
+        .update({ proof_bundle_id: proofBundleId })
+        .eq('id', threadId);
+
+      if (error) {
+        console.error('[AgoOrchestratorAgent] Failed to link proof bundle to thread:', error);
+      }
+    } catch (err) {
+      console.error('[AgoOrchestratorAgent] Error linking proof bundle:', err);
+    }
+  }
+
+  /**
+   * Get or create a governance thread for a submission
+   * Checks if a thread already exists before creating a new one
+   */
+  private async getOrCreateGovernanceThread(input: {
+    enterpriseId: string;
+    submissionId: string;
+    title?: string;
+    description?: string;
+    priority?: 'low' | 'normal' | 'high' | 'urgent';
+  }): Promise<string | null> {
+    try {
+      // Check for existing thread
+      const { data: existing } = await this.supabase
+        .from('governance_threads')
+        .select('id')
+        .eq('enterprise_id', input.enterpriseId)
+        .eq('submission_id', input.submissionId)
+        .single();
+
+      if (existing) {
+        return existing.id;
+      }
+
+      // Create new thread
+      return await this.createGovernanceThread(input);
+    } catch (err) {
+      // If error is "no rows returned", create new thread
+      return await this.createGovernanceThread(input);
+    }
   }
 
   private async runUsageAuditQuery(
