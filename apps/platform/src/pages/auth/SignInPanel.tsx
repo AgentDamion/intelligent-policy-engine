@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+﻿import React, { useEffect, useRef, useState } from 'react'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/button'
 import { Divider } from '@/components/ui/Divider'
@@ -6,14 +6,27 @@ import { SSOButton } from '@/components/auth/SSOButton'
 import { isValidEmail } from '@/utils/validators'
 import { track } from '@/utils/analytics'
 import { supabase } from '@/lib/supabase'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { getPlatformOrigin } from '@/utils/platformOrigin'
+
+function getSafeRedirectTo(search: string): string | null {
+  const raw = new URLSearchParams(search).get('redirectTo')
+  if (!raw) return null
+  if (!raw.startsWith('/')) return null
+  if (raw.startsWith('//')) return null
+  if (raw.includes('://')) return null
+  if (raw.startsWith('/login')) return null
+  if (raw.startsWith('/onboarding')) return null
+  return raw
+}
 
 export function SignInPanel() {
   const platformOrigin = getPlatformOrigin()
   const emailRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
+  const location = useLocation()
+  const redirectTo = getSafeRedirectTo(location.search)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [remember, setRemember] = useState(true)
@@ -41,9 +54,11 @@ export function SignInPanel() {
       track('auth.signin_submitted', { useMagicLink, remember })
 
       if (useMagicLink) {
+        const emailRedirectTo = new URL("/login", platformOrigin)
+        if (redirectTo) emailRedirectTo.searchParams.set("redirectTo", redirectTo)
         const { error } = await supabase.auth.signInWithOtp({
           email,
-          options: { emailRedirectTo: `${platformOrigin}/login` },
+          options: { emailRedirectTo: emailRedirectTo.toString() },
         })
         if (error) throw error
         toast.success('Magic link sent. Check your email.')
@@ -54,7 +69,7 @@ export function SignInPanel() {
       if (error) throw error
 
       toast.success('Welcome back!')
-      navigate('/dashboard')
+      navigate(redirectTo || '/dashboard', { replace: true })
     } catch (e: any) {
       setErr(e?.message || 'Sign in failed. Please try again.')
     } finally {
@@ -71,9 +86,11 @@ export function SignInPanel() {
     }
 
     const supabaseProvider = provider === 'microsoft' ? 'azure' : 'google'
+    const oauthRedirectTo = new URL("/login", platformOrigin)
+    if (redirectTo) oauthRedirectTo.searchParams.set("redirectTo", redirectTo)
     const { error } = await supabase.auth.signInWithOAuth({
       provider: supabaseProvider as any,
-      options: { redirectTo: `${platformOrigin}/login` },
+      options: { redirectTo: oauthRedirectTo.toString() },
     })
     if (error) toast.error(error.message)
   }
@@ -102,7 +119,7 @@ export function SignInPanel() {
           <Input
             type="password"
             label="Password"
-            placeholder="••••••••"
+            placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             error={err && password.length < 8 ? 'Minimum 8 characters' : undefined}
@@ -131,7 +148,7 @@ export function SignInPanel() {
 
         <div className="flex items-center gap-3">
           <Button type="submit" variant="primary" disabled={loading} className="w-full">
-            {loading ? 'Signing in…' : 'Sign in'}
+            {loading ? 'Signing inâ€¦' : 'Sign in'}
           </Button>
           <Button type="button" variant="secondary" disabled={loading} className="w-full" onClick={() => setUseMagicLink((s) => !s)}>
             {useMagicLink ? 'Use password' : 'Use magic link'}
@@ -141,4 +158,7 @@ export function SignInPanel() {
     </form>
   )
 }
+
+
+
 

@@ -1,8 +1,8 @@
-import React, { useState } from 'react'
+﻿import React, { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useEnterprise } from '../contexts/EnterpriseContext'
 import { supabase } from '../lib/supabase'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import {
   CheckCircle,
   Loader2
@@ -16,10 +16,23 @@ interface OnboardingData {
   primaryUseCase: string
 }
 
+function getSafeRedirectTo(search: string): string | null {
+  const raw = new URLSearchParams(search).get('redirectTo')
+  if (!raw) return null
+  if (!raw.startsWith('/')) return null
+  if (raw.startsWith('//')) return null
+  if (raw.includes('://')) return null
+  if (raw.startsWith('/login')) return null
+  if (raw.startsWith('/onboarding')) return null
+  return raw
+}
+
 const OnboardingPage: React.FC = () => {
   const { user } = useAuth()
   const { setCurrentEnterprise } = useEnterprise()
   const navigate = useNavigate()
+  const location = useLocation()
+  const redirectTo = getSafeRedirectTo(location.search)
   
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -103,7 +116,7 @@ const OnboardingPage: React.FC = () => {
       setCurrentEnterprise(enterprise)
 
       // Navigate to dashboard
-      navigate('/dashboard')
+      navigate(redirectTo || '/dashboard', { replace: true })
 
     } catch (error: any) {
       console.error('Onboarding error:', error)
@@ -186,3 +199,4 @@ const OnboardingPage: React.FC = () => {
 }
 
 export default OnboardingPage
+

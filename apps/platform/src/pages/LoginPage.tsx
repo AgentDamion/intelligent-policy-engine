@@ -1,8 +1,19 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+﻿import React, { useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { Building2, Eye, EyeOff } from 'lucide-react'
 import toast from 'react-hot-toast'
+
+function getSafeRedirectTo(search: string): string | null {
+  const raw = new URLSearchParams(search).get('redirectTo')
+  if (!raw) return null
+  if (!raw.startsWith('/')) return null
+  if (raw.startsWith('//')) return null
+  if (raw.includes('://')) return null
+  if (raw.startsWith('/login')) return null
+  if (raw.startsWith('/onboarding')) return null
+  return raw
+}
 
 const LoginPage: React.FC = () => {
   const [isSignUp, setIsSignUp] = useState(false)
@@ -13,6 +24,8 @@ const LoginPage: React.FC = () => {
   
   const { signIn, signUp } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+  const redirectTo = getSafeRedirectTo(location.search)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -33,7 +46,7 @@ const LoginPage: React.FC = () => {
           toast.success('Account created! Please check your email to verify your account.')
         } else {
           toast.success('Welcome back!')
-          navigate('/dashboard')
+          navigate(redirectTo || '/dashboard', { replace: true })
         }
       }
     } catch (error) {
@@ -152,3 +165,4 @@ const LoginPage: React.FC = () => {
 }
 
 export default LoginPage
+

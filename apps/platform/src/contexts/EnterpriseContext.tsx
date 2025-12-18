@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react'
+﻿import React, { createContext, useContext, useEffect, useState } from 'react'
 import { useAuth } from './AuthContext'
 import { supabase } from '@/lib/supabase'
 import { Database } from '@/lib/supabase'
@@ -14,6 +14,7 @@ interface EnterpriseContextType {
   enterpriseMembers: EnterpriseMember[]
   workspaceMembers: WorkspaceMember[]
   loading: boolean
+  enterpriseFetchComplete: boolean
   createEnterprise: (name: string) => Promise<{ data: Enterprise | null; error: any }>
   createWorkspace: (name: string, enterpriseId: string, enterpriseName: string) => Promise<{ data: Workspace | null; error: any }>
   addEnterpriseMember: (enterpriseId: string, userId: string, role: 'owner' | 'admin' | 'editor' | 'viewer') => Promise<{ error: any }>
@@ -39,11 +40,21 @@ export const EnterpriseProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [enterpriseMembers, setEnterpriseMembers] = useState<EnterpriseMember[]>([])
   const [workspaceMembers, setWorkspaceMembers] = useState<WorkspaceMember[]>([])
   const [loading, setLoading] = useState(true)
+  const [enterpriseFetchComplete, setEnterpriseFetchComplete] = useState(false)
+  const [fetchInProgress, setFetchInProgress] = useState(false)
+  const [hasNoEnterprise, setHasNoEnterprise] = useState(false)
 
   const fetchUserEnterprises = async () => {
-    if (!user) return
+    if (!user) {
+      setEnterpriseFetchComplete(true)
+      setLoading(false)
+      setHasNoEnterprise(true)
+      return
+    }
 
     try {
+      setFetchInProgress(true)
+      setHasNoEnterprise(false)
       // Get enterprises where user is a member
       const { data: memberships, error: membershipError } = await supabase
         .from('enterprise_members')
@@ -63,12 +74,21 @@ export const EnterpriseProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         if (enterpriseError) throw enterpriseError
 
         // Set first enterprise as current if none selected
-        if (enterprises && enterprises.length > 0 && !currentEnterprise) {
+        if (enterprises && enterprises.length > 0) {
           setCurrentEnterprise(enterprises[0])
+          setHasNoEnterprise(false)
+        } else {
+          setHasNoEnterprise(true)
         }
+      } else {
+        setHasNoEnterprise(true)
       }
     } catch (error) {
       console.error('Error fetching user enterprises:', error)
+      setHasNoEnterprise(true)
+    } finally {
+      setFetchInProgress(false)
+      setLoading(false)
     }
   }
 
@@ -132,9 +152,29 @@ export const EnterpriseProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   useEffect(() => {
     if (user) {
+      setEnterpriseFetchComplete(false)
+      setLoading(true)
+      setHasNoEnterprise(false)
       fetchUserEnterprises()
+    } else {
+      setEnterpriseFetchComplete(true)
+      setLoading(false)
+      setHasNoEnterprise(true)
     }
   }, [user])
+
+  // Set enterpriseFetchComplete to true only after React has applied the state update
+  // This ensures ProtectedRoute waits for the enterprise to be set before redirecting
+  useEffect(() => {
+    if (!fetchInProgress) {
+      // Fetch is complete - check if we have an enterprise or confirmed there's none
+      if (currentEnterprise || hasNoEnterprise) {
+        if (!enterpriseFetchComplete) {
+          setEnterpriseFetchComplete(true)
+        }
+      }
+    }
+  }, [currentEnterprise, hasNoEnterprise, fetchInProgress, enterpriseFetchComplete])
 
   useEffect(() => {
     if (currentEnterprise) {
@@ -148,10 +188,6 @@ export const EnterpriseProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       fetchWorkspaceMembers()
     }
   }, [workspaces])
-
-  useEffect(() => {
-    setLoading(false)
-  }, [currentEnterprise, workspaces, enterpriseMembers, workspaceMembers])
 
   const createEnterprise = async (name: string) => {
     try {
@@ -255,6 +291,7 @@ export const EnterpriseProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     enterpriseMembers,
     workspaceMembers,
     loading,
+    enterpriseFetchComplete,
     createEnterprise,
     createWorkspace,
     addEnterpriseMember,

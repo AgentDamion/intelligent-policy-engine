@@ -15,10 +15,12 @@ import {
   Briefcase,
   Activity,
   Zap,
-  Sparkles
+  Sparkles,
+  Shield
 } from 'lucide-react'
 import LoadingSpinner from './ui/LoadingSpinner'
 import { SpineLayout } from './agentic/spine/SpineLayout'
+import { FloatingVERAOrb } from './vera/FloatingVERAOrb'
 
 const Layout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -38,12 +40,18 @@ const Layout: React.FC = () => {
     { name: 'Settings', href: '/settings', icon: Settings },
   ]
 
+  // VERA+ is a special flagship feature with its own full-page experience
+  const veraPlus = { name: 'VERA+', href: '/vera-plus', icon: Shield }
+
   const handleSignOut = async () => {
     await signOut()
     navigate('/login')
   }
 
   const isActive = (path: string) => location.pathname === path
+
+  // Hide floating orb on VERA+ pages where VERA is already prominent
+  const showFloatingOrb = !location.pathname.startsWith('/vera')
 
   if (!currentEnterprise) {
     return (
@@ -119,6 +127,21 @@ const Layout: React.FC = () => {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* VERA+ Launch Button */}
+          <div className="px-6 py-4 border-b border-gray-200">
+            <Link
+              to={veraPlus.href}
+              className="flex items-center justify-between w-full px-4 py-3 text-sm font-semibold rounded-xl transition-all bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 shadow-md hover:shadow-lg"
+              onClick={() => setSidebarOpen(false)}
+            >
+              <div className="flex items-center">
+                <Shield className="h-5 w-5 mr-3" />
+                <span>VERA+</span>
+              </div>
+              <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">AI Governance</span>
+            </Link>
           </div>
 
           {/* Navigation */}
@@ -199,6 +222,9 @@ const Layout: React.FC = () => {
             <Outlet />
           </main>
         </div>
+
+        {/* Floating VERA Orb - Global Access */}
+        {showFloatingOrb && <FloatingVERAOrb />}
       </div>
     </SpineLayout>
   )

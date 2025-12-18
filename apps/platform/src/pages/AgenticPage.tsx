@@ -1,11 +1,11 @@
 import React from 'react'
-import { ACChatWidget } from '@/components/agentic/ac/ACChatWidget'
+import { VERAChatWidget } from '@/components/vera/VERAChatWidget'
 import { useEnterprise } from '@/contexts/EnterpriseContext'
 
 /**
- * Dedicated "Agentic" screen.
- * The platform already wraps the whole app in SpineLayout (floating widget),
- * but this page gives a full-page agent workspace like the Lovable /agentic screen.
+ * Dedicated "Agentic" screen with VERA Chat.
+ * VERA (Velocity Engine for Risk & Assurance) is the AI Governance Officer
+ * that provides policy explanations, decision reasoning, and compliance guidance.
  */
 const AgenticPage: React.FC = () => {
   const { currentEnterprise } = useEnterprise()
@@ -13,25 +13,28 @@ const AgenticPage: React.FC = () => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6">
       <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Agentic Workspace</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">VERA Workspace</h1>
         <p className="text-sm text-gray-600 mt-2">
-          This is the dedicated agentic screen. Use the chat on the right to talk to Vera/agents and drive workflows.
+          Chat with VERA, your AI Governance Officer. Get instant answers about policies, 
+          compliance decisions, and tool approvals.
         </p>
 
         <div className="mt-6 space-y-3 text-sm text-gray-700">
           <div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
-            <div className="font-medium">What you can do here</div>
+            <div className="font-medium">What you can ask VERA:</div>
             <ul className="list-disc list-inside mt-2 space-y-1">
-              <li>Ask the agent to summarize policies or run compliance checks</li>
-              <li>Kick off sandbox simulations and review results</li>
-              <li>Route recommendations to review and track audit events</li>
+              <li>"Why was this tool approved/rejected?" - Get policy explanations</li>
+              <li>"Can I use ChatGPT for healthcare content?" - Compliance guidance</li>
+              <li>"What tools are approved for my brand?" - Tool discovery</li>
+              <li>"Explain the decision for submission #123" - Decision reasoning</li>
             </ul>
           </div>
 
-          <div className="p-4 rounded-lg bg-blue-50 border border-blue-200">
-            <div className="font-medium text-blue-900">Tip</div>
-            <div className="text-blue-900 mt-1">
-              If you don’t see responses, confirm the agent worker is running and Supabase Realtime is enabled.
+          <div className="p-4 rounded-lg bg-purple-50 border border-purple-200">
+            <div className="font-medium text-purple-900">About VERA</div>
+            <div className="text-purple-900 mt-1">
+              VERA operates at "The Boundary" between your enterprise and partners, 
+              providing real-time governance decisions with full transparency and auditability.
             </div>
           </div>
         </div>
@@ -39,7 +42,7 @@ const AgenticPage: React.FC = () => {
 
       <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
         <div className="h-[700px]">
-          <ACChatWidget enterpriseId={currentEnterprise?.id} />
+          <VERAChatWidget enterpriseId={currentEnterprise?.id} />
         </div>
       </div>
     </div>

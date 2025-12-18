@@ -1,4 +1,6 @@
-import { useState } from 'react'
+﻿import { useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { useAuth } from '@/contexts/AuthContext'
 import { Card } from '@/components/ui/card'
 import { Segmented } from '@/components/ui/Segmented'
 import { TeaserCard } from '@/components/auth/TeaserCard'
@@ -6,8 +8,30 @@ import { CreateOrgPanel } from './CreateOrgPanel'
 import { SignInPanel } from './SignInPanel'
 import { JoinOrgPanel } from './JoinOrgPanel'
 
+function getSafeRedirectTo(search: string): string | null {
+  const raw = new URLSearchParams(search).get('redirectTo')
+  if (!raw) return null
+  if (!raw.startsWith('/')) return null
+  if (raw.startsWith('//')) return null
+  if (raw.includes('://')) return null
+  if (raw.startsWith('/login')) return null
+  if (raw.startsWith('/onboarding')) return null
+  return raw
+}
+
 export default function AuthHubPage() {
   const [mode, setMode] = useState<'signin' | 'create' | 'join'>('signin')
+
+  const { user, loading } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  useEffect(() => {
+    if (!loading && user) {
+      const redirectTo = getSafeRedirectTo(location.search)
+      navigate(redirectTo || '/dashboard', { replace: true })
+    }
+  }, [loading, user, location.search, navigate])
 
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-[480px_1fr] bg-[#F7F8FC] text-[#0F1222]">
@@ -26,7 +50,7 @@ export default function AuthHubPage() {
 
         <TeaserCard
           title="Security posture check (preview)"
-          body="We’ll evaluate auth + org setup and suggest hardening steps."
+          body="Weâ€™ll evaluate auth + org setup and suggest hardening steps."
           status="neutral"
         />
 
@@ -62,4 +86,5 @@ export default function AuthHubPage() {
     </div>
   )
 }
+
 
