@@ -1,337 +1,405 @@
-import { Agent } from '../cursor-agent-registry.ts'
-import { aiClient, AIRequest } from '../shared/ai-client.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// Cache for loaded prompts (refreshes every 5 minutes)
-let cachedPrompt: any = null
-let cacheTimestamp: number = 0
-const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+/**
+ * AIRequestEvent - Replaces ToolUsageEvent for boundary governance
+ */
+export interface AIRequestEvent {
+  partner_id: string;
+  enterprise_id: string;
+  workspace_id?: string;
+  model: string;
+  prompt: string;
+  prompt_tokens?: number;
+  max_tokens?: number;
+  temperature?: number;
+  metadata?: Record<string, unknown>;
+  timestamp: string;
+}
 
-export class PolicyAgent implements Agent {
-  private supabase: any
+/**
+ * PolicyEvaluationResult
+ */
+export interface PolicyEvaluationResult {
+  allowed: boolean;
+  decision: 'allow' | 'block' | 'warn';
+  reasons: string[];
+  violated_rules?: string[];
+  policy_ids: string[];
+  confidence: number;
+  metadata: {
+    evaluation_time_ms: number;
+    rules_evaluated: number;
+    cost_estimate?: number;
+  };
+}
 
-  constructor() {
-    // Initialize Supabase client for prompt loading
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
-    this.supabase = createClient(supabaseUrl, supabaseKey)
+/**
+ * BoundaryRule - New structure for middleware policies
+ */
+export interface BoundaryRule {
+  type: 'model_restriction' | 'content_filter' | 'rate_limit' | 'cost_control';
+  config: Record<string, unknown>;
+  severity: 'block' | 'warn' | 'monitor';
+}
+
+/**
+ * PolicyAgent - Evolved for Boundary Governance
+ * 
+ * Responsibilities:
+ * - Evaluate AI requests against boundary policies
+ * - Support model restrictions, content filters, rate limits, cost controls
+ * - Real-time evaluation (< 100ms latency)
+ * - Return structured evaluation results
+ */
+export class PolicyAgent {
+  private supabase: SupabaseClient;
+
+  constructor(supabase: SupabaseClient) {
+    this.supabase = supabase;
   }
 
-  async process(input: any, context: any): Promise<any> {
-    console.log('🔍 PolicyAgent processing request with AI:', input.type)
-
-    // Load active prompt from database
-    const promptData = await this.getActivePrompt()
-
-    // Fill template with input data
-    const userPrompt = this.fillPromptTemplate(promptData.user_prompt_template, input)
-
-    // Prepare AI request with DATABASE prompt
-    const aiRequest: AIRequest = {
-      prompt: userPrompt,
-      systemPrompt: promptData.system_prompt,  // Use DB system prompt
-      context: {
-        input,
-        enterpriseId: context.enterprise_id,
-        tenantId: context.tenantId,
-        timestamp: context.timestamp,
-        promptVersion: promptData.prompt_version
-      },
-      agentType: 'policy',
-      enterpriseId: context.enterprise_id,
-      temperature: 0.2, // Lower temperature for consistent policy decisions
-      maxTokens: 1500
-    }
-
-    // Get AI analysis
-    const aiResponse = await aiClient.processRequest(aiRequest)
+  /**
+   * Process AI request evaluation
+   */
+  async process(input: AIRequestEvent, context: Record<string, unknown>): Promise<PolicyEvaluationResult> {
+    const startTime = Date.now();
     
-    // Parse AI response
-    let aiAnalysis
+    console.log('PolicyAgent evaluating request:', {
+      partner_id: input.partner_id,
+      enterprise_id: input.enterprise_id,
+      model: input.model,
+      prompt_length: input.prompt?.length || 0
+    });
+
     try {
-      aiAnalysis = JSON.parse(aiResponse.content)
-    } catch {
-      // Fallback if AI doesn't return valid JSON
-      aiAnalysis = {
-        analysis: aiResponse.content,
-        confidence: aiResponse.confidence,
-        reasoning: aiResponse.reasoning,
-        risk_level: 'medium',
-        compliance_status: 'needs_review'
+      // Load active policies for enterprise-partner relationship
+      const policies = await this.loadBoundaryPolicies(input.enterprise_id, input.partner_id);
+      
+      console.log(`Loaded ${policies.length} boundary policies`);
+
+      // Evaluate each policy type
+      const evaluations = await Promise.all([
+        this.evaluateModelRestrictions(input, policies),
+        this.evaluateContentFilters(input, policies),
+        this.evaluateRateLimits(input, policies),
+        this.evaluateCostControls(input, policies)
+      ]);
+
+      // Aggregate results
+      const violations: string[] = [];
+      const warnings: string[] = [];
+      const reasons: string[] = [];
+      let decision: 'allow' | 'block' | 'warn' = 'allow';
+
+      for (const eval of evaluations) {
+        if (eval.decision === 'block') {
+          decision = 'block';
+          violations.push(...eval.violated_rules);
+          reasons.push(...eval.reasons);
+        } else if (eval.decision === 'warn' && decision !== 'block') {
+          decision = 'warn';
+          warnings.push(...eval.reasons);
+        }
+        reasons.push(...eval.reasons);
       }
+
+      const evaluationTimeMs = Date.now() - startTime;
+
+      const result: PolicyEvaluationResult = {
+        allowed: decision !== 'block',
+        decision,
+        reasons: [...new Set(reasons)], // Deduplicate
+        violated_rules: violations.length > 0 ? violations : undefined,
+        policy_ids: policies.map(p => p.id),
+        confidence: this.calculateConfidence(evaluations),
+        metadata: {
+          evaluation_time_ms: evaluationTimeMs,
+          rules_evaluated: evaluations.length,
+          cost_estimate: this.estimateCost(input)
+        }
+      };
+
+      console.log('PolicyAgent evaluation complete:', {
+        decision: result.decision,
+        evaluation_time_ms: evaluationTimeMs,
+        violated_rules: result.violated_rules?.length || 0
+      });
+
+      return result;
+
+    } catch (error) {
+      console.error('PolicyAgent evaluation error:', error);
+      
+      // Fail-safe: Allow request but log error
+      return {
+        allowed: true,
+        decision: 'allow',
+        reasons: ['Evaluation error - defaulting to allow with logging'],
+        policy_ids: [],
+        confidence: 0,
+        metadata: {
+          evaluation_time_ms: Date.now() - startTime,
+          rules_evaluated: 0,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        }
+      };
+    }
+  }
+
+  /**
+   * Load boundary policies for enterprise-partner relationship
+   */
+  private async loadBoundaryPolicies(
+    enterpriseId: string, 
+    partnerId: string
+  ): Promise<Array<{ id: string; rules: BoundaryRule[] }>> {
+    // Query policy_instances with boundary governance rules
+    const { data: policies, error } = await this.supabase
+      .from('policy_instances')
+      .select('id, effective_pom, current_eps_id')
+      .eq('enterprise_id', enterpriseId)
+      .eq('status', 'active');
+
+    if (error) {
+      console.error('Error loading policies:', error);
+      return [];
     }
 
-    // Determine final decision based on AI analysis
-    const decision = this.makeDecisionFromAI(aiAnalysis, input)
-    const riskLevel = aiAnalysis.risk_level || 'medium'
-    const riskFactors = aiAnalysis.metadata?.key_factors || []
+    // Extract boundary rules from POM
+    return (policies || [])
+      .map(p => ({
+        id: p.id,
+        rules: this.extractBoundaryRules(p.effective_pom)
+      }))
+      .filter(p => p.rules.length > 0);
+  }
 
-    return {
-      request: {
-        originalContent: input.content || "Request processed",
-        user: {
-          role: input.user?.role || "marketing_agency_employee",
-          urgency_level: input.urgency?.level || 0.5,
-          emotional_state: input.urgency?.emotionalState || "neutral"
-        },
-        request: {
-          tool: input.tool?.toLowerCase(),
-          purpose: this.inferPurpose(input.usage),
-          presentation_type: "client_presentation",
-          confidence: aiAnalysis.confidence,
-          deadline: "pending",
-          current_time: new Date().toISOString()
-        },
-        context: {
-          time_pressure: input.urgency?.timePressure || 0.5,
-          is_weekend: false,
-          is_client_facing: true
-        }
-      },
-      decision: {
-        type: "policy_evaluation",
-        status: decision.status,
-        confidence: aiAnalysis.confidence,
-        reasoning: aiAnalysis.reasoning,
-        riskLevel: riskLevel,
-        requiresHumanReview: decision.requiresHumanReview,
-        riskFactors: riskFactors,
-        conditions: {
-          guardrails: {
-            fda_compliance: decision.fdaCompliance,
-            gdpr_compliance: decision.gdprCompliance,
-            risk_threshold: 0.7
+  /**
+   * Extract boundary rules from policy POM
+   */
+  private extractBoundaryRules(pom: any): BoundaryRule[] {
+    const rules: BoundaryRule[] = [];
+
+    // Model restrictions
+    if (pom?.model_restrictions) {
+      rules.push({
+        type: 'model_restriction',
+        config: pom.model_restrictions,
+        severity: pom.model_restrictions.severity || 'block'
+      });
+    }
+
+    // Content filters
+    if (pom?.content_filters) {
+      rules.push({
+        type: 'content_filter',
+        config: pom.content_filters,
+        severity: pom.content_filters.severity || 'block'
+      });
+    }
+
+    // Rate limits
+    if (pom?.rate_limits) {
+      rules.push({
+        type: 'rate_limit',
+        config: pom.rate_limits,
+        severity: pom.rate_limits.severity || 'warn'
+      });
+    }
+
+    // Cost controls
+    if (pom?.cost_controls) {
+      rules.push({
+        type: 'cost_control',
+        config: pom.cost_controls,
+        severity: pom.cost_controls.severity || 'warn'
+      });
+    }
+
+    return rules;
+  }
+
+  /**
+   * Evaluate model restriction rules
+   */
+  private async evaluateModelRestrictions(
+    input: AIRequestEvent,
+    policies: Array<{ id: string; rules: BoundaryRule[] }>
+  ): Promise<{ decision: 'allow' | 'block' | 'warn'; reasons: string[]; violated_rules: string[] }> {
+    const reasons: string[] = [];
+    const violations: string[] = [];
+    let decision: 'allow' | 'block' | 'warn' = 'allow';
+
+    for (const policy of policies) {
+      const modelRules = policy.rules.filter(r => r.type === 'model_restriction');
+      
+      for (const rule of modelRules) {
+        const allowedModels = rule.config.allowed_models as string[] || [];
+        
+        if (allowedModels.length > 0 && !allowedModels.includes(input.model)) {
+          if (rule.severity === 'block') {
+            decision = 'block';
+            violations.push(`model_restriction:${policy.id}`);
+            reasons.push(`Model '${input.model}' not in allowed list: ${allowedModels.join(', ')}`);
+          } else if (rule.severity === 'warn') {
+            decision = decision === 'block' ? 'block' : 'warn';
+            reasons.push(`Warning: Model '${input.model}' not in recommended list`);
           }
         }
-      },
-      metadata: {
-        processingTime: Date.now() - new Date(context.timestamp).getTime(),
-        agentVersion: "3.0-AI",
-        modelAccuracy: aiAnalysis.confidence,
-        aiProvider: aiResponse.metadata.provider,
-        aiModel: aiResponse.metadata.model,
-        aiUsage: aiResponse.metadata.usage
       }
     }
-  }
 
-  getInfo() {
-    return { name: 'PolicyAgent', type: 'PolicyEvaluation' }
+    return { decision, reasons, violated_rules: violations };
   }
 
   /**
-   * Get active prompt from database with caching
+   * Evaluate content filter rules
    */
-  private async getActivePrompt(): Promise<any> {
-    const now = Date.now()
+  private async evaluateContentFilters(
+    input: AIRequestEvent,
+    policies: Array<{ id: string; rules: BoundaryRule[] }>
+  ): Promise<{ decision: 'allow' | 'block' | 'warn'; reasons: string[]; violated_rules: string[] }> {
+    const reasons: string[] = [];
+    const violations: string[] = [];
+    let decision: 'allow' | 'block' | 'warn' = 'allow';
 
-    // Check if cache is still valid
-    if (cachedPrompt && (now - cacheTimestamp) < CACHE_TTL) {
-      return cachedPrompt
-    }
-
-    try {
-      // Query database for active prompt
-      const { data, error } = await this.supabase
-        .from('agent_prompts_v2')
-        .select('*')
-        .eq('agent_type', 'PolicyAgent')
-        .eq('is_active', true)
-        .single()
-
-      if (error || !data) {
-        console.warn('⚠️  Failed to load prompt from DB, using fallback:', error?.message)
-        return this.getFallbackPrompt()
+    for (const policy of policies) {
+      const contentRules = policy.rules.filter(r => r.type === 'content_filter');
+      
+      for (const rule of contentRules) {
+        const blockPatterns = rule.config.block_patterns as string[] || [];
+        
+        for (const pattern of blockPatterns) {
+          const regex = new RegExp(pattern, 'i');
+          if (regex.test(input.prompt)) {
+            if (rule.severity === 'block') {
+              decision = 'block';
+              violations.push(`content_filter:${policy.id}`);
+              reasons.push(`Blocked pattern detected: ${pattern}`);
+            } else if (rule.severity === 'warn') {
+              decision = decision === 'block' ? 'block' : 'warn';
+              reasons.push(`Warning: Sensitive pattern detected: ${pattern}`);
+            }
+          }
+        }
       }
-
-      // Update cache
-      cachedPrompt = data
-      cacheTimestamp = now
-
-      console.log(`✅ Using PolicyAgent prompt version ${data.prompt_version}`)
-      return data
-
-    } catch (err) {
-      console.error('❌ Error loading prompt from database:', err)
-      return this.getFallbackPrompt()
     }
+
+    return { decision, reasons, violated_rules: violations };
   }
 
   /**
-   * Fallback to hardcoded prompt if database unavailable
+   * Evaluate rate limit rules
    */
-  private getFallbackPrompt(): any {
-    return {
-      system_prompt: `You are a policy compliance evaluator for AI governance and enterprise risk management.
+  private async evaluateRateLimits(
+    input: AIRequestEvent,
+    policies: Array<{ id: string; rules: BoundaryRule[] }>
+  ): Promise<{ decision: 'allow' | 'block' | 'warn'; reasons: string[]; violated_rules: string[] }> {
+    const reasons: string[] = [];
+    const violations: string[] = [];
+    let decision: 'allow' | 'block' | 'warn' = 'allow';
 
-Your role is to analyze AI tool and service requests against enterprise policies, regulatory requirements, and risk frameworks.
+    // Query recent requests for rate limiting
+    const { data: recentRequests, error } = await this.supabase
+      .from('middleware_requests')
+      .select('created_at')
+      .eq('partner_id', input.partner_id)
+      .eq('enterprise_id', input.enterprise_id)
+      .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+      .order('created_at', { ascending: false });
 
-Key Responsibilities:
-- Evaluate regulatory compliance (GDPR, HIPAA, FDA, PCI-DSS, SOC2)
-- Assess data privacy and security risks
-- Identify potential legal and ethical concerns
-- Consider vendor reputation and trustworthiness
-- Evaluate business impact and operational risks
-
-Decision Framework:
-- APPROVED: Low risk tools from trusted vendors with appropriate safeguards
-- REJECTED: High risk tools with clear compliance violations or security threats
-- NEEDS_REVIEW: Medium risk scenarios requiring human judgment
-
-Be thorough in your analysis but err on the side of caution for sensitive use cases.`,
-      user_prompt_template: `Analyze this policy request for compliance and risk:
-
-Tool: {tool}
-Vendor: {vendor}
-Usage: {usage}
-Data Handling: {dataHandling}
-Content: {content}
-
-Assess:
-1. Regulatory compliance (GDPR, HIPAA, FDA, etc.)
-2. Data privacy risks
-3. Security implications
-4. Business risk factors
-5. Recommended approval status
-
-Provide structured analysis with confidence scoring.`,
-      prompt_version: 1
+    if (error) {
+      console.error('Error checking rate limits:', error);
+      return { decision: 'allow', reasons: ['Rate limit check skipped'], violated_rules: [] };
     }
+
+    const requestCount = (recentRequests || []).length;
+
+    for (const policy of policies) {
+      const rateLimitRules = policy.rules.filter(r => r.type === 'rate_limit');
+      
+      for (const rule of rateLimitRules) {
+        const maxRequestsPerDay = rule.config.max_requests_per_day as number || Infinity;
+        
+        if (requestCount >= maxRequestsPerDay) {
+          if (rule.severity === 'block') {
+            decision = 'block';
+            violations.push(`rate_limit:${policy.id}`);
+            reasons.push(`Daily rate limit exceeded: ${requestCount}/${maxRequestsPerDay}`);
+          } else if (rule.severity === 'warn') {
+            decision = decision === 'block' ? 'block' : 'warn';
+            reasons.push(`Warning: Approaching rate limit: ${requestCount}/${maxRequestsPerDay}`);
+          }
+        }
+      }
+    }
+
+    return { decision, reasons, violated_rules: violations };
   }
 
   /**
-   * Fill template placeholders with actual input data
+   * Evaluate cost control rules
    */
-  private fillPromptTemplate(template: string, input: any): string {
-    return template
-      .replace(/{tool}/g, input.tool || 'Unknown')
-      .replace(/{vendor}/g, input.vendor || 'Unknown')
-      .replace(/{usage}/g, input.usage || 'Unknown')
-      .replace(/{dataHandling}/g, JSON.stringify(input.dataHandling || []))
-      .replace(/{content}/g, input.content || 'No content provided')
-  }
+  private async evaluateCostControls(
+    input: AIRequestEvent,
+    policies: Array<{ id: string; rules: BoundaryRule[] }>
+  ): Promise<{ decision: 'allow' | 'block' | 'warn'; reasons: string[]; violated_rules: string[] }> {
+    const reasons: string[] = [];
+    const violations: string[] = [];
+    let decision: 'allow' | 'block' | 'warn' = 'allow';
 
-  private buildPolicyPrompt(input: any): string {
-    return `Analyze this policy request for compliance and risk:
+    const estimatedCost = this.estimateCost(input);
 
-Tool: ${input.tool || 'Unknown'}
-Vendor: ${input.vendor || 'Unknown'}
-Usage: ${input.usage || 'Unknown'}
-Data Handling: ${JSON.stringify(input.dataHandling || [])}
-Content: ${input.content || 'No content provided'}
-
-Assess:
-1. Regulatory compliance (GDPR, HIPAA, FDA, etc.)
-2. Data privacy risks
-3. Security implications
-4. Business risk factors
-5. Recommended approval status
-
-Provide structured analysis with confidence scoring.`
-  }
-
-  private makeDecisionFromAI(aiAnalysis: any, input: any) {
-    const complianceStatus = aiAnalysis.compliance_status || 'needs_review'
-    const riskLevel = aiAnalysis.risk_level || 'medium'
-    
-    let status = 'approved'
-    if (complianceStatus === 'non_compliant') status = 'rejected'
-    if (complianceStatus === 'needs_review' || riskLevel === 'high') status = 'needs_review'
-    
-    const requiresHumanReview = status === 'needs_review' || riskLevel === 'high'
-    
-    return {
-      status,
-      confidence: aiAnalysis.confidence || 0.8,
-      requiresHumanReview,
-      fdaCompliance: !input.tool?.toLowerCase().includes('medical') || riskLevel !== 'high',
-      gdprCompliance: !input.dataHandling?.includes('personal_data_without_consent'),
-      riskThreshold: 0.7
-    }
-  }
-
-  private calculateEnhancedRiskScore(input: any): number {
-    let riskScore = 0.5 // Base risk
-
-    // Tool-based risk factors
-    if (input.tool) {
-      const toolLower = input.tool.toLowerCase()
-      if (toolLower.includes('medical') || toolLower.includes('healthcare')) riskScore += 0.3
-      if (toolLower.includes('financial') || toolLower.includes('payment')) riskScore += 0.2
-      if (toolLower.includes('social') || toolLower.includes('media')) riskScore += 0.1
+    for (const policy of policies) {
+      const costRules = policy.rules.filter(r => r.type === 'cost_control');
+      
+      for (const rule of costRules) {
+        const maxMonthlyCost = rule.config.max_monthly_spend as number || Infinity;
+        
+        // TODO: Query actual monthly spend from middleware_requests
+        // For now, just check estimated cost
+        if (estimatedCost > maxMonthlyCost) {
+          if (rule.severity === 'block') {
+            decision = 'block';
+            violations.push(`cost_control:${policy.id}`);
+            reasons.push(`Request cost exceeds limit: $${estimatedCost.toFixed(4)}`);
+          } else if (rule.severity === 'warn') {
+            decision = decision === 'block' ? 'block' : 'warn';
+            reasons.push(`Warning: High cost request: $${estimatedCost.toFixed(4)}`);
+          }
+        }
+      }
     }
 
-    // Data handling risk factors
-    if (input.dataHandling) {
-      if (input.dataHandling.includes('personal_data')) riskScore += 0.2
-      if (input.dataHandling.includes('sensitive_data')) riskScore += 0.3
-      if (input.dataHandling.includes('medical_records')) riskScore += 0.4
-    }
-
-    // Usage context risk factors
-    if (input.usage) {
-      if (input.usage.includes('client_facing')) riskScore += 0.1
-      if (input.usage.includes('public')) riskScore += 0.2
-      if (input.usage.includes('regulatory')) riskScore += 0.3
-    }
-
-    // Urgency level impact
-    if (input.urgency?.level > 0.8) riskScore += 0.1
-    if (input.urgency?.level < 0.3) riskScore -= 0.1
-
-    return Math.min(1.0, Math.max(0.0, riskScore))
+    return { decision, reasons, violated_rules: violations };
   }
 
-  private makeEnhancedDecision(riskScore: number, input: any) {
-    const confidence = Math.max(0.6, 1.0 - riskScore * 0.4)
-    const requiresHumanReview = riskScore > 0.7 || input.urgency?.level > 0.9
-    const fdaCompliance = riskScore < 0.8
-    const gdprCompliance = !input.dataHandling?.includes('personal_data_without_consent')
+  /**
+   * Estimate cost of AI request
+   */
+  private estimateCost(input: AIRequestEvent): number {
+    // Simple cost estimation based on model and token count
+    const modelCosts: Record<string, { input: number; output: number }> = {
+      'gpt-4': { input: 0.03 / 1000, output: 0.06 / 1000 },
+      'gpt-3.5-turbo': { input: 0.0015 / 1000, output: 0.002 / 1000 },
+      'claude-3-opus': { input: 0.015 / 1000, output: 0.075 / 1000 },
+      'claude-3-sonnet': { input: 0.003 / 1000, output: 0.015 / 1000 }
+    };
 
-    let status = 'approved'
-    if (riskScore > 0.7) status = 'needs_review'
-    if (riskScore > 0.9) status = 'rejected'
+    const cost = modelCosts[input.model] || modelCosts['gpt-3.5-turbo'];
+    const inputTokens = input.prompt_tokens || Math.ceil(input.prompt.length / 4);
+    const outputTokens = input.max_tokens || 500;
 
-    return {
-      status,
-      confidence,
-      requiresHumanReview,
-      fdaCompliance,
-      gdprCompliance,
-      riskThreshold: 0.7
-    }
+    return (inputTokens * cost.input) + (outputTokens * cost.output);
   }
 
-  private getRiskLevel(riskScore: number): string {
-    if (riskScore > 0.8) return 'high'
-    if (riskScore > 0.6) return 'medium'
-    return 'low'
-  }
-
-  private getRiskFactors(input: any): string[] {
-    const factors = []
-    if (input.tool?.toLowerCase().includes('medical')) factors.push('medical_content_risk')
-    if (input.dataHandling?.includes('personal_data')) factors.push('privacy_risk')
-    if (input.usage?.includes('public')) factors.push('reputational_risk')
-    return factors
-  }
-
-  private getDecisionReasoning(riskScore: number, decision: any): string {
-    if (decision.status === 'rejected') {
-      return `Request rejected due to high risk score (${Math.round(riskScore * 100)}%). Requires human review.`
-    }
-    if (decision.status === 'needs_review') {
-      return `Request flagged for review due to elevated risk score (${Math.round(riskScore * 100)}%).`
-    }
-    return `Request approved with confidence ${Math.round(decision.confidence * 100)}%.`
-  }
-
-  private inferPurpose(usage: any): string {
-    if (typeof usage === 'string') {
-      if (usage.includes('presentation')) return 'client_presentation'
-      if (usage.includes('analysis')) return 'data_analysis'
-      if (usage.includes('content')) return 'content_creation'
-    }
-    return 'general_use'
+  /**
+   * Calculate confidence score
+   */
+  private calculateConfidence(evaluations: Array<{ decision: string }>): number {
+    // Simple confidence: 1.0 if all evaluations agree, lower if mixed
+    const decisions = evaluations.map(e => e.decision);
+    const uniqueDecisions = new Set(decisions);
+    return uniqueDecisions.size === 1 ? 1.0 : 0.7;
   }
 }

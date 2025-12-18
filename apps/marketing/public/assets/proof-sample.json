@@ -1,0 +1,37 @@
+{
+  "id": "proof_bundle_sample_001",
+  "claim": "Tool usage compliant with pharma client policy XYZ-2024-Q1",
+  "scope": {
+    "project_id": "proj_12345",
+    "tool_version_id": "tool_v_67890",
+    "regions": ["US", "EU"],
+    "data_classifications": ["PHI", "PII"]
+  },
+  "actors": {
+    "approvers": ["John Doe (Compliance Officer)", "Jane Smith (Legal)"],
+    "attestors": ["AI Team Lead", "Project Manager"]
+  },
+  "disclosures": [
+    {
+      "tool_name": "Sample AI Tool",
+      "version": "2.3.1",
+      "provider": "Vendor Inc.",
+      "purpose": "Clinical trial data analysis",
+      "evidence_pointers": [
+        "s3://evidence/dpia_12345.pdf",
+        "s3://evidence/security_assessment.pdf"
+      ]
+    }
+  ],
+  "attestations": [
+    {
+      "attestor": "John Doe",
+      "timestamp": "2025-01-15T14:30:00Z",
+      "statement": "I attest that all disclosures are accurate and complete.",
+      "signature_hash": "sha256:7f8a9b2c4d5e6f1a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a"
+    }
+  ],
+  "content_hash": "sha256:abc123def456789abc123def456789abc123def456789abc123def456789abc12",
+  "generated_at": "2025-01-15T15:00:00Z",
+  "signature": "base64_encoded_signature_placeholder_12345678901234567890"
+}

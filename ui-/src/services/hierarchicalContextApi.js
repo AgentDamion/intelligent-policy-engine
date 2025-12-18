@@ -40,16 +40,40 @@ export const hierarchicalContextApi = {
   },
 
   // Context Management
-  switchContext: async (contextId) => {
+  switchContext: async (contextId, targetType = null) => {
     return apiRequest('/auth/context/switch', {
       method: 'POST',
-      body: { contextId }
+      body: { contextId, targetType }
     });
   },
 
   getUserContexts: async () => {
     const response = await apiRequest('/auth/contexts');
     return response.contexts;
+  },
+
+  // Dual-mode context management
+  getAvailableContexts: async () => {
+    const response = await apiRequest('/auth/contexts/available');
+    return response;
+  },
+
+  getPartnerContexts: async (partnerEnterpriseId = null) => {
+    const endpoint = partnerEnterpriseId 
+      ? `/auth/contexts/partner?partnerEnterpriseId=${partnerEnterpriseId}`
+      : '/auth/contexts/partner';
+    const response = await apiRequest(endpoint);
+    return response.contexts;
+  },
+
+  getEnterpriseContexts: async () => {
+    const response = await apiRequest('/auth/contexts/enterprise');
+    return response.contexts;
+  },
+
+  getContextAnalytics: async (days = 30) => {
+    const response = await apiRequest(`/auth/contexts/analytics?days=${days}`);
+    return response.analytics;
   },
 
   // Dashboard Data

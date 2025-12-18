@@ -1,27 +1,32 @@
-# A new project's config.toml
+project_id = "dqemokpnzasbeytdbzei"
+
 [api]
 enabled = true
 port = 54321
-schemas = ["public", "storage", "graphql_public"]
+schemas = ["public", "graphql_public"]
 extra_search_path = ["public", "extensions"]
 max_rows = 1000
 
 [db]
 port = 54322
-shadow_port = 54320
-major_version = 15
 
 [db.pooler]
 enabled = false
 port = 54329
+pool_mode = "transaction"
+default_pool_size = 20
+max_client_conn = 100
 
 [realtime]
 enabled = true
+ip_version = "ipv4"
+port = 54323
+max_header_length = 4096
 
 [studio]
 enabled = true
 port = 54323
-api_url = "http://127.0.0.1:54321"
+api_url = "http://localhost:54321"
 
 [inbucket]
 enabled = true
@@ -31,12 +36,127 @@ pop3_port = 54326
 
 [storage]
 enabled = true
+port = 54327
+file_size_limit = "50MiB"
 
 [auth]
 enabled = true
+port = 54328
 site_url = "http://localhost:3000"
-additional_redirect_urls = ["https://dqemokpnzasbeytdbzei.supabase.co", "https://app.dqemokpnzasbeytdbzei.supabase.co"]
+additional_redirect_urls = ["https://lovable.app"]
 jwt_expiry = 3600
+enable_signup = true
 
-[edge_runtime]
-enabled = true
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+
+# Edge Functions Configuration
+[functions.policy-process]
+verify_jwt = true
+
+[functions.policy-agent]
+verify_jwt = true
+
+[functions.context-analysis]
+verify_jwt = true
+
+[functions.cursor-agent-adapter]
+verify_jwt = true
+
+[functions.generate-rfp-clauses]
+verify_jwt = true
+
+[functions.submit-rfp-response]
+verify_jwt = true
+
+[functions.analyze-rfp-feedback]
+verify_jwt = true
+
+[functions.export-governance-evidence]
+verify_jwt = true
+
+[functions.get-rfp-distributions]
+verify_jwt = true
+
+[functions.ingest-policy]
+verify_jwt = true
+
+[functions.rfi_document_parser]
+verify_jwt = true
+
+[functions.rfp_score_response]
+verify_jwt = true
+
+[functions.platform-manager]
+verify_jwt = true
+
+[functions.platform-universal]
+verify_jwt = true
+
+[functions.platform-webhook]
+verify_jwt = false
+
+[functions.validate-rfp-disclosures]
+verify_jwt = true
+
+[functions.governance-ingest]
+verify_jwt = true
+
+[functions.sandbox-run]
+verify_jwt = true
+
+[functions.sandbox-approve]
+verify_jwt = true
+
+[functions.sandbox-export]
+verify_jwt = true
+
+[functions.get-risk-score]
+verify_jwt = true
+
+[functions.get-risk-factors]
+verify_jwt = true
+
+[functions.record-evidence-event]
+verify_jwt = true
+
+[functions.validate-ai-usage]
+verify_jwt = true
+
+[functions.generate-proof]
+verify_jwt = true
+
+[functions.seed-training-data]
+verify_jwt = true
+
+[functions.insert-policy-agent-prompt]
+verify_jwt = true
+
+[functions.generate-eps]
+verify_jwt = true
+
+[functions.policy-evaluate]
+verify_jwt = true
+
+[functions.copilot-suggest]
+verify_jwt = true
+
+[functions.evidence-compile]
+verify_jwt = true
+
+[functions.orchestrator-harmonize]
+verify_jwt = true
+
+[functions.orchestrator-score-risk]
+verify_jwt = true
+
+[functions.policy-rules-manage]
+verify_jwt = true
+
+[functions.middleware-openai-proxy]
+verify_jwt = false
+
+[functions.seed-globalmed]
+verify_jwt = false

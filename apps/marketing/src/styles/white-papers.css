@@ -1,0 +1,90 @@
+/* White Papers Landing Page - Conversion Optimized Styles */
+
+/* Hero & Section Containers */
+.section--hero {
+  /* Layout now controlled in component via Tailwind grid */
+  display: block;
+}
+
+@media (max-width: 960px) {
+  .section--hero {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Image Sizing Rules */
+.hero-illustration {
+  max-width: min(48vw, 640px);
+  width: 100%;
+  height: auto;
+}
+
+.figure img,
+.wp-illustration {
+  width: 100%;
+  max-width: 720px;
+  height: auto;
+  aspect-ratio: auto;
+  object-fit: contain;
+}
+
+.card__thumb {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+/* Typography Scaling */
+.hero h1 {
+  font-size: clamp(28px, 4vw, 44px);
+  line-height: 1.12;
+}
+
+.hero p {
+  font-size: clamp(16px, 2.2vw, 20px);
+}
+
+/* Focus States for Accessibility */
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid hsl(var(--brand-teal));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Sticky Mobile CTA */
+@media (max-width: 1024px) {
+  .sticky-cta {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: hsl(222, 84%, 5%);
+    color: #fff;
+    padding: 12px 16px;
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    z-index: 50;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .sticky-cta button {
+    flex: 1;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  
+  .sticky-cta button:focus-visible {
+    outline-color: #fff;
+  }
+}
+
+@media (min-width: 1025px) {
+  .sticky-cta {
+    display: none;
+  }
+}

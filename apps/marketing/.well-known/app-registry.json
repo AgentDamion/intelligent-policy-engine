@@ -1,0 +1,452 @@
+{
+  "generated_at": "2024-10-08T20:52:00Z",
+  "version": "1.0.0",
+  "lastUpdated": "2024-10-08T20:52:00Z",
+  "apps": [
+    {
+      "key": "public",
+      "name": "Public Website",
+      "root": "/"
+    },
+    {
+      "key": "enterprise",
+      "name": "Enterprise Platform",
+      "root": "/app"
+    },
+    {
+      "key": "agency",
+      "name": "Agency Partner Platform",
+      "root": "/agency"
+    },
+    {
+      "key": "marketplace",
+      "name": "Marketplace Application",
+      "root": "/marketplace"
+    },
+    {
+      "key": "portal",
+      "name": "Customer Portal",
+      "root": "/portal"
+    },
+    {
+      "key": "internal",
+      "name": "Internal Operations", 
+      "root": "/internal"
+    },
+    {
+      "key": "shared",
+      "name": "Shared Components",
+      "root": "/shared"
+    }
+  ],
+  "pages": [
+    {
+      "specId": "P1",
+      "appKey": "public",
+      "route": "/",
+      "component": "Landing",
+      "status": "YES",
+      "dataWired": false
+    },
+    {
+      "specId": "P2",
+      "appKey": "public",
+      "route": "/velocity-calculator",
+      "component": "VelocityCalculator",
+      "status": "YES",
+      "dataWired": true
+    },
+    {
+      "specId": "C1",
+      "appKey": "enterprise",
+      "route": "/app/agency/dashboard",
+      "component": "AgencyDashboard",
+      "status": "YES",
+      "dataWired": true
+    },
+    {
+      "specId": "C2",
+      "appKey": "enterprise",
+      "route": "/app/readiness",
+      "component": "AIReadiness",
+      "status": "YES",
+      "dataWired": true
+    },
+    {
+      "specId": "C3",
+      "appKey": "enterprise",
+      "route": "/app/requirements",
+      "component": "Requirements",
+      "status": "YES",
+      "dataWired": true
+    },
+    {
+      "specId": "C4",
+      "appKey": "enterprise",
+      "route": "/app/performance",
+      "component": "Performance",
+      "status": "YES",
+      "dataWired": true
+    },
+    {
+      "specId": "C5",
+      "appKey": "agency",
+      "route": "/app/tools",
+      "component": "ToolInventory",
+      "status": "YES",
+      "dataWired": true
+    },
+    {
+      "specId": "E1",
+      "appKey": "enterprise",
+      "route": "/app/policies",
+      "component": "PolicyStudio",
+      "status": "YES",
+      "dataWired": true
+    },
+    {
+      "specId": "E3",
+      "appKey": "enterprise",
+      "route": "/app/audit",
+      "component": "AuditTrail",
+      "status": "YES",
+      "dataWired": true
+    },
+    {
+      "specId": "D1",
+      "appKey": "enterprise",
+      "route": "/portal",
+      "component": "Portal",
+      "status": "YES",
+      "dataWired": false
+    },
+    {
+      "specId": "D2",
+      "appKey": "enterprise",
+      "route": "/admin",
+      "component": "Admin",
+      "status": "YES",
+      "dataWired": false
+    },
+    {
+      "specId": "L1",
+      "appKey": "agency",
+      "route": "/agency/dashboard",
+      "component": "AgencyDashboard",
+      "status": "YES",
+      "dataWired": true
+    },
+    {
+      "specId": "L2",
+      "appKey": "agency",
+      "route": "/agency/requirements",
+      "component": "Requirements",
+      "status": "YES",
+      "dataWired": true
+    },
+    {
+      "specId": "L3",
+      "appKey": "agency",
+      "route": "/agency/performance",
+      "component": "Performance",
+      "status": "YES",
+      "dataWired": true
+    },
+    {
+      "specId": "L4",
+      "appKey": "agency",
+      "route": "/agency/my-tools",
+      "component": "MyTools",
+      "status": "YES",
+      "dataWired": true
+    },
+    {
+      "specId": "L5",
+      "appKey": "agency",
+      "route": "/agency/submissions",
+      "component": "AgencySubmissions",
+      "status": "YES",
+      "dataWired": true
+    },
+    {
+      "specId": "L6",
+      "appKey": "agency",
+      "route": "/agency/reviews",
+      "component": "Reviews",
+      "status": "YES",
+      "dataWired": true
+    },
+    {
+      "specId": "L7",
+      "appKey": "agency",
+      "route": "/agency/conflicts",
+      "component": "Conflicts",
+      "status": "YES",
+      "dataWired": true
+    },
+    {
+      "specId": "L8",
+      "appKey": "agency",
+      "route": "/agency/ai-readiness",
+      "component": "AIReadiness",
+      "status": "YES",
+      "dataWired": false
+    },
+    {
+      "specId": "L9",
+      "appKey": "agency",
+      "route": "/agency/compliance-status",
+      "component": "ComplianceStatus",
+      "status": "YES",
+      "dataWired": false
+    },
+    {
+      "specId": "L10",
+      "appKey": "agency",
+      "route": "/agency/ai-tool-tracking",
+      "component": "AIToolTracking",
+      "status": "YES",
+      "dataWired": true
+    },
+    {
+      "specId": "L11",
+      "appKey": "agency",
+      "route": "/agency/integrations",
+      "component": "Integrations",
+      "status": "YES",
+      "dataWired": false
+    },
+    {
+      "specId": "DEV1",
+      "appKey": "shared",
+      "route": "/dev/spec-status",
+      "component": "SpecStatusDashboard",
+      "status": "YES",
+      "dataWired": false
+    },
+    {
+      "specId": "MARKETPLACE-HOME-001",
+      "appKey": "marketplace",
+      "route": "/marketplace",
+      "component": "MarketplaceHome",
+      "status": "YES",
+      "dataWired": true
+    },
+    {
+      "specId": "MARKETPLACE-CATALOG-001",
+      "appKey": "marketplace", 
+      "route": "/marketplace/tools",
+      "component": "ToolCatalog",
+      "status": "YES",
+      "dataWired": true
+    },
+    {
+      "specId": "MARKETPLACE-VENDOR-DASHBOARD-001",
+      "appKey": "marketplace",
+      "route": "/marketplace/vendor/dashboard",
+      "component": "VendorDashboard",
+      "status": "YES",
+      "dataWired": true
+    },
+    {
+      "specId": "MARKETPLACE-VENDOR-SUBMIT-001",
+      "appKey": "marketplace",
+      "route": "/marketplace/vendor/submit", 
+      "component": "VendorSubmit",
+      "status": "YES",
+      "dataWired": true
+    },
+    {
+      "specId": "MARKETPLACE-ADMIN-001",
+      "appKey": "marketplace",
+      "route": "/marketplace/admin",
+      "component": "MarketplaceAdmin",
+      "status": "YES",
+      "dataWired": true
+    },
+    {
+      "specId": "PORTAL-DASHBOARD-001",
+      "appKey": "portal",
+      "route": "/portal/dashboard",
+      "component": "PortalDashboard",
+      "status": "YES",
+      "dataWired": true
+    },
+    {
+      "specId": "PORTAL-BILLING-001",
+      "appKey": "portal",
+      "route": "/portal/billing",
+      "component": "Billing",
+      "status": "YES",
+      "dataWired": true
+    },
+    {
+      "specId": "PORTAL-ANALYTICS-001",
+      "appKey": "portal",
+      "route": "/portal/analytics",
+      "component": "PortalAnalytics",
+      "status": "PART",
+      "dataWired": false
+    },
+    {
+      "specId": "PORTAL-ACCOUNT-001",
+      "appKey": "portal",
+      "route": "/portal/account",
+      "component": "AccountManagement",
+      "status": "PART",
+      "dataWired": false
+    },
+    {
+      "specId": "ADMIN-BUSINESS-001",
+      "appKey": "admin",
+      "route": "/admin/business",
+      "component": "BusinessDashboard",
+      "status": "YES",
+      "dataWired": true
+    },
+    {
+      "specId": "ADMIN-CUSTOMERS-001",
+      "appKey": "admin",
+      "route": "/admin/customers",
+      "component": "CustomerManagement",
+      "status": "YES",
+      "dataWired": true
+    },
+    {
+      "specId": "ADMIN-REVENUE-001",
+      "appKey": "admin",
+      "route": "/admin/revenue",
+      "component": "RevenueAnalytics",
+      "status": "PART",
+      "dataWired": false
+    },
+    {
+      "specId": "ADMIN-OPERATIONS-001",
+      "appKey": "admin",
+      "route": "/admin/operations",
+      "component": "SystemOperations",
+      "status": "PART",
+      "dataWired": false
+    },
+    {
+      "specId": "PUBLIC-INDUSTRIES-001",
+      "appKey": "public",
+      "route": "/industries",
+      "component": "Industries",
+      "status": "YES",
+      "dataWired": true
+    },
+    {
+      "specId": "PUBLIC-RESOURCES-001",
+      "appKey": "public",
+      "route": "/resources",
+      "component": "Resources",
+      "status": "YES",
+      "dataWired": true
+    },
+    {
+      "specId": "PUBLIC-TRUST-CENTER-001",
+      "appKey": "public",
+      "route": "/trust-center",
+      "component": "TrustCenter",
+      "status": "PART",
+      "dataWired": false
+    },
+    {
+      "specId": "PUBLIC-COMPLIANCE-CALCULATOR-001",
+      "appKey": "public",
+      "route": "/compliance-calculator",
+      "component": "ComplianceCalculator",
+      "status": "PART",
+      "dataWired": false
+    },
+    {
+      "specId": "internal-dashboard",
+      "appKey": "internal",
+      "route": "/internal/dashboard",
+      "component": "InternalDashboard", 
+      "status": "YES",
+      "dataWired": false
+    },
+    {
+      "specId": "internal-business-dashboard",
+      "appKey": "internal", 
+      "route": "/internal/business",
+      "component": "BusinessDashboard",
+      "status": "YES",
+      "dataWired": true
+    },
+    {
+      "specId": "internal-customer-management",
+      "appKey": "internal",
+      "route": "/internal/customers", 
+      "component": "CustomerManagement",
+      "status": "YES",
+      "dataWired": false
+    },
+    {
+      "specId": "agency-admin-team",
+      "appKey": "agency",
+      "route": "/agency/admin/team",
+      "component": "AgencyTeamManagement",
+      "status": "YES", 
+      "dataWired": false
+    },
+    {
+      "specId": "agency-admin-clients",
+      "appKey": "agency",
+      "route": "/agency/admin/clients",
+      "component": "AgencyClientManagement",
+      "status": "YES",
+      "dataWired": false
+    },
+    {
+      "specId": "agency-admin-projects", 
+      "appKey": "agency",
+      "route": "/agency/admin/projects",
+      "component": "AgencyProjectOversight",
+      "status": "YES",
+      "dataWired": false
+    },
+    {
+      "specId": "agency-admin-settings",
+      "appKey": "agency", 
+      "route": "/agency/admin/settings",
+      "component": "AgencySettings",
+      "status": "YES",
+      "dataWired": false
+    },
+    {
+      "specId": "enterprise-admin-users",
+      "appKey": "enterprise",
+      "route": "/enterprise/admin/users",
+      "component": "EnterpriseUserManagement",
+      "status": "YES",
+      "dataWired": false
+    },
+    {
+      "specId": "enterprise-admin-roles",
+      "appKey": "enterprise",
+      "route": "/enterprise/admin/roles", 
+      "component": "EnterpriseRoleManagement",
+      "status": "YES",
+      "dataWired": false
+    },
+    {
+      "specId": "enterprise-admin-settings",
+      "appKey": "enterprise",
+      "route": "/enterprise/admin/settings",
+      "component": "EnterpriseOrganizationSettings",
+      "status": "YES",
+      "dataWired": false
+    },
+    {
+      "specId": "enterprise-admin-compliance",
+      "appKey": "enterprise",
+      "route": "/enterprise/admin/compliance",
+      "component": "EnterpriseComplianceSettings", 
+      "status": "YES",
+      "dataWired": false
+    }
+  ]
+}

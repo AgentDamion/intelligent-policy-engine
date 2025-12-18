@@ -11,6 +11,11 @@ export const useHierarchicalContextStore = create()(
       user: null,
       currentContext: null,
       availableContexts: [],
+      enterpriseContexts: [],
+      partnerContexts: [],
+      hasMultipleContexts: false,
+      hasEnterpriseContexts: false,
+      hasPartnerContexts: false,
       dashboardData: null,
       notifications: [],
       isLoading: false,
@@ -41,10 +46,10 @@ export const useHierarchicalContextStore = create()(
         }
       },
 
-      switchContext: async (contextId) => {
+      switchContext: async (contextId, targetType = null) => {
         set({ isLoading: true, error: null });
         try {
-          const response = await hierarchicalContextApi.switchContext(contextId);
+          const response = await hierarchicalContextApi.switchContext(contextId, targetType);
           
           set({ 
             currentContext: response.context,
@@ -57,6 +62,35 @@ export const useHierarchicalContextStore = create()(
           // Load dashboard data for new context
           get().loadDashboardData();
 
+        } catch (error) {
+          set({ error: error.message, isLoading: false });
+        }
+      },
+
+      // Dual-mode context switching
+      switchToPartnerContext: async (contextId) => {
+        return get().switchContext(contextId, 'partner');
+      },
+
+      switchToEnterpriseContext: async (contextId) => {
+        return get().switchContext(contextId, 'enterprise');
+      },
+
+      // Load available contexts grouped by type
+      loadAvailableContexts: async () => {
+        set({ isLoading: true, error: null });
+        try {
+          const response = await hierarchicalContextApi.getAvailableContexts();
+          
+          set({ 
+            enterpriseContexts: response.enterprise || [],
+            partnerContexts: response.partner || [],
+            availableContexts: response.all || [],
+            hasMultipleContexts: response.hasMultipleContexts || false,
+            hasEnterpriseContexts: response.hasEnterpriseContexts || false,
+            hasPartnerContexts: response.hasPartnerContexts || false,
+            isLoading: false 
+          });
         } catch (error) {
           set({ error: error.message, isLoading: false });
         }

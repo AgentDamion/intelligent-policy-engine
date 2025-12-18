@@ -1,0 +1,56 @@
+AICOMPLYR Proof Bundle - Sample
+
+===============================
+COMPLIANCE PROOF BUNDLE
+===============================
+
+Bundle ID: proof_bundle_sample_001
+Generated: 2025-01-15T15:00:00Z
+
+CLAIM
+-----
+Tool usage compliant with pharma client policy XYZ-2024-Q1
+
+SCOPE
+-----
+Project ID: proj_12345
+Tool Version: tool_v_67890
+Regions: US, EU
+Data Classifications: PHI, PII
+
+ACTORS
+------
+Approvers:
+  - John Doe (Compliance Officer)
+  - Jane Smith (Legal)
+
+Attestors:
+  - AI Team Lead
+  - Project Manager
+
+DISCLOSURES
+-----------
+Tool Name: Sample AI Tool
+Version: 2.3.1
+Provider: Vendor Inc.
+Purpose: Clinical trial data analysis
+
+Evidence Pointers:
+  - s3://evidence/dpia_12345.pdf
+  - s3://evidence/security_assessment.pdf
+
+ATTESTATIONS
+------------
+Attestor: John Doe
+Timestamp: 2025-01-15T14:30:00Z
+Statement: I attest that all disclosures are accurate and complete.
+Signature Hash: sha256:7f8a9b2c4d5e6f1a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a
+
+CRYPTOGRAPHIC VERIFICATION
+--------------------------
+Content Hash: sha256:abc123def456789abc123def456789abc123def456789abc123def456789abc12
+Bundle Signature: base64_encoded_signature_placeholder_12345678901234567890
+
+---
+This is a sample proof bundle for demonstration purposes.
+For more information, visit https://aicomplyr.io

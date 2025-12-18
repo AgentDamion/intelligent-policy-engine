@@ -1,168 +1,161 @@
-import React from 'react'
-import { FileText, Plus, Search, Filter, MoreVertical } from 'lucide-react'
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Plus, Shield, Edit, Archive, Clock, CheckCircle, AlertCircle, FlaskConical } from 'lucide-react';
+import { routes } from '@/lib/routes';
+import { usePolicies } from '@/hooks/usePolicies';
+import { format } from 'date-fns';
 
 const PoliciesPage: React.FC = () => {
-  // Mock data - replace with real data from your database
-  const mockPolicies = [
-    {
-      id: 1,
-      title: 'Data Privacy Policy',
-      status: 'published',
-      version: '2.1',
-      lastUpdated: '2024-01-15',
-      author: 'John Doe',
-      workspace: 'Legal Team'
-    },
-    {
-      id: 2,
-      title: 'AI Usage Guidelines',
-      status: 'review',
-      version: '1.0',
-      lastUpdated: '2024-01-10',
-      author: 'Jane Smith',
-      workspace: 'AI Team'
-    },
-    {
-      id: 3,
-      title: 'Remote Work Policy',
-      status: 'draft',
-      version: '3.0',
-      lastUpdated: '2024-01-08',
-      author: 'Mike Johnson',
-      workspace: 'HR Team'
-    }
-  ]
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'published':
-        return 'bg-success-100 text-success-800'
-      case 'review':
-        return 'bg-warning-100 text-warning-800'
-      case 'draft':
-        return 'bg-gray-100 text-gray-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
-  }
+  const navigate = useNavigate();
+  const { policies, loading } = usePolicies();
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="p-6 space-y-6">
+      <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Policies</h1>
-          <p className="text-gray-600">Manage and track your organization&apos;s policies</p>
+          <h1 className="text-3xl font-bold text-foreground">Policy Management</h1>
+          <p className="text-muted-foreground mt-1">
+            Create and manage AI governance policies for your partners
+          </p>
         </div>
-        <button className="btn-primary flex items-center">
-          <Plus className="h-4 w-4 mr-2" />
+        <Button 
+          className="gap-2" 
+          onClick={() => navigate(routes.enterprise.policyStudio())}
+          aria-label="Create new policy"
+        >
+          <Plus className="h-4 w-4" />
           Create Policy
-        </button>
+        </Button>
       </div>
 
-      {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search policies..."
-            className="input-field pl-10"
-          />
+      {loading ? (
+        <div className="grid gap-4">
+          <Card>
+            <CardContent className="p-6">
+              <div className="animate-pulse space-y-4">
+                <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-        <button className="btn-secondary flex items-center">
-          <Filter className="h-4 w-4 mr-2" />
-          Filters
-        </button>
-      </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5" />
+                  Active Policies
+                </CardTitle>
+                <CardDescription>Currently enforced policies</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{policies.length}</div>
+              </CardContent>
+            </Card>
 
-      {/* Policies Table */}
-      <div className="card">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Policy
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Version
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Last Updated
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Author
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Workspace
-                </th>
-                <th className="relative px-6 py-3">
-                  <span className="sr-only">Actions</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {mockPolicies.map((policy) => (
-                <tr key={policy.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <FileText className="h-5 w-5 text-primary-600 mr-3" />
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">{policy.title}</div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Edit className="h-5 w-5" />
+                  Draft Policies
+                </CardTitle>
+                <CardDescription>Policies in development</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">0</div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Archive className="h-5 w-5" />
+                  Total Policies
+                </CardTitle>
+                <CardDescription>All policy records</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{policies.length}</div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                All Policies
+              </CardTitle>
+              <CardDescription>
+                Manage your AI governance policies
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {policies.length > 0 ? (
+                <div className="space-y-4">
+                  {policies.map((policy) => (
+                    <div key={policy.id} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-medium">{policy.title}</h4>
+                        <div className="flex gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => navigate(`${routes.enterprise.sandbox}?policy_id=${policy.id}`)}
+                          >
+                            <FlaskConical className="h-4 w-4 mr-1" />
+                            Test
+                          </Button>
+                          <Button variant="outline" size="sm">
+                            <Edit className="h-4 w-4 mr-1" />
+                            Edit
+                          </Button>
+                          <Button variant="outline" size="sm">
+                            <Archive className="h-4 w-4 mr-1" />
+                            Archive
+                          </Button>
+                        </div>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        {policy.description || "No description provided"}
+                      </p>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <span>Created: {format(new Date(policy.created_at), 'MMM dd, yyyy')}</span>
+                        <span>•</span>
+                        <Badge variant="outline" className="gap-1">
+                          <CheckCircle className="h-3 w-3" />
+                          Active
+                        </Badge>
                       </div>
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(policy.status)}`}>
-                      {policy.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {policy.version}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {policy.lastUpdated}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {policy.author}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {policy.workspace}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button className="text-gray-400 hover:text-gray-600">
-                      <MoreVertical className="h-4 w-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Empty State */}
-      {mockPolicies.length === 0 && (
-        <div className="text-center py-12">
-          <FileText className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No policies</h3>
-          <p className="mt-1 text-sm text-gray-500">
-            Get started by creating your first policy.
-          </p>
-          <div className="mt-6">
-            <button className="btn-primary">
-              <Plus className="h-4 w-4 mr-2" />
-              Create Policy
-            </button>
-          </div>
-        </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Shield className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="font-medium mb-2">No policies found</p>
+                  <p className="text-sm">Create your first policy to get started with AI governance.</p>
+                  <Button 
+                    className="mt-4" 
+                    onClick={() => navigate(routes.enterprise.policyStudio())}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create First Policy
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default PoliciesPage
+export default PoliciesPage;

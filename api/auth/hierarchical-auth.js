@@ -4,11 +4,14 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const { Pool } = require('pg');
 const db = require('../../database/connection');
+const { getCacheService } = require('../services/cache-service');
+const contextValidator = require('./context-validator');
 
 class HierarchicalAuthSystem {
     constructor() {
         this.permissionCache = new Map();
         this.contextCache = new Map();
+        this.cache = getCacheService();
     }
 
     // ===== AUTHENTICATION =====
@@ -64,6 +67,13 @@ class HierarchicalAuthSystem {
     // ===== CONTEXT MANAGEMENT =====
 
     async getUserContexts(userId) {
+        // Check cache first (5-minute TTL)
+        const cacheKey = this.cache.userKey(userId, 'contexts');
+        const cached = await this.cache.get(cacheKey);
+        if (cached) {
+            return cached;
+        }
+
         const result = await db.query(`
             SELECT 
                 uc.id as context_id,
@@ -84,7 +94,7 @@ class HierarchicalAuthSystem {
             ORDER BY uc.is_default DESC, uc.last_accessed DESC
         `, [userId]);
 
-        return result.rows.map(row => ({
+        const contexts = result.rows.map(row => ({
             contextId: row.context_id,
             contextType: row.agency_seat_id ? 'agencySeat' : 'enterprise',
             enterpriseId: row.enterprise_id,
@@ -98,6 +108,106 @@ class HierarchicalAuthSystem {
             isDefault: row.is_default,
             lastAccessed: row.last_accessed
         }));
+
+        // Cache for 5 minutes
+        await this.cache.set(cacheKey, contexts, 300);
+        return contexts;
+    }
+
+    /**
+     * Get user contexts grouped by type (enterprise vs partner)
+     */
+    async getUserContextsGrouped(userId) {
+        const allContexts = await this.getUserContexts(userId);
+        
+        // Get partner-client contexts
+        const partnerContextsResult = await db.query(`
+            SELECT 
+                pcc.id as context_id,
+                pcc.role,
+                pcc.permissions,
+                pcc.is_default,
+                pcc.last_accessed,
+                pe.id as partner_enterprise_id,
+                pe.name as partner_enterprise_name,
+                ce.id as client_enterprise_id,
+                ce.name as client_enterprise_name,
+                per.relationship_status,
+                per.compliance_score
+            FROM partner_client_contexts pcc
+            JOIN enterprises pe ON pcc.partner_enterprise_id = pe.id
+            JOIN enterprises ce ON pcc.client_enterprise_id = ce.id
+            LEFT JOIN partner_enterprise_relationships per 
+                ON pcc.partner_enterprise_id = per.partner_enterprise_id
+                AND pcc.client_enterprise_id = per.client_enterprise_id
+            WHERE pcc.user_id = $1 AND pcc.is_active = true
+            ORDER BY pcc.is_default DESC, pcc.last_accessed DESC
+        `, [userId]);
+
+        const partnerContexts = partnerContextsResult.rows.map(row => ({
+            contextId: row.context_id,
+            contextType: 'partner',
+            partnerEnterpriseId: row.partner_enterprise_id,
+            partnerEnterpriseName: row.partner_enterprise_name,
+            clientEnterpriseId: row.client_enterprise_id,
+            clientEnterpriseName: row.client_enterprise_name,
+            role: row.role,
+            permissions: row.permissions || [],
+            isDefault: row.is_default,
+            lastAccessed: row.last_accessed,
+            relationshipStatus: row.relationship_status,
+            complianceScore: row.compliance_score
+        }));
+
+        return {
+            enterprise: allContexts.filter(c => c.contextType !== 'partner'),
+            partner: partnerContexts,
+            all: [...allContexts, ...partnerContexts]
+        };
+    }
+
+    /**
+     * Get partner-client contexts for a specific partner enterprise
+     */
+    async getPartnerClientContexts(userId, partnerEnterpriseId) {
+        const result = await db.query(`
+            SELECT 
+                pcc.*,
+                ce.id as client_enterprise_id,
+                ce.name as client_enterprise_name,
+                ce.type as client_enterprise_type,
+                per.relationship_status,
+                per.compliance_score
+            FROM partner_client_contexts pcc
+            JOIN enterprises ce ON pcc.client_enterprise_id = ce.id
+            LEFT JOIN partner_enterprise_relationships per 
+                ON pcc.partner_enterprise_id = per.partner_enterprise_id
+                AND pcc.client_enterprise_id = per.client_enterprise_id
+            WHERE pcc.user_id = $1 
+              AND pcc.partner_enterprise_id = $2
+              AND pcc.is_active = true
+            ORDER BY pcc.last_accessed DESC
+        `, [userId, partnerEnterpriseId]);
+
+        return result.rows.map(row => ({
+            contextId: row.id,
+            partnerEnterpriseId: row.partner_enterprise_id,
+            clientEnterpriseId: row.client_enterprise_id,
+            clientEnterpriseName: row.client_enterprise_name,
+            clientEnterpriseType: row.client_enterprise_type,
+            role: row.role,
+            permissions: row.permissions || [],
+            relationshipStatus: row.relationship_status,
+            complianceScore: row.compliance_score,
+            lastAccessed: row.last_accessed
+        }));
+    }
+
+    /**
+     * Validate partner relationship
+     */
+    async validatePartnerRelationship(partnerId, clientId) {
+        return await contextValidator.validatePartnerRelationship(partnerId, clientId);
     }
 
     async getUserDefaultContext(userId) {
@@ -136,45 +246,108 @@ class HierarchicalAuthSystem {
         };
     }
 
-    async switchUserContext(userId, contextId) {
-        // Verify user has access to this context
+    async switchUserContext(userId, contextId, targetType = null) {
+        let context;
+        let isPartnerContext = false;
+
+        // Try to find in user_contexts first
         const contextResult = await db.query(`
-            SELECT uc.*, e.name as enterprise_name, as.name as agency_seat_name
+            SELECT uc.*, e.name as enterprise_name, e.type as enterprise_type, 
+                   as.name as agency_seat_name
             FROM user_contexts uc
             JOIN enterprises e ON uc.enterprise_id = e.id
             LEFT JOIN agency_seats as ON uc.agency_seat_id = as.id
             WHERE uc.id = $1 AND uc.user_id = $2 AND uc.is_active = true
         `, [contextId, userId]);
 
-        if (!contextResult.rows[0]) {
-            throw new Error('Context not found or access denied');
+        if (contextResult.rows[0]) {
+            context = contextResult.rows[0];
+            isPartnerContext = false;
+        } else {
+            // Try partner_client_contexts
+            const partnerContextResult = await db.query(`
+                SELECT pcc.*, 
+                       pe.name as partner_enterprise_name,
+                       ce.name as client_enterprise_name,
+                       ce.id as client_enterprise_id,
+                       pe.id as partner_enterprise_id
+                FROM partner_client_contexts pcc
+                JOIN enterprises pe ON pcc.partner_enterprise_id = pe.id
+                JOIN enterprises ce ON pcc.client_enterprise_id = ce.id
+                WHERE pcc.id = $1 AND pcc.user_id = $2 AND pcc.is_active = true
+            `, [contextId, userId]);
+
+            if (!partnerContextResult.rows[0]) {
+                throw new Error('Context not found or access denied');
+            }
+
+            context = partnerContextResult.rows[0];
+            isPartnerContext = true;
+
+            // Validate relationship is active
+            await this.validatePartnerRelationship(
+                context.partner_enterprise_id,
+                context.client_enterprise_id
+            );
         }
 
-        const context = contextResult.rows[0];
-
         // Update last accessed
-        await db.query(`
-            UPDATE user_contexts 
-            SET last_accessed = NOW() 
-            WHERE id = $1
-        `, [contextId]);
+        if (isPartnerContext) {
+            await db.query(`
+                UPDATE partner_client_contexts 
+                SET last_accessed = NOW() 
+                WHERE id = $1
+            `, [contextId]);
+        } else {
+            await db.query(`
+                UPDATE user_contexts 
+                SET last_accessed = NOW() 
+                WHERE id = $1
+            `, [contextId]);
+        }
+
+        // Invalidate context cache
+        await this.cache.del(this.cache.userKey(userId, 'contexts'));
 
         // Generate new token with updated context
         const userResult = await db.query('SELECT * FROM users WHERE id = $1', [userId]);
         const user = userResult.rows[0];
         
-        const updatedContext = {
-            contextId: context.id,
-            contextType: context.agency_seat_id ? 'agencySeat' : 'enterprise',
-            enterpriseId: context.enterprise_id,
-            enterpriseName: context.enterprise_name,
-            agencySeatId: context.agency_seat_id,
-            agencySeatName: context.agency_seat_name,
-            role: context.role,
-            permissions: context.permissions || []
-        };
+        let updatedContext;
+        if (isPartnerContext) {
+            updatedContext = {
+                contextId: context.id,
+                contextType: 'partner',
+                partnerEnterpriseId: context.partner_enterprise_id,
+                partnerEnterpriseName: context.partner_enterprise_name,
+                clientEnterpriseId: context.client_enterprise_id,
+                clientEnterpriseName: context.client_enterprise_name,
+                enterpriseId: context.client_enterprise_id, // For compatibility
+                role: context.role,
+                permissions: context.permissions || []
+            };
+        } else {
+            updatedContext = {
+                contextId: context.id,
+                contextType: context.agency_seat_id ? 'agencySeat' : 'enterprise',
+                enterpriseId: context.enterprise_id,
+                enterpriseName: context.enterprise_name,
+                agencySeatId: context.agency_seat_id,
+                agencySeatName: context.agency_seat_name,
+                role: context.role,
+                permissions: context.permissions || []
+            };
+        }
 
         const token = this.generateContextAwareToken(user, updatedContext);
+
+        // Audit context switch
+        await contextValidator.auditContextSwitch(
+            userId,
+            contextId,
+            targetType || updatedContext.contextType,
+            true
+        );
 
         return {
             context: updatedContext,

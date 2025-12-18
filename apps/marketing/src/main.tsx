@@ -1,44 +1,22 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { Toaster } from 'react-hot-toast'
-
+import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
-import { EnterpriseProvider } from './contexts/EnterpriseContext.tsx'
-import { AuthProvider } from './contexts/AuthContext.tsx'
-
 import './index.css'
+import { initializeEnvironment } from './utils/envValidation'
+import { monitoring } from './utils/monitoring'
+import { displayProductionReport } from './utils/productionCheck'
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      retry: 1,
-    },
-  },
-})
+// Initialize monitoring and environment validation
+try {
+  initializeEnvironment();
+  monitoring.info('Application starting', { version: '1.0.0' });
+  
+  // Run production readiness checks in development
+  if (import.meta.env.DEV) {
+    displayProductionReport();
+  }
+} catch (error) {
+  monitoring.error('Failed to initialize application', error);
+  throw error;
+}
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <AuthProvider>
-          <EnterpriseProvider>
-            <App />
-            <Toaster 
-              position="top-right"
-              toastOptions={{
-                duration: 4000,
-                style: {
-                  background: '#363636',
-                  color: '#fff',
-                },
-              }}
-            />
-          </EnterpriseProvider>
-        </AuthProvider>
-      </BrowserRouter>
-    </QueryClientProvider>
-  </React.StrictMode>,
-)
+createRoot(document.getElementById("root")!).render(<App />);

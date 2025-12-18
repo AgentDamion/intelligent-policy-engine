@@ -1,0 +1,166 @@
+{
+  "policy_id": "template-fda-pharma",
+  "version": "1.0",
+  "scope": ["clinical", "regulatory", "manufacturing"],
+  "metadata": {
+    "created_at": "2025-01-01T00:00:00Z",
+    "template_type": "policy_adaptation",
+    "description": "FDA-compliant policy template for pharmaceutical AI usage (21 CFR Part 11)",
+    "regulatory_frameworks": ["FDA 21 CFR Part 11", "EU MDR", "ISO 13485"]
+  },
+  "tools": [],
+  "data_controls": {
+    "data_classes": ["clinical_data", "patient_records", "trial_data", "manufacturing_data"],
+    "retention_period": "indefinite",
+    "geographic_restrictions": ["US", "EU"],
+    "encryption_required": true,
+    "anonymization_required": true
+  },
+  "usage_disclosure": {
+    "allowed_ai_usage": [
+      "clinical_decision_support",
+      "drug_discovery",
+      "adverse_event_monitoring",
+      "manufacturing_quality_control"
+    ],
+    "disclosure_required": true,
+    "opt_out_available": false,
+    "patient_consent_required": true
+  },
+  "compliance_frameworks": [
+    {
+      "framework": "FDA 21 CFR Part 11",
+      "controls": [
+        "Electronic records must be signed with secure digital signatures",
+        "Audit trails must capture all AI system decisions",
+        "System validation required before production use",
+        "Access controls with unique user identification",
+        "Time-stamped audit trails for all record modifications"
+      ],
+      "evidence_required": [
+        "Validation documentation",
+        "Audit trail reports",
+        "Digital signature logs",
+        "Access control matrices"
+      ]
+    },
+    {
+      "framework": "EU MDR Article 61",
+      "controls": [
+        "Clinical evaluation of AI-driven medical device software",
+        "Post-market surveillance of AI decision accuracy",
+        "Technical documentation for regulatory review"
+      ],
+      "evidence_required": [
+        "Clinical evaluation report",
+        "Post-market surveillance data",
+        "Technical file"
+      ]
+    },
+    {
+      "framework": "ISO 13485 Quality Management",
+      "controls": [
+        "Design controls for AI system development",
+        "Risk management per ISO 14971",
+        "Validation and verification protocols"
+      ],
+      "evidence_required": [
+        "Design history file",
+        "Risk management file",
+        "Validation protocols and reports"
+      ]
+    }
+  ],
+  "risks": [
+    {
+      "id": "fda-001",
+      "category": "regulatory_compliance",
+      "severity": "high",
+      "description": "Non-compliant AI usage may result in FDA warning letters or product recalls",
+      "mitigation": "Implement comprehensive validation and audit trails; obtain regulatory approval before deployment",
+      "likelihood": "medium"
+    },
+    {
+      "id": "fda-002",
+      "category": "patient_safety",
+      "severity": "high",
+      "description": "Incorrect AI predictions could lead to patient harm",
+      "mitigation": "Human-in-the-loop review for all clinical decisions; regular model performance monitoring",
+      "likelihood": "low"
+    },
+    {
+      "id": "fda-003",
+      "category": "data_integrity",
+      "severity": "high",
+      "description": "Data manipulation could compromise clinical trial validity",
+      "mitigation": "Immutable audit trails; cryptographic signatures; access controls",
+      "likelihood": "low"
+    }
+  ],
+  "guardrails": {
+    "output_filters": [
+      "medical_claims_without_evidence",
+      "unvalidated_clinical_recommendations"
+    ],
+    "blocked_actions": [
+      "automated_clinical_decisions_without_review",
+      "patient_data_export_without_approval",
+      "model_updates_without_validation"
+    ],
+    "rate_limits": {
+      "requests_per_hour": 1000,
+      "tokens_per_day": 500000
+    },
+    "human_in_loop_required": true
+  },
+  "validation_controls": {
+    "pre_execution": [
+      {
+        "check_id": "patient_consent_verification",
+        "description": "Verify patient consent for AI usage is documented",
+        "frequency": "every_run",
+        "fail_action": "reject"
+      },
+      {
+        "check_id": "data_anonymization_check",
+        "description": "Ensure PHI is properly de-identified per HIPAA Safe Harbor",
+        "frequency": "every_run",
+        "fail_action": "reject"
+      },
+      {
+        "check_id": "regulatory_approval_check",
+        "description": "Verify AI tool has required regulatory approvals",
+        "frequency": "monthly",
+        "fail_action": "reject"
+      }
+    ],
+    "post_execution": [
+      {
+        "check_id": "clinical_review",
+        "description": "Licensed healthcare professional reviews AI outputs",
+        "frequency": "every_run",
+        "fail_action": "reject"
+      },
+      {
+        "check_id": "audit_trail_generation",
+        "description": "Generate tamper-proof audit trail with digital signatures",
+        "frequency": "every_run",
+        "fail_action": "reject"
+      }
+    ],
+    "monitoring": [
+      {
+        "check_id": "model_performance_monitoring",
+        "description": "Track AI accuracy, sensitivity, specificity against validation set",
+        "frequency": "daily",
+        "fail_action": "alert"
+      },
+      {
+        "check_id": "adverse_event_detection",
+        "description": "Monitor for AI-related adverse events or safety signals",
+        "frequency": "continuous",
+        "fail_action": "alert"
+      }
+    ]
+  }
+}

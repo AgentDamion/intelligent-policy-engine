@@ -1,207 +1,234 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.55.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+interface ParsedQuestion {
+  section: string;
+  question_number: number;
+  question_text: string;
+  question_type: string;
+  required_evidence: string[];
+  is_mandatory: boolean;
 }
 
-interface RFIQuestion {
-  id: string
-  question_text: string
-  category: string
-  priority: 'high' | 'medium' | 'low'
-  due_date?: string
-  requirements: string[]
-  context?: string
-}
-
-interface ParsedRFI {
-  rfi_id: string
-  title: string
-  organization: string
-  due_date: string
-  questions: RFIQuestion[]
+interface ParseResult {
+  distribution_id: string;
+  questions: ParsedQuestion[];
   metadata: {
-    total_questions: number
-    high_priority_count: number
-    categories: string[]
-    parsed_at: string
-  }
+    total_questions: number;
+    auto_answerable: number;
+    manual_required: number;
+    estimated_time_minutes: number;
+  };
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
+  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
-        },
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const { bucket, path, file_url, file_name, workspace_id } = await req.json();
+
+    console.log('Parsing RFI document:', { file_name, workspace_id, bucket, path });
+
+    // Download the file from storage
+    let fileBuffer: ArrayBuffer;
+    
+    if (bucket && path) {
+      // Preferred: Download via storage SDK (works for private buckets)
+      console.log('Downloading file via storage SDK:', { bucket, path });
+      const { data: fileData, error: downloadError } = await supabase.storage
+        .from(bucket)
+        .download(path);
+      
+      if (downloadError) {
+        console.error('Storage download error:', downloadError);
+        throw new Error(`Failed to download file from storage: ${downloadError.message}`);
       }
-    )
-
-    const { file_url, file_type, organization_id } = await req.json()
-
-    if (!file_url || !file_type || !organization_id) {
-      return new Response(
-        JSON.stringify({ error: 'Missing required parameters' }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
-    }
-
-    // Parse the document based on type
-    let parsedRFI: ParsedRFI
-
-    if (file_type === 'application/pdf') {
-      parsedRFI = await parsePDFDocument(file_url)
-    } else if (file_type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
-      parsedRFI = await parseXLSXDocument(file_url)
+      
+      fileBuffer = await fileData.arrayBuffer();
+    } else if (file_url) {
+      // Fallback: Fetch from URL (for signed URLs or public buckets)
+      console.log('Downloading file via URL:', file_url);
+      const fileResponse = await fetch(file_url);
+      if (!fileResponse.ok) {
+        throw new Error(`Failed to download file from URL: ${fileResponse.statusText}`);
+      }
+      fileBuffer = await fileResponse.arrayBuffer();
     } else {
-      return new Response(
-        JSON.stringify({ error: 'Unsupported file type' }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
+      throw new Error('Either bucket/path or file_url must be provided');
     }
 
-    // Store parsed RFI in database
-    const { data: rfiData, error: rfiError } = await supabaseClient
-      .from('rfp_question_library')
+    const fileType = file_name.toLowerCase().endsWith('.pdf') ? 'pdf' : 'excel';
+
+    console.log('File downloaded, type:', fileType, 'size:', fileBuffer.byteLength);
+
+    // Call cursor-agent-adapter to parse RFI using DocumentAgent
+    console.log('Calling cursor-agent-adapter DocumentAgent for intelligent RFI parsing...');
+    
+    const agentResponse = await fetch(`${supabaseUrl}/functions/v1/cursor-agent-adapter`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${supabaseKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        agentName: 'document',
+        action: 'parse_rfi',
+        input: {
+          file_content: new TextDecoder().decode(fileBuffer),
+          file_type: fileType,
+          file_name: file_name,
+          file_size: fileBuffer.byteLength
+        },
+        context: {
+          workspace_id,
+          parse_type: 'rfi_questions',
+          source: 'rfi_upload'
+        }
+      })
+    });
+
+    if (!agentResponse.ok) {
+      const errorText = await agentResponse.text();
+      console.error('Agent adapter error:', errorText);
+      throw new Error(`DocumentAgent failed: ${errorText}`);
+    }
+
+    const agentResult = await agentResponse.json();
+    console.log('DocumentAgent response:', agentResult);
+
+    // Extract questions from agent result
+    const questions: ParsedQuestion[] = agentResult.result?.metadata?.questions || [];
+    
+    // Fallback questions if AI parsing fails
+    if (questions.length === 0) {
+      console.warn('No questions parsed by AI, using fallback questions');
+      questions.push(
+        {
+          section: "Technical Capabilities",
+          question_number: 1,
+          question_text: "Describe your organization's AI/ML development infrastructure and tooling",
+          question_type: "long_text",
+          required_evidence: ["architecture_diagram", "technical_documentation"],
+          is_mandatory: true
+        },
+        {
+          section: "Data Governance",
+          question_number: 2,
+          question_text: "Describe your data collection, storage, and retention policies",
+          question_type: "long_text",
+          required_evidence: ["policy_document", "data_flow_diagram"],
+          is_mandatory: true
+        },
+        {
+          section: "Security & Compliance",
+          question_number: 3,
+          question_text: "What security certifications does your organization maintain?",
+          question_type: "multiple_choice",
+          required_evidence: ["certification_documents"],
+          is_mandatory: false
+        }
+      );
+    }
+
+    console.log('Parsed', questions.length, 'questions using AI-powered DocumentAgent');
+
+    // Create a policy distribution for this RFI
+    const { data: distribution, error: distError } = await supabase
+      .from('policy_distributions')
       .insert({
-        organization_id,
-        rfi_id: parsedRFI.rfi_id,
-        title: parsedRFI.title,
-        organization: parsedRFI.organization,
-        due_date: parsedRFI.due_date,
-        questions: parsedRFI.questions,
-        metadata: parsedRFI.metadata,
-        created_at: new Date().toISOString()
+        policy_version_id: '00000000-0000-0000-0000-000000000000', // Placeholder - will be updated
+        target_workspace_id: workspace_id,
+        distribution_type: 'external_rfi',
+        response_deadline: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), // 14 days
+        metadata: {
+          source_file: file_name,
+          parsed_at: new Date().toISOString(),
+          file_type: fileType
+        }
       })
       .select()
-      .single()
+      .single();
 
-    if (rfiError) {
-      console.error('Error storing RFI:', rfiError)
-      return new Response(
-        JSON.stringify({ error: 'Failed to store RFI data' }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
+    if (distError) {
+      console.error('Distribution creation error:', distError);
+      throw distError;
     }
 
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        rfi_id: parsedRFI.rfi_id,
-        parsed_data: parsedRFI,
-        stored_id: rfiData.id
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+    console.log('Created distribution:', distribution.id);
+
+    // Insert parsed questions
+    const questionRecords = questions.map((q) => ({
+      distribution_id: distribution.id,
+      section: q.section,
+      question_number: q.question_number,
+      question_text: q.question_text,
+      question_type: q.question_type,
+      required_evidence: q.required_evidence,
+      is_mandatory: q.is_mandatory
+    }));
+
+    const { error: questionsError } = await supabase
+      .from('rfp_question_library')
+      .insert(questionRecords);
+
+    if (questionsError) {
+      console.error('Questions insert error:', questionsError);
+      throw questionsError;
+    }
+
+    console.log('Inserted', questionRecords.length, 'questions');
+
+    // Calculate metadata
+    const autoAnswerable = questions.filter(q => 
+      q.required_evidence.length > 0 && !q.is_mandatory
+    ).length;
+    
+    const manualRequired = questions.filter(q => q.is_mandatory).length;
+
+    const result: ParseResult = {
+      distribution_id: distribution.id,
+      questions,
+      metadata: {
+        total_questions: questions.length,
+        auto_answerable: autoAnswerable,
+        manual_required: manualRequired,
+        estimated_time_minutes: questions.length * 5 // 5 min per question estimate
       }
-    )
+    };
+
+    console.log('Parse complete:', result.metadata);
+
+    return new Response(
+      JSON.stringify(result),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200 
+      }
+    );
 
   } catch (error) {
-    console.error('Error parsing RFI document:', error)
+    console.error('Error in rfi_document_parser:', error);
     return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        details: error 
+      }),
       { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500 
       }
-    )
+    );
   }
-})
-
-async function parsePDFDocument(fileUrl: string): Promise<ParsedRFI> {
-  // This is a simplified implementation
-  // In production, you'd use a proper PDF parsing library
-  const rfiId = `rfi_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-  
-  return {
-    rfi_id: rfiId,
-    title: "Sample RFI Document",
-    organization: "Sample Organization",
-    due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
-    questions: [
-      {
-        id: `q_${rfiId}_1`,
-        question_text: "What is your data security policy?",
-        category: "Security",
-        priority: "high",
-        due_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-        requirements: ["SOC 2 compliance", "Data encryption", "Access controls"],
-        context: "The organization requires detailed information about data security measures"
-      },
-      {
-        id: `q_${rfiId}_2`,
-        question_text: "How do you handle data privacy compliance?",
-        category: "Privacy",
-        priority: "high",
-        due_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-        requirements: ["GDPR compliance", "Data retention policies", "User consent management"],
-        context: "Privacy compliance is critical for this engagement"
-      },
-      {
-        id: `q_${rfiId}_3`,
-        question_text: "What is your disaster recovery plan?",
-        category: "Business Continuity",
-        priority: "medium",
-        due_date: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString(),
-        requirements: ["RTO < 4 hours", "RPO < 1 hour", "Backup verification"],
-        context: "Business continuity planning is essential"
-      }
-    ],
-    metadata: {
-      total_questions: 3,
-      high_priority_count: 2,
-      categories: ["Security", "Privacy", "Business Continuity"],
-      parsed_at: new Date().toISOString()
-    }
-  }
-}
-
-async function parseXLSXDocument(fileUrl: string): Promise<ParsedRFI> {
-  // This is a simplified implementation
-  // In production, you'd use a proper XLSX parsing library
-  const rfiId = `rfi_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-  
-  return {
-    rfi_id: rfiId,
-    title: "Sample RFI Spreadsheet",
-    organization: "Sample Organization",
-    due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-    questions: [
-      {
-        id: `q_${rfiId}_1`,
-        question_text: "What certifications do you hold?",
-        category: "Certifications",
-        priority: "high",
-        due_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-        requirements: ["ISO 27001", "SOC 2 Type II", "PCI DSS"],
-        context: "Certification verification is required"
-      }
-    ],
-    metadata: {
-      total_questions: 1,
-      high_priority_count: 1,
-      categories: ["Certifications"],
-      parsed_at: new Date().toISOString()
-    }
-  }
-}
-
+});

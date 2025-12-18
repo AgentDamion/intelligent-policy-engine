@@ -17,6 +17,11 @@ const enhancedOrchestrationRoutes = require('./api/enhanced-orchestration');
 const inviteRoutes = require('./api/invite');
 const toolSubmissionRoutes = require('./api/tool-submission');
 const apiRoutes = require('./api/routes');
+const hierarchicalRoutes = require('./api/routes/hierarchical-routes');
+const partnerRelationshipRoutes = require('./api/routes/partner-relationships');
+const partnerContextRoutes = require('./api/routes/partner-contexts');
+const screenRoutes = require('./api/routes/screen-routes');
+const dashboardRoutes = require('./api/routes/dashboards');
 const { checkJwt, requirePermission } = require('./api/auth/auth0-middleware');
 
 const app = express();
@@ -54,6 +59,11 @@ app.use('/api/policy-distribution', policyDistributionRoutes);
 app.use('/api/enhanced-orchestration', enhancedOrchestrationRoutes);
 app.use('/api/invite', inviteRoutes);
 app.use('/api/tool-submission', toolSubmissionRoutes);
+app.use('/api', hierarchicalRoutes);
+app.use('/api/partner-relationships', partnerRelationshipRoutes);
+app.use('/api/partner-contexts', partnerContextRoutes);
+app.use('/api/screens', screenRoutes);
+app.use('/api/dashboards', dashboardRoutes);
 app.use('/api', apiRoutes);
 
 // Serve static files from React build (Railway production)

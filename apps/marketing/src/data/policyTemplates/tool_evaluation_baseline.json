@@ -1,0 +1,80 @@
+{
+  "policy_id": "template-tool-evaluation",
+  "version": "1.0",
+  "scope": ["internal", "testing"],
+  "metadata": {
+    "created_at": "2025-01-01T00:00:00Z",
+    "template_type": "tool_evaluation",
+    "description": "Minimal controls for AI tool evaluation and testing"
+  },
+  "tools": [],
+  "data_controls": {
+    "data_classes": ["text", "code"],
+    "retention_period": "30_days",
+    "geographic_restrictions": [],
+    "encryption_required": true
+  },
+  "usage_disclosure": {
+    "allowed_ai_usage": ["testing", "evaluation"],
+    "disclosure_required": false,
+    "opt_out_available": true
+  },
+  "compliance_frameworks": [
+    {
+      "framework": "Internal Testing Standards",
+      "controls": [
+        "Use only synthetic or anonymized data for testing",
+        "Document all test scenarios and outcomes",
+        "Limit access to test environment"
+      ],
+      "evidence_required": [
+        "Test run logs",
+        "Data anonymization records"
+      ]
+    }
+  ],
+  "risks": [
+    {
+      "id": "eval-001",
+      "category": "data_leakage",
+      "severity": "low",
+      "description": "Test data may inadvertently contain sensitive information",
+      "mitigation": "Use only synthetic data; review test datasets before use",
+      "likelihood": "low"
+    }
+  ],
+  "guardrails": {
+    "output_filters": ["profanity"],
+    "blocked_actions": ["production_deployment"],
+    "rate_limits": {
+      "requests_per_hour": 100,
+      "tokens_per_day": 50000
+    }
+  },
+  "validation_controls": {
+    "pre_execution": [
+      {
+        "check_id": "synthetic_data_check",
+        "description": "Verify that only synthetic or test data is used",
+        "frequency": "every_run",
+        "fail_action": "reject"
+      }
+    ],
+    "post_execution": [
+      {
+        "check_id": "output_review",
+        "description": "Manual review of outputs for unexpected behavior",
+        "frequency": "sample_10_percent",
+        "fail_action": "alert"
+      }
+    ],
+    "monitoring": [
+      {
+        "check_id": "usage_tracking",
+        "description": "Track evaluation runs and outcomes",
+        "frequency": "continuous",
+        "fail_action": "log"
+      }
+    ]
+  }
+}

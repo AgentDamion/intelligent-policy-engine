@@ -25,15 +25,15 @@ router.post('/auth/login', async (req, res) => {
     }
 });
 
-// Switch user context
+// Switch user context (enhanced with dual-mode support)
 router.post('/auth/context/switch', 
     hierarchicalAuth.requireAuth(),
     async (req, res) => {
         try {
-            const { contextId } = req.body;
+            const { contextId, targetType } = req.body;
             const userId = req.user.id;
             
-            const switchResult = await hierarchicalAuth.switchUserContext(userId, contextId);
+            const switchResult = await hierarchicalAuth.switchUserContext(userId, contextId, targetType);
             
             res.json({
                 success: true,
@@ -46,13 +46,71 @@ router.post('/auth/context/switch',
     }
 );
 
-// Get user contexts
+// Get user contexts (all contexts)
 router.get('/auth/contexts', 
     hierarchicalAuth.requireAuth(),
     async (req, res) => {
         try {
             const contexts = await hierarchicalAuth.getUserContexts(req.user.id);
             res.json({ contexts });
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+);
+
+// Get available contexts grouped by type (dual-mode)
+router.get('/auth/contexts/available',
+    hierarchicalAuth.requireAuth(),
+    async (req, res) => {
+        try {
+            const dualModeService = require('../services/dual-mode-context-service');
+            const contexts = await dualModeService.getAvailableContexts(req.user.id);
+            res.json({ success: true, ...contexts });
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+);
+
+// Get partner contexts only
+router.get('/auth/contexts/partner',
+    hierarchicalAuth.requireAuth(),
+    async (req, res) => {
+        try {
+            const dualModeService = require('../services/dual-mode-context-service');
+            const partnerEnterpriseId = req.query.partnerEnterpriseId || null;
+            const contexts = await dualModeService.getPartnerContexts(req.user.id, partnerEnterpriseId);
+            res.json({ success: true, contexts, count: contexts.length });
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+);
+
+// Get enterprise contexts only
+router.get('/auth/contexts/enterprise',
+    hierarchicalAuth.requireAuth(),
+    async (req, res) => {
+        try {
+            const dualModeService = require('../services/dual-mode-context-service');
+            const contexts = await dualModeService.getEnterpriseContexts(req.user.id);
+            res.json({ success: true, contexts, count: contexts.length });
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+);
+
+// Get context analytics
+router.get('/auth/contexts/analytics',
+    hierarchicalAuth.requireAuth(),
+    async (req, res) => {
+        try {
+            const dualModeService = require('../services/dual-mode-context-service');
+            const days = parseInt(req.query.days) || 30;
+            const analytics = await dualModeService.getContextAnalytics(req.user.id, days);
+            res.json({ success: true, analytics });
         } catch (error) {
             res.status(500).json({ error: error.message });
         }

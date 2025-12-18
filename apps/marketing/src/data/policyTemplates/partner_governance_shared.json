@@ -1,0 +1,158 @@
+{
+  "policy_id": "template-partner-governance",
+  "version": "1.0",
+  "scope": ["partner", "client", "shared"],
+  "metadata": {
+    "created_at": "2025-01-01T00:00:00Z",
+    "template_type": "partner_governance",
+    "description": "Multi-tenant safe defaults for agency-client partnerships",
+    "sharing_model": "federated"
+  },
+  "tools": [],
+  "data_controls": {
+    "data_classes": ["shared_assets", "brand_materials", "campaign_data"],
+    "retention_period": "2_years",
+    "geographic_restrictions": [],
+    "encryption_required": true,
+    "data_isolation_required": true,
+    "cross_tenant_sharing_rules": {
+      "require_approval": true,
+      "audit_all_access": true,
+      "revocable": true
+    }
+  },
+  "usage_disclosure": {
+    "allowed_ai_usage": [
+      "content_generation",
+      "brand_compliance_checking",
+      "creative_ideation",
+      "campaign_optimization"
+    ],
+    "disclosure_required": true,
+    "opt_out_available": true,
+    "partner_consent_required": true
+  },
+  "compliance_frameworks": [
+    {
+      "framework": "Multi-Tenant Data Governance",
+      "controls": [
+        "Logical data separation between client and agency",
+        "Role-based access control with partner-specific permissions",
+        "Audit trails showing which partner accessed what data",
+        "Data residency compliance per client requirements"
+      ],
+      "evidence_required": [
+        "Tenant isolation test results",
+        "Cross-tenant access logs",
+        "Permission matrices",
+        "Data lineage reports"
+      ]
+    },
+    {
+      "framework": "IP Protection",
+      "controls": [
+        "Client retains ownership of generated content",
+        "Agency work product properly attributed",
+        "No cross-pollination of client IP to competitors",
+        "Clear licensing terms for AI-generated assets"
+      ],
+      "evidence_required": [
+        "IP ownership documentation",
+        "Licensing agreements",
+        "Attribution records"
+      ]
+    }
+  ],
+  "risks": [
+    {
+      "id": "partner-001",
+      "category": "data_leakage",
+      "severity": "high",
+      "description": "Client data may inadvertently leak to other clients via shared AI context",
+      "mitigation": "Implement strict context isolation; clear AI memory between client sessions; audit all cross-client data flows",
+      "likelihood": "medium"
+    },
+    {
+      "id": "partner-002",
+      "category": "ip_infringement",
+      "severity": "medium",
+      "description": "AI may generate content similar to competitor's IP",
+      "mitigation": "Implement plagiarism detection; maintain training data provenance; obtain client approval before use",
+      "likelihood": "low"
+    },
+    {
+      "id": "partner-003",
+      "category": "accountability",
+      "severity": "medium",
+      "description": "Unclear responsibility when AI produces non-compliant content",
+      "mitigation": "Define clear SLAs; dual approval for high-stakes outputs; shared audit access",
+      "likelihood": "medium"
+    }
+  ],
+  "guardrails": {
+    "output_filters": [
+      "competitor_brand_mentions",
+      "client_confidential_info_in_shared_context"
+    ],
+    "blocked_actions": [
+      "cross_client_data_sharing_without_approval",
+      "ai_training_on_client_data_without_consent",
+      "partner_policy_override_without_dual_approval"
+    ],
+    "rate_limits": {
+      "requests_per_hour": 500,
+      "tokens_per_day": 200000
+    },
+    "dual_approval_required": true
+  },
+  "validation_controls": {
+    "pre_execution": [
+      {
+        "check_id": "partner_consent_check",
+        "description": "Verify both client and agency have approved AI usage for this purpose",
+        "frequency": "every_run",
+        "fail_action": "reject"
+      },
+      {
+        "check_id": "data_isolation_check",
+        "description": "Ensure client data is isolated from other tenants",
+        "frequency": "every_run",
+        "fail_action": "reject"
+      },
+      {
+        "check_id": "conflict_check",
+        "description": "Check for policy conflicts between client and agency policies",
+        "frequency": "policy_change",
+        "fail_action": "alert"
+      }
+    ],
+    "post_execution": [
+      {
+        "check_id": "dual_approval_workflow",
+        "description": "Route outputs requiring approval to both client and agency stakeholders",
+        "frequency": "high_stakes_runs",
+        "fail_action": "hold_for_approval"
+      },
+      {
+        "check_id": "cross_tenant_audit",
+        "description": "Log all actions visible to both client and agency audit trails",
+        "frequency": "every_run",
+        "fail_action": "reject"
+      }
+    ],
+    "monitoring": [
+      {
+        "check_id": "shared_access_monitoring",
+        "description": "Monitor for unauthorized cross-tenant access attempts",
+        "frequency": "continuous",
+        "fail_action": "alert"
+      },
+      {
+        "check_id": "policy_drift_detection",
+        "description": "Detect when client and agency policies diverge in incompatible ways",
+        "frequency": "daily",
+        "fail_action": "alert"
+      }
+    ]
+  }
+}

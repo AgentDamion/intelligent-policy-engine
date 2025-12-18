@@ -1,49 +1,495 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
+@import './styles/accessibility.css';
+@import './styles/agentic.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
 @layer base {
-  html {
-    font-family: 'Inter', system-ui, sans-serif;
+  :root {
+    --background: 35 15% 94%;
+    --foreground: 220 13% 18%;
+
+    --card: 35 20% 96%;
+    --card-foreground: 220 13% 18%;
+
+    --popover: 35 20% 96%;
+    --popover-foreground: 220 13% 18%;
+
+    /* New brand colors based on wireframe */
+    --primary: 180 70% 45%; /* Teal primary */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 14 95% 65%; /* Coral secondary */
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 35 12% 88%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 180 70% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+  --border: 35 15% 85%;
+  --input: 35 15% 85%;
+    --ring: 180 70% 45%;
+
+    --radius: 0.375rem;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Brand colors from wireframe */
+    --brand-teal: 180 70% 45%;
+    --brand-coral: 14 95% 65%;
+    --brand-green: 140 55% 50%;
+    --brand-purple: 265 85% 60%;
+    --brand-orange: 25 95% 55%;
+    --brand-gray: 210 10% 95%;
+    --brand-dark: 220 13% 18%;
+    
+    /* New Design System Colors */
+    --mint-50: 158 100% 96%;
+    --mint-500: 164 71% 41%;
+    --teal-600: 178 84% 25%;
+    --teal-900: 178 73% 14%;
+    --coral-100: 15 100% 93%;
+    --coral-500: 11 100% 70%;
+    --slate-700: 215 25% 27%;
+    --slate-500: 214 20% 57%;
+
+    /* Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(var(--mint-50)), hsl(15 100% 96%));
+    --gradient-mint: linear-gradient(135deg, hsl(var(--mint-500)), hsl(var(--teal-600)));
+    --gradient-enterprise: linear-gradient(135deg, hsl(var(--brand-teal)), hsl(var(--brand-orange)));
+    --gradient-portfolio: linear-gradient(90deg, hsl(var(--brand-teal)), hsl(var(--brand-coral)));
+    --gradient-subtle: linear-gradient(135deg, hsl(var(--background)), hsl(var(--card)));
+    
+    /* AI-native gradients for Lovable 2.0 */
+    --gradient-ai-primary: linear-gradient(135deg, hsl(174 100% 37%), hsl(14 100% 63%));
+    --gradient-ai-trust: linear-gradient(135deg, hsl(174 100% 37%), hsl(122 39% 57%));
+    --gradient-ai-risk: linear-gradient(135deg, hsl(14 100% 63%), hsl(4 90% 65%));
+    --gradient-subtle-teal: linear-gradient(180deg, hsl(174 100% 97%), hsl(174 100% 99%));
+    --gradient-subtle-coral: linear-gradient(180deg, hsl(14 100% 97%), hsl(14 100% 99%));
+    
+    /* Shadows */
+    --shadow-soft: 0 4px 16px -4px hsl(var(--slate-700) / 0.1);
+    --shadow-card: 0 1px 3px 0 hsl(var(--slate-700) / 0.1), 0 1px 2px -1px hsl(var(--slate-700) / 0.1);
+    --shadow-ai-glow: 0 0 40px hsla(174, 100%, 37%, 0.15);
+    --shadow-ai-glow-hover: 0 0 60px hsla(174, 100%, 37%, 0.25);
+    --shadow-elegant: 0 10px 30px -10px hsla(0, 0%, 0%, 0.1);
+    --shadow-elegant-hover: 0 15px 40px -10px hsla(0, 0%, 0%, 0.15);
+    
+    /* Taupe/beige palette for PlayerZero aesthetic */
+    --brand-taupe: 35 15% 88%;
+    --brand-beige: 35 20% 92%;
+    --brand-warm-white: 35 25% 96%;
+    --brand-taupe-dark: 35 20% 82%;
+    --brand-section-alt: 35 18% 90%;
   }
-  
-  body {
-    @apply bg-gray-50 text-gray-900;
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 180 100% 50%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 180 100% 50%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 180 100% 50%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* DeForge-inspired dark mode colors */
+    --midnight-navy: 220 30% 8%;
+    --deep-purple: 265 35% 12%;
+    --electric-teal: 180 100% 50%;
+    --compliance-purple: 250 100% 65%;
+    --neon-glow: 180 100% 60%;
   }
 }
 
-@layer components {
-  .btn-primary {
-    @apply bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   
-  .btn-secondary {
-    @apply bg-white hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 rounded-lg border border-gray-300 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+  .font-brand {
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
-  
-  .btn-success {
-    @apply bg-success-600 hover:bg-success-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-success-500 focus:ring-offset-2;
+
+  /* Typography hierarchy */
+  h1, h2, h3 {
+    font-family: 'Sora', system-ui, sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.025em;
   }
-  
-  .btn-danger {
-    @apply bg-danger-600 hover:bg-danger-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-danger-500 focus:ring-offset-2;
+
+  h1 {
+    font-weight: 700;
   }
-  
-  .input-field {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors duration-200;
-  }
-  
-  .card {
-    @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6;
-  }
-  
-  .card-hover {
-    @apply card hover:shadow-md transition-shadow duration-200;
+
+  h2 {
+    font-weight: 600;
   }
 }
 
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
+  /* Brand color utilities */
+  .bg-brand-teal {
+    background-color: hsl(var(--brand-teal));
   }
+  
+  .bg-brand-coral {
+    background-color: hsl(var(--brand-coral));
+  }
+  
+  .bg-brand-green {
+    background-color: hsl(var(--brand-green));
+  }
+  
+  .bg-brand-purple {
+    background-color: hsl(var(--brand-purple));
+  }
+  
+  .bg-brand-orange {
+    background-color: hsl(var(--brand-orange));
+  }
+  
+  .bg-brand-gray {
+    background-color: hsl(var(--brand-gray));
+  }
+  
+  .text-brand-dark {
+    color: hsl(var(--brand-dark));
+  }
+  
+  .text-brand-teal {
+    color: hsl(var(--brand-teal));
+  }
+  
+  .text-brand-coral {
+    color: hsl(var(--brand-coral));
+  }
+  
+  /* Taupe/beige utilities */
+  .bg-brand-taupe {
+    background-color: hsl(var(--brand-taupe));
+  }
+  
+  .bg-brand-beige {
+    background-color: hsl(var(--brand-beige));
+  }
+  
+  .bg-brand-warm-white {
+    background-color: hsl(var(--brand-warm-white));
+  }
+  
+  .bg-brand-taupe-dark {
+    background-color: hsl(var(--brand-taupe-dark));
+  }
+  
+  .bg-brand-section-alt {
+    background-color: hsl(var(--brand-section-alt));
+  }
+  
+  /* Animation utilities */
+  .hover-scale {
+    @apply transition-transform duration-200 hover:scale-105;
+  }
+  
+  /* Subtle dot grid background for PlayerZero aesthetic */
+  .bg-dot-grid {
+    background-image: radial-gradient(circle, hsl(var(--brand-taupe-dark) / 0.3) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  
+  .angular-hover {
+    @apply transition-all duration-300 hover:rotate-1 hover:scale-105 hover:shadow-lg;
+  }
+  
+  .geometric-float {
+    animation: geometric-float 6s ease-in-out infinite;
+  }
+  
+  .wing-flutter {
+    animation: wing-flutter 2s ease-in-out infinite;
+  }
+  
+  .brand-gradient-text {
+    background: linear-gradient(90deg, hsl(var(--brand-teal)), hsl(188, 70%, 55%));
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+  
+  .brand-gradient-bg {
+    background: linear-gradient(90deg, hsl(var(--brand-teal)), hsl(188, 70%, 45%));
+  }
+  
+  .brand-coral-gradient {
+    background: linear-gradient(90deg, hsl(var(--brand-coral)), hsl(25, 95%, 55%));
+  }
+  
+  /* AI-native design utilities */
+  .ai-gradient-primary {
+    background: var(--gradient-ai-primary);
+  }
+  
+  .ai-gradient-trust {
+    background: var(--gradient-ai-trust);
+  }
+  
+  .ai-gradient-risk {
+    background: var(--gradient-ai-risk);
+  }
+  
+  .ai-glow {
+    box-shadow: var(--shadow-ai-glow);
+  }
+  
+  .ai-glow-hover {
+    transition: box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .ai-glow-hover:hover {
+    box-shadow: var(--shadow-ai-glow-hover);
+  }
+  
+  /* Glass morphism effects */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  }
+  
+  .glass-badge {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 1rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Cinematic login utilities */
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+  
+  .animate-gradient-drift {
+    background-size: 200% 200%;
+    animation: gradient-drift 30s ease infinite;
+  }
+  
+  .animate-float-slow {
+    animation: float-slow 20s ease-in-out infinite;
+  }
+  
+  .animate-float-delayed {
+    animation: float-delayed 25s ease-in-out infinite 5s;
+  }
+  
+  .bg-gradient-radial {
+    background: radial-gradient(circle, var(--tw-gradient-stops));
+  }
+}
+
+.geometric-accent {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  background: linear-gradient(
+    135deg,
+    rgba(20, 184, 166, 0.05) 0%,
+    transparent 100%
+  );
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  animation: float 20s ease-in-out infinite;
+  backdrop-filter: blur(1px);
+}
+
+@keyframes float {
+  0%, 100% { 
+    transform: translateY(0px) rotate(0deg) scale(1);
+    opacity: 0.05;
+  }
+  50% { 
+    transform: translateY(-20px) rotate(2deg) scale(1.02);
+    opacity: 0.08;
+  }
+}
+
+@keyframes geometric-float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(5deg); }
+}
+
+@keyframes wing-flutter {
+  0%, 100% { transform: scaleX(1) skewX(0deg); }
+  50% { transform: scaleX(1.1) skewX(5deg); }
+}
+
+/* Cinematic login animations */
+@keyframes pulse-glow {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 20px rgba(20, 184, 166, 0.4));
+  }
+  50% {
+    transform: scale(1.05);
+    filter: drop-shadow(0 0 30px rgba(20, 184, 166, 0.6));
+  }
+}
+
+@keyframes gradient-drift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes float-slow {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.1;
+  }
+  50% {
+    transform: translate(-20px, -20px) scale(1.1);
+    opacity: 0.15;
+  }
+}
+
+@keyframes float-delayed {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.08;
+  }
+  50% {
+    transform: translate(20px, 20px) scale(1.05);
+    opacity: 0.12;
+  }
+}
+
+/* DeForge-inspired animations */
+@keyframes type-cursor {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+@keyframes timeline-pulse {
+  0%, 100% { 
+    transform: scale(1);
+    box-shadow: 0 0 0 0 hsl(var(--electric-teal) / 0.4);
+  }
+  50% { 
+    transform: scale(1.05);
+    box-shadow: 0 0 0 10px hsl(var(--electric-teal) / 0);
+  }
+}
+
+@keyframes neon-glow {
+  0%, 100% { 
+    box-shadow: 0 0 5px hsl(var(--electric-teal) / 0.3), 
+                0 0 10px hsl(var(--electric-teal) / 0.2), 
+                0 0 15px hsl(var(--electric-teal) / 0.1);
+  }
+  50% { 
+    box-shadow: 0 0 10px hsl(var(--electric-teal) / 0.5), 
+                0 0 20px hsl(var(--electric-teal) / 0.3), 
+                0 0 30px hsl(var(--electric-teal) / 0.2);
+  }
+}
+
+@keyframes meta-loop-pulse {
+  0%, 100% { 
+    transform: rotate(0deg) scale(1);
+    opacity: 0.6;
+  }
+  50% { 
+    transform: rotate(180deg) scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+/* Utility classes for DeForge-style components */
+.deforge-gradient {
+  background: linear-gradient(135deg, hsl(var(--midnight-navy)), hsl(var(--deep-purple)));
+}
+
+.terminal-glow {
+  background: rgba(0, 224, 255, 0.05);
+  border: 1px solid rgba(0, 224, 255, 0.2);
+  box-shadow: 0 0 20px rgba(0, 224, 255, 0.1);
+}
+
+.metric-tile {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.timeline-step {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.timeline-step.active {
+  animation: timeline-pulse 2s ease-in-out infinite;
+}
+
+.typing-effect {
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 2px solid hsl(var(--electric-teal));
+  animation: type-cursor 1s infinite;
 }

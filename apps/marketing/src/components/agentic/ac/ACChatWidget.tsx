@@ -1,166 +1,240 @@
-import { useState } from 'react'
-import { useAgentTask } from '../../../hooks/useAgentTask'
-import { Button } from '../../ui/button'
-import LoadingSpinner from '../../ui/LoadingSpinner'
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
+import { useChatWidget } from '@/hooks/useChatWidget';
+import { useToast } from '@/hooks/use-toast';
+import { ChatWidgetCollapsed } from './ChatWidgetCollapsed';
+import { ChatWidgetExpanded } from './ChatWidgetExpanded';
+import { FloatingPortal } from '@/components/shared/FloatingPortal';
+import type { SuggestedAction } from '@/types/chat';
 
 interface ACChatWidgetProps {
-  enterpriseId?: string
+  threadId: string;
+  className?: string;
 }
 
-export function ACChatWidget({ enterpriseId }: ACChatWidgetProps) {
-  const [input, setInput] = useState('')
-  const [messages, setMessages] = useState<Array<{
-    id: string
-    type: 'user' | 'agent'
-    content: string
-    timestamp: Date
-  }>>([])
+export const ACChatWidget = ({ threadId, className }: ACChatWidgetProps) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  
+  // 🔍 DEBUG: Component mounting
+  console.log('🔍 ACChatWidget MOUNTED', {
+    threadId,
+    className,
+    timestamp: new Date().toISOString()
+  });
+  
+  const {
+    messages,
+    unreadCount,
+    isLoading,
+    isSending,
+    isConnected,
+    sendMessage,
+    clearUnread,
+    error
+  } = useChatWidget(threadId, isExpanded);
 
-  const { submitTask, isSubmitting, isProcessing, currentTask, error } = useAgentTask({
-    enterpriseId,
-    onComplete: (response) => {
-      const answer = response.response_payload?.answer || 'No response received'
-      setMessages(prev => [...prev, {
-        id: response.id,
-        type: 'agent',
-        content: answer,
-        timestamp: new Date(response.updated_at)
-      }])
-      setInput('') // Clear input on success
-    },
-    onError: (err) => {
-      console.error('Agent task failed:', err)
-      setMessages(prev => [...prev, {
-        id: Date.now().toString(),
-        type: 'agent',
-        content: `Error: ${err.message}`,
-        timestamp: new Date()
-      }])
-    },
-    onStatusChange: (status) => {
-      console.log('Task status:', status)
+  // 🔍 DEBUG: Hook state
+  console.log('🔍 ACChatWidget Hook State', {
+    threadId,
+    messagesCount: messages.length,
+    unreadCount,
+    isLoading,
+    isSending,
+    isConnected,
+    hasError: !!error,
+    errorMessage: error?.message
+  });
+
+  // Handle errors
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: 'Chat Error',
+        description: error.message,
+        variant: 'destructive'
+      });
     }
-  })
+  }, [error, toast]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!input.trim() || isSubmitting || isProcessing) return
+  // Clear unread when opening
+  const handleOpen = useCallback(() => {
+    setIsExpanded(true);
+    clearUnread();
+  }, [clearUnread]);
 
-    // Add user message to chat
-    const userMessage = {
-      id: Date.now().toString(),
-      type: 'user' as const,
-      content: input.trim(),
-      timestamp: new Date()
+  // Close widget
+  const handleClose = useCallback(() => {
+    setIsExpanded(false);
+  }, []);
+
+  // Handle action clicks
+  const handleActionClick = useCallback(async (action: SuggestedAction) => {
+    switch (action.action_type) {
+      case 'navigate':
+        navigate(action.target);
+        setIsExpanded(false);
+        break;
+        
+      case 'download':
+        window.open(action.target, '_blank');
+        toast({
+          title: 'Download Started',
+          description: action.description || 'Opening download link'
+        });
+        break;
+        
+      case 'modal':
+        // Dispatch custom event for modal
+        window.dispatchEvent(new CustomEvent('ac-open-modal', {
+          detail: {
+            type: action.target,
+            threadId,
+            context: action.context
+          }
+        }));
+        break;
+        
+      case 'api':
+        try {
+          const response = await fetch(action.target, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(action.context || {})
+          });
+          
+          if (!response.ok) throw new Error('API call failed');
+          
+          toast({
+            title: 'Action Completed',
+            description: action.description || 'Action executed successfully'
+          });
+        } catch (err) {
+          toast({
+            title: 'Action Failed',
+            description: 'Unable to complete the requested action',
+            variant: 'destructive'
+          });
+        }
+        break;
     }
-    setMessages(prev => [...prev, userMessage])
+  }, [navigate, threadId, toast]);
 
+  // Handle send message
+  const handleSendMessage = useCallback(async (content: string) => {
     try {
-      await submitTask({
-        prompt: input.trim(),
-        enterprise_id: enterpriseId
-      })
+      await sendMessage(content);
     } catch (err) {
-      console.error('Failed to submit task:', err)
+      // Error already handled by hook
+      throw err;
     }
+  }, [sendMessage]);
+
+  // Keyboard support
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isExpanded) {
+        handleClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isExpanded, handleClose]);
+
+  // 🔍 DEBUG: Geometry logging
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      const el = document.getElementById('ac-debug-box');
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        const styles = window.getComputedStyle(el);
+        console.log('🔍 ACChatWidget DEBUG BOX GEOMETRY', {
+          rect: {
+            top: rect.top,
+            left: rect.left,
+            width: rect.width,
+            height: rect.height,
+            bottom: rect.bottom,
+            right: rect.right
+          },
+          styles: {
+            zIndex: styles.zIndex,
+            visibility: styles.visibility,
+            display: styles.display,
+            opacity: styles.opacity,
+            position: styles.position,
+            transform: styles.transform
+          }
+        });
+      } else {
+        console.log('🔍 ACChatWidget DEBUG BOX NOT FOUND IN DOM');
+      }
+      console.log('🔍 Viewport', {
+        innerWidth: window.innerWidth,
+        innerHeight: window.innerHeight,
+        visualViewport: {
+          width: window.visualViewport?.width,
+          height: window.visualViewport?.height,
+          scale: window.visualViewport?.scale
+        }
+      });
+    });
+  }, [isExpanded, messages.length]);
+
+  // Don't render for general thread
+  if (threadId === 'general') {
+    console.log('🔍 ACChatWidget: NOT RENDERING (threadId is "general")');
+    return null;
   }
 
+  console.log('🔍 ACChatWidget: RENDERING', {
+    isExpanded,
+    shouldShowCollapsed: !isExpanded
+  });
+
   return (
-    <div className="flex flex-col h-full bg-white rounded-lg shadow-lg border border-gray-200">
-      {/* Header */}
-      <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 rounded-t-lg">
-        <h3 className="text-lg font-semibold text-gray-800">Agent Chat</h3>
-        {isProcessing && (
-          <div className="text-xs text-gray-500 mt-1 flex items-center gap-2">
-            <LoadingSpinner size="sm" />
-            Processing...
-          </div>
-        )}
-      </div>
-
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.length === 0 ? (
-          <div className="text-center text-gray-500 text-sm py-8">
-            Start a conversation with the agent...
-          </div>
-        ) : (
-          messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                  message.type === 'user'
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-100 text-gray-800'
-                }`}
-              >
-                <div className="text-sm">{message.content}</div>
-                <div className={`text-xs mt-1 ${
-                  message.type === 'user' ? 'text-blue-100' : 'text-gray-500'
-                }`}>
-                  {message.timestamp.toLocaleTimeString()}
-                </div>
-              </div>
-            </div>
-          ))
-        )}
-
-        {/* Show current task response if completed */}
-        {currentTask?.status === 'completed' && currentTask.response_payload && 
-         !messages.some(m => m.id === currentTask.id) && (
-          <div className="flex justify-start">
-            <div className="max-w-[80%] rounded-lg px-4 py-2 bg-gray-100 text-gray-800">
-              <div className="text-sm">{currentTask.response_payload.answer}</div>
-              {currentTask.response_payload.steps && (
-                <div className="text-xs mt-2 text-gray-500">
-                  Steps: {currentTask.response_payload.steps.join(' → ')}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Error Display */}
-      {error && (
-        <div className="px-4 py-2 bg-red-50 border-t border-red-200">
-          <div className="text-sm text-red-600">
-            ❌ Error: {error.message}
-          </div>
+    <FloatingPortal>
+      {/* 🔍 DEBUG VISUAL INDICATOR - Top left with max z-index */}
+      <div 
+        id="ac-debug-box"
+        className="fixed top-[12px] left-[12px] w-[140px] h-[140px] bg-red-500 border-4 border-yellow-400 shadow-[0_0_20px_rgba(255,255,0,0.8)] rounded-lg z-[2147483647] pointer-events-none flex flex-col items-center justify-center text-white text-xs font-mono p-2"
+      >
+        <div className="font-bold mb-1">DEBUG</div>
+        <div className="text-[10px] text-center space-y-0.5">
+          <div>ID: {threadId.slice(0, 8)}</div>
+          <div>Exp: {isExpanded ? 'Y' : 'N'}</div>
+          <div>Msg: {messages.length}</div>
+          <div>Unr: {unreadCount}</div>
+          <div>Con: {isConnected ? 'Y' : 'N'}</div>
+          <div>Err: {error ? 'Y' : 'N'}</div>
         </div>
-      )}
-
-      {/* Input Form */}
-      <div className="border-t border-gray-200 p-4">
-        <form onSubmit={handleSubmit} className="flex gap-2">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Type your message..."
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            disabled={isSubmitting || isProcessing}
-          />
-          <Button 
-            type="submit" 
-            disabled={!input.trim() || isSubmitting || isProcessing}
-            className="px-6"
-          >
-            {isSubmitting || isProcessing ? (
-              <span className="flex items-center gap-2">
-                <LoadingSpinner size="sm" />
-                Sending...
-              </span>
-            ) : (
-              'Send'
-            )}
-          </Button>
-        </form>
       </div>
-    </div>
-  )
-}
 
+      <div className={className}>
+        {!isExpanded && (
+          <ChatWidgetCollapsed
+            unreadCount={unreadCount}
+            onClick={handleOpen}
+          />
+        )}
+        
+        <AnimatePresence>
+          {isExpanded && (
+            <ChatWidgetExpanded
+              messages={messages}
+              unreadCount={unreadCount}
+              isSending={isSending}
+              isConnected={isConnected}
+              onClose={handleClose}
+              onSendMessage={handleSendMessage}
+              onActionClick={handleActionClick}
+            />
+          )}
+        </AnimatePresence>
+      </div>
+    </FloatingPortal>
+  );
+};

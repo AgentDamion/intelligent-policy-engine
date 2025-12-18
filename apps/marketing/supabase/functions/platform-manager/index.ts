@@ -1,148 +1,216 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { z } from "https://deno.land/x/zod@v3.20.2/mod.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { PlatformConfigurationInputSchema, PlatformConfigurationUpdateSchema } from "../shared/platform-config.ts"
-import { CredentialManager } from "../shared/credential-manager.ts"
-import { buildAuthHeaders } from "../shared/auth-headers.ts"
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.55.0';
 
-serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response(null, { headers: cors })
-  try {
-    const url = new URL(req.url)
-    const path = url.pathname.replace(/\/$/, '')
-    const [_, base, id, action] = path.split('/')
-    if (base !== 'platform-manager') return json({ ok: true })
-
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-    if (!supabaseUrl || !supabaseServiceKey) return json({ error: 'Missing Supabase env' }, 500)
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
-
-    const org = headerOrg(req, url)
-    if (!org) return json({ error: 'Missing organization_id (x-org-id or query)' }, 400)
-
-    if (req.method === 'GET' && !id) {
-      const { data, error } = await supabase
-        .from('platform_configurations')
-        .select('id, organization_id, platform_type, platform_name, configuration, field_mappings, webhook_config, status, last_connection_test, connection_status, created_at, updated_at')
-        .eq('organization_id', org)
-        .order('created_at', { ascending: false })
-      if (error) return json({ error: error.message }, 500)
-      return json({ items: data })
-    }
-
-    if (req.method === 'GET' && id) {
-      const { data, error } = await supabase
-        .from('platform_configurations')
-        .select('id, organization_id, platform_type, platform_name, configuration, field_mappings, webhook_config, status, last_connection_test, connection_status, created_at, updated_at')
-        .eq('id', id)
-        .eq('organization_id', org)
-        .single()
-      if (error) return json({ error: error.message }, 404)
-      return json(data)
-    }
-
-    if (req.method === 'POST' && !id) {
-      const body = await req.json()
-      const payload = PlatformConfigurationInputSchema.parse({ ...body, organization_id: body.organization_id || org })
-      let credentials_encrypted: string | undefined
-      if (payload.credentials) {
-        credentials_encrypted = await CredentialManager.encryptCredentials(payload.credentials)
-      }
-      const { data, error } = await supabase.from('platform_configurations').insert({
-        organization_id: payload.organization_id,
-        platform_type: payload.platform_type,
-        platform_name: payload.platform_name,
-        configuration: payload.configuration,
-        credentials_encrypted,
-        field_mappings: payload.field_mappings || {},
-        webhook_config: payload.webhook_config || {},
-        status: payload.status || 'active',
-      }).select('*').single()
-      if (error) return json({ error: error.message }, 500)
-      return json({ id: data.id })
-    }
-
-    if (req.method === 'PUT' && id) {
-      const body = await req.json()
-      const payload = PlatformConfigurationUpdateSchema.parse(body)
-      const update: Record<string, unknown> = { ...payload }
-      if ('credentials' in payload && payload.credentials) {
-        update.credentials_encrypted = await CredentialManager.encryptCredentials(payload.credentials)
-        delete (update as any).credentials
-      }
-      const { data, error } = await supabase
-        .from('platform_configurations')
-        .update(update)
-        .eq('id', id)
-        .eq('organization_id', org)
-        .select('id')
-        .single()
-      if (error) return json({ error: error.message }, 500)
-      return json({ id: data.id })
-    }
-
-    if (req.method === 'DELETE' && id) {
-      const { error } = await supabase
-        .from('platform_configurations')
-        .delete()
-        .eq('id', id)
-        .eq('organization_id', org)
-      if (error) return json({ error: error.message }, 500)
-      return json({ deleted: true })
-    }
-
-    if (req.method === 'POST' && id && action === 'test') {
-      const rec = await CredentialManager.loadFromDb(id)
-      if (!rec || rec.organization_id !== org) return json({ error: 'Not found' }, 404)
-      const creds = rec.credentials_encrypted
-        ? await CredentialManager.decryptCredentials(rec.credentials_encrypted)
-        : null
-      const baseUrl = rec?.configuration?.endpoints?.base_url || rec?.configuration?.base_url || rec?.configuration?.api_base || null
-      const status = await testConnectivity(baseUrl, creds || undefined)
-      await createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
-        .from('platform_configurations')
-        .update({ last_connection_test: new Date().toISOString(), connection_status: status.connected ? 'connected' : 'error', error_message: status.error || null })
-        .eq('id', id)
-      return json(status)
-    }
-
-    return json({ error: 'Unsupported route' }, 404)
-  } catch (e) {
-    return json({ ok: false, error: e instanceof Error ? e.message : String(e) }, 500)
-  }
-})
-
-const cors = {
+const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-}
+};
 
-function json(data: unknown, status = 200) {
-  return new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json', ...cors } })
-}
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
 
-function headerOrg(req: Request, url: URL): string | null {
-  const h = req.headers
-  return (
-    h.get('x-org-id') ||
-    h.get('x-organization-id') ||
-    h.get('x-enterprise-id') ||
-    url.searchParams.get('organization_id') ||
-    url.searchParams.get('enterprise_id')
-  )
-}
-
-async function testConnectivity(baseUrl: string | null, creds?: Record<string, unknown>): Promise<{ connected: boolean; code?: number; error?: string }> {
-  if (!baseUrl) return { connected: false, error: 'Missing base_url' }
   try {
-    const headers = creds ? buildAuthHeaders(creds as any) : {}
-    const res = await fetch(String(baseUrl), { method: 'GET', headers })
-    return { connected: res.ok || (res.status >= 200 && res.status < 500), code: res.status }
-  } catch (e) {
-    return { connected: false, error: e instanceof Error ? e.message : String(e) }
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    const url = new URL(req.url);
+    const pathParts = url.pathname.split('/').filter(Boolean);
+    const method = req.method;
+
+    // GET /platform-manager?organization_id=xxx - List configurations
+    if (method === 'GET') {
+      const organizationId = url.searchParams.get('organization_id');
+      
+      if (!organizationId) {
+        throw new Error('organization_id is required');
+      }
+
+      const { data: configs, error } = await supabase
+        .from('platform_configurations')
+        .select('*')
+        .eq('organization_id', organizationId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      return new Response(
+        JSON.stringify({ items: configs || [] }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // POST - Handle both create and test
+    if (method === 'POST') {
+      const body = await req.json();
+      const { action, config_id } = body;
+
+      // POST /platform-manager/:id/test - Test connection
+      if (action === 'test' && config_id) {
+        console.log(`Testing connection for config ${config_id}`);
+
+        const { data: config, error: configError } = await supabase
+          .from('platform_configurations')
+          .select('*')
+          .eq('id', config_id)
+          .single();
+
+        if (configError || !config) {
+          throw new Error('Configuration not found');
+        }
+
+        let testResult = { success: false, message: '' };
+
+        // Test connection based on platform type
+        switch (config.platform_type) {
+          case 'veeva_vault':
+            testResult = await testVeevaConnection(config);
+            break;
+          case 'salesforce':
+            testResult = await testSalesforceConnection(config);
+            break;
+          case 'sharepoint':
+            testResult = await testSharePointConnection(config);
+            break;
+          default:
+            testResult = {
+              success: false,
+              message: `Unsupported platform type: ${config.platform_type}`
+            };
+        }
+
+        // Update last connection test
+        await supabase
+          .from('platform_configurations')
+          .update({
+            last_connection_test: new Date().toISOString(),
+            status: testResult.success ? 'active' : 'error'
+          })
+          .eq('id', config_id);
+
+        // Log the test
+        await supabase
+          .from('platform_integration_logs')
+          .insert({
+            platform_config_id: config_id,
+            operation_type: 'test',
+            status: testResult.success ? 'success' : 'error',
+            platform_type: config.platform_type,
+            error_message: testResult.success ? null : testResult.message,
+            metadata: { message: testResult.message }
+          });
+
+        console.log(`Connection test result: ${testResult.success ? 'SUCCESS' : 'FAILED'}`);
+
+        return new Response(
+          JSON.stringify(testResult),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      throw new Error('Invalid request');
+    }
+
+    throw new Error('Method not allowed');
+
+  } catch (error) {
+    console.error('Error in platform-manager:', error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { 
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    );
+  }
+});
+
+// Platform-specific connection testers
+async function testVeevaConnection(config: any) {
+  try {
+    const { base_url, credentials } = config;
+    
+    // Veeva Vault API authentication
+    const authUrl = `${base_url}/api/v23.1/auth`;
+    const response = await fetch(authUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        username: credentials.username,
+        password: credentials.password
+      })
+    });
+
+    const data = await response.json();
+    
+    if (data.responseStatus === 'SUCCESS') {
+      return { success: true, message: 'Successfully connected to Veeva Vault' };
+    } else {
+      return { success: false, message: data.errors?.[0]?.message || 'Failed to authenticate' };
+    }
+  } catch (error) {
+    return { success: false, message: `Connection error: ${error.message}` };
   }
 }
 
+async function testSalesforceConnection(config: any) {
+  try {
+    const { base_url, credentials } = config;
+    
+    // Salesforce OAuth authentication
+    const authUrl = `${base_url}/services/oauth2/token`;
+    const response = await fetch(authUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'password',
+        client_id: credentials.client_id,
+        client_secret: credentials.client_secret,
+        username: credentials.username,
+        password: credentials.password
+      })
+    });
 
+    const data = await response.json();
+    
+    if (data.access_token) {
+      return { success: true, message: 'Successfully connected to Salesforce' };
+    } else {
+      return { success: false, message: data.error_description || 'Failed to authenticate' };
+    }
+  } catch (error) {
+    return { success: false, message: `Connection error: ${error.message}` };
+  }
+}
+
+async function testSharePointConnection(config: any) {
+  try {
+    const { base_url, credentials } = config;
+    
+    // SharePoint REST API authentication via Microsoft Graph
+    const authUrl = 'https://login.microsoftonline.com/' + credentials.tenant_id + '/oauth2/v2.0/token';
+    const response = await fetch(authUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'client_credentials',
+        client_id: credentials.client_id,
+        client_secret: credentials.client_secret,
+        scope: 'https://graph.microsoft.com/.default'
+      })
+    });
+
+    const data = await response.json();
+    
+    if (data.access_token) {
+      return { success: true, message: 'Successfully connected to SharePoint' };
+    } else {
+      return { success: false, message: data.error_description || 'Failed to authenticate' };
+    }
+  } catch (error) {
+    return { success: false, message: `Connection error: ${error.message}` };
+  }
+}

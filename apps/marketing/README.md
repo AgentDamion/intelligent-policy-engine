@@ -1,230 +1,79 @@
-# AIComplyr Policy Studio
+# Welcome to your Lovable project
 
-A comprehensive enterprise policy management platform built with React, TypeScript, and Supabase.
+## Project info
 
-## 🚀 Features
+**URL**: https://lovable.dev/projects/f469515a-fc16-44bb-8199-468b4153787b
 
-- **Multi-tenant Architecture**: Enterprise and workspace isolation
-- **Policy Management**: Create, version, and distribute policies
-- **Role-based Access Control**: Owner, Admin, Editor, Viewer roles
-- **Real-time Updates**: Live collaboration and notifications
-- **Audit Logging**: Complete activity tracking and compliance
-- **Responsive Design**: Mobile-first, modern UI/UX
-- **Enterprise Security**: Row-level security and data isolation
+## How can I edit this code?
 
-## 🛠️ Tech Stack
+There are several ways of editing your application.
 
-- **Frontend**: React 18 + TypeScript + Vite
-- **Styling**: Tailwind CSS + Custom Design System
-- **State Management**: React Context + React Query
-- **Database**: Supabase (PostgreSQL)
-- **Authentication**: Supabase Auth
-- **Real-time**: Supabase Realtime
-- **Icons**: Lucide React
-- **Forms**: React Hook Form + Zod validation
+**Use Lovable**
 
-## 📋 Prerequisites
+Simply visit the [Lovable Project](https://lovable.dev/projects/f469515a-fc16-44bb-8199-468b4153787b) and start prompting.
 
-- Node.js 18+ (20+ recommended)
-- npm or yarn
-- Supabase account and project
-- Git
+Changes made via Lovable will be committed automatically to this repo.
 
-## 🚀 Quick Start
+**Use your preferred IDE**
 
-### 1. Clone the Repository
+If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
 
-```bash
-git clone <your-repo-url>
-cd aicomplyr-policy-studio
-```
+The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
-### 2. Install Dependencies
+Follow these steps:
 
-```bash
-npm install
-```
+```sh
+# Step 1: Clone the repository using the project's Git URL.
+git clone <YOUR_GIT_URL>
 
-### 3. Environment Setup
+# Step 2: Navigate to the project directory.
+cd <YOUR_PROJECT_NAME>
 
-Create a `.env.local` file in the root directory:
+# Step 3: Install the necessary dependencies.
+npm i
 
-```bash
-VITE_SUPABASE_URL=your_supabase_project_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-VITE_API_URL=your_api_url
-VITE_WS_URL=your_websocket_url
-```
-
-### 4. Database Setup
-
-Make sure you have applied the database migrations:
-
-```bash
-# Apply the policy studio core migration
-node supabase/run-migrations-direct.js run 20250829140812_policy_studio_core.sql
-
-# Apply the schema standardization migration
-node supabase/run-migrations-direct.js run 20250829140813_schema_standardization_and_improvements.sql
-```
-
-### 5. Start Development Server
-
-```bash
+# Step 4: Start the development server with auto-reloading and an instant preview.
 npm run dev
 ```
 
-The application will be available at `http://localhost:3000`
+**Edit a file directly in GitHub**
 
-## 🏗️ Project Structure
+- Navigate to the desired file(s).
+- Click the "Edit" button (pencil icon) at the top right of the file view.
+- Make your changes and commit the changes.
 
-```
-src/
-├── components/          # Reusable UI components
-│   ├── ui/             # Basic UI components
-│   └── Layout.tsx      # Main layout component
-├── contexts/            # React contexts
-│   ├── AuthContext.tsx # Authentication state
-│   └── EnterpriseContext.tsx # Enterprise/workspace state
-├── pages/               # Page components
-│   ├── DashboardPage.tsx
-│   ├── LoginPage.tsx
-│   ├── PoliciesPage.tsx
-│   ├── WorkspacesPage.tsx
-│   └── SettingsPage.tsx
-├── lib/                 # Utility libraries
-│   └── supabase.ts     # Supabase client configuration
-├── App.tsx             # Main app component
-├── main.tsx            # Application entry point
-└── index.css           # Global styles
-```
+**Use GitHub Codespaces**
 
-## 🔐 Authentication Flow
+- Navigate to the main page of your repository.
+- Click on the "Code" button (green button) near the top right.
+- Select the "Codespaces" tab.
+- Click on "New codespace" to launch a new Codespace environment.
+- Edit files directly within the Codespace and commit and push your changes once you're done.
 
-1. **Sign Up**: Users create accounts with email/password
-2. **Enterprise Creation**: First user creates an enterprise
-3. **Workspace Setup**: Create workspaces within the enterprise
-4. **Member Invitation**: Invite team members with specific roles
-5. **Access Control**: RLS policies ensure data isolation
+## Routes and Navigation
 
-## 🎯 Core Features
+This project uses a centralized route registry located in `src/lib/routes.ts` as the single source of truth for all application routes. All navigation components and links should reference this registry instead of hardcoded paths.
 
-### Enterprise Management
-- Create and manage enterprises
-- Multi-workspace support
-- Role-based permissions
-- Team member management
+**Route Documentation**: View the complete application route schema at `/dev/route-schema` (requires authentication).
 
-### Policy Management
-- Policy creation and editing
-- Version control
-- Status tracking (draft, review, published, archived)
-- Distribution to workspaces
+## What technologies are used for this project?
 
-### Security Features
-- Row-level security (RLS)
-- Enterprise data isolation
-- Audit logging
-- Role-based access control
+This project is built with:
 
-## 🚀 Available Scripts
+- Vite
+- TypeScript
+- React
+- shadcn-ui
+- Tailwind CSS
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Run ESLint
-- `npm run type-check` - Run TypeScript type checking
+## How can I deploy this project?
 
-## 🔧 Configuration
+Simply open [Lovable](https://lovable.dev/projects/f469515a-fc16-44bb-8199-468b4153787b) and click on Share -> Publish.
 
-### Tailwind CSS
-Custom design system with:
-- Color palette (primary, secondary, success, warning, danger)
-- Component classes (buttons, inputs, cards)
-- Responsive utilities
-- Custom animations
+## Can I connect a custom domain to my Lovable project?
 
-### Supabase
-- Real-time subscriptions
-- Row-level security policies
-- Database triggers and functions
-- File storage (if needed)
+Yes, you can!
 
-## 📱 Responsive Design
+To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
-- Mobile-first approach
-- Responsive sidebar navigation
-- Adaptive layouts for all screen sizes
-- Touch-friendly interactions
-
-## 🧪 Testing
-
-```bash
-# Run type checking
-npm run type-check
-
-# Run linting
-npm run lint
-```
-
-## 🚀 Deployment
-
-### Build for Production
-
-```bash
-npm run build
-```
-
-### Deploy to Vercel/Netlify
-
-1. Connect your repository
-2. Set environment variables
-3. Deploy automatically on push
-
-### Environment Variables for Production
-
-```bash
-VITE_SUPABASE_URL=your_production_supabase_url
-VITE_SUPABASE_ANON_KEY=your_production_supabase_anon_key
-```
-
-## 🔒 Security Considerations
-
-- All database queries use RLS policies
-- User authentication required for all routes
-- Enterprise data isolation enforced
-- Input validation and sanitization
-- HTTPS required in production
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## 📄 License
-
-This project is proprietary and confidential.
-
-## 🆘 Support
-
-For support and questions:
-- Check the documentation
-- Review the code comments
-- Contact the development team
-
-## 🗺️ Roadmap
-
-- [ ] Policy templates and workflows
-- [ ] Advanced compliance reporting
-- [ ] AI-powered policy suggestions
-- [ ] Mobile app
-- [ ] Advanced analytics dashboard
-- [ ] Integration APIs
-- [ ] Multi-language support
-
----
-
-**Built with ❤️ by the AIComplyr Team** 
+Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
