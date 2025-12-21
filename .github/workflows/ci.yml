@@ -60,13 +60,17 @@ jobs:
         pnpm build 2>&1 | tee build.log || true
         if [ -d "dist/assets" ]; then
           echo "### Platform App Bundle Sizes" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
           du -sh dist/assets/*.js | sort -h | head -5 >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
         fi
         cd ../marketing
         pnpm build 2>&1 | tee build.log || true
         if [ -d "dist/assets" ]; then
           echo "### Marketing App Bundle Sizes" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
           du -sh dist/assets/*.js | sort -h | head -5 >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
         fi
       env:
         VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}

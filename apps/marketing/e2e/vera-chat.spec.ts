@@ -84,9 +84,8 @@ test('VERA Dashboard displays metrics', async ({ page }) => {
   });
   
   // Check for dashboard elements
-  await expect(page.locator('text=Revenue Protected, text=Days Saved, text=Auto-Clear Rate').first()).toBeVisible({ timeout: 10000 }).catch(() => {
+  await expect(page.locator('text=Revenue Protected, text=Days Saved, text=Auto-Clear Rate').first()).toBeVisible({ timeout: 10000 }).catch(async () => {
     // If exact text not found, check for any metric cards
-    expect(page.locator('[class*="card"], [class*="metric"]').first()).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('[class*="card"], [class*="metric"]').first()).toBeVisible({ timeout: 5000 });
   });
 });
-
