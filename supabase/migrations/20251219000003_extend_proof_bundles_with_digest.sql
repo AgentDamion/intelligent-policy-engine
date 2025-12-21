@@ -36,3 +36,5 @@ COMMENT ON COLUMN public.proof_bundles.policy_artifact_id IS 'Reference to the p
 COMMENT ON COLUMN public.proof_bundles.trace_id IS 'W3C traceparent trace ID for distributed tracing correlation';
 COMMENT ON COLUMN public.proof_bundles.trace_context IS 'Full W3C tracestate and context metadata for debugging';
 
+
+

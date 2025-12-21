@@ -11,6 +11,9 @@ import {
   type TraceContext,
   type AuditContext
 } from '../_shared/policy-digest.ts'
+import {
+  createObservabilityContext
+} from '../_shared/observability-logger.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -94,6 +97,21 @@ serve(async (req) => {
     }
 
     // 3. Prepare enhanced context for the agent with policy and trace context
+    const enhancedTraceContext: TraceContext = {
+      traceId: traceContext.traceId,
+      spanId: currentSpanId,
+      traceState: traceContext.traceState,
+      policyDigest: policyContext?.digest || null
+    }
+
+    // Create observability context for structured logging
+    const obsContext = createObservabilityContext(supabase, enhancedTraceContext, {
+      enterpriseId: tenantId,
+      workspaceId: workspace_id || undefined,
+      agentName: agentName,
+      policyDigest: policyContext?.digest || undefined
+    })
+
     const enhancedContext = {
       ...context,
       tenantId,
@@ -105,29 +123,51 @@ serve(async (req) => {
       supabase, // Pass Supabase client for database operations
       // Policy context for agent use
       _policyContext: policyContext,
-      _traceContext: {
-        traceId: traceContext.traceId,
-        spanId: currentSpanId,
-        policyDigest: policyContext?.digest || null
-      }
+      _traceContext: enhancedTraceContext,
+      // Pass observability context to agents for step logging
+      _observability: obsContext
     }
+
+    // Log the incoming prompt/input
+    await obsContext.logPrompt(
+      typeof input === 'string' ? input : JSON.stringify(input),
+      undefined,
+      undefined
+    )
 
     // Execute agent processing
     let result
     let agentSuccess = true
     let agentError: Error | null = null
+    const agentStartTime = Date.now()
     try {
       result = await agent.process(input, enhancedContext)
       console.log(`✅ Agent ${agentName} completed successfully`)
+      
+      // Log successful response
+      const agentDuration = Date.now() - agentStartTime
+      await obsContext.logResponse(
+        typeof result === 'string' ? result : JSON.stringify(result),
+        undefined,
+        undefined,
+        agentDuration
+      )
     } catch (err) {
       agentSuccess = false
       agentError = err as Error
       console.error(`❌ Agent ${agentName} failed:`, err)
+      
+      // Log the error
+      await obsContext.logError(agentError)
     }
 
-    // 4. Log agent activity with policy digest and trace context
+    // 4. Log agent activity with policy digest, trace context, and observability metadata
+    const processingDurationMs = Date.now() - startTime
+    const observabilityStepCount = obsContext.getStepCount()
+    
+    let activityId: number | undefined
     try {
-      await supabase.from('agent_activities').insert({
+      const { data: activityData } = await supabase.from('agent_activities').insert({
         agent: agentName,
         action: action,
         enterprise_id: tenantId,
@@ -135,7 +175,16 @@ serve(async (req) => {
         details: {
           input: input,
           output: agentSuccess ? result : null,
-          error: agentError?.message || null
+          error: agentError?.message || null,
+          // Enhanced observability metadata
+          reasoning_summary: agentSuccess && result?.reasoning ? result.reasoning : null,
+          intermediate_steps_count: observabilityStepCount,
+          processing_time_ms: processingDurationMs,
+          observability: {
+            trace_id: traceContext.traceId,
+            span_id: currentSpanId,
+            steps_logged: observabilityStepCount
+          }
         },
         status: agentSuccess ? 'success' : 'error',
         // Policy digest fields
@@ -143,7 +192,9 @@ serve(async (req) => {
         trace_id: auditContext.traceId,
         span_id: auditContext.spanId,
         created_at: new Date().toISOString()
-      })
+      }).select('id').single()
+      
+      activityId = activityData?.id
     } catch (logError) {
       console.warn('⚠️ Failed to log agent activity:', logError)
     }

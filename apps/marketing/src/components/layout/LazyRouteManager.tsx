@@ -40,6 +40,10 @@ const PolicySettings = lazy(() => import('@/pages/PolicySettings'));
 const Auth = lazy(() => import('@/pages/Auth'));
 const Agentic = lazy(() => import('@/pages/Agentic'));
 const Spine = lazy(() => import('@/pages/Spine'));
+// New Marketing Pages
+const VERAConversation = lazy(() => import('@/pages/VERAConversation'));
+const WorkflowLibrary = lazy(() => import('@/pages/WorkflowLibrary'));
+const MissionControlDemo = lazy(() => import('@/pages/MissionControlDemo'));
 // Legal Document Pages
 const Terms = lazy(() => import('@/pages/Terms'));
 const Privacy = lazy(() => import('@/pages/Privacy'));
@@ -313,7 +317,7 @@ export const LazyRouteManager: React.FC = () => {
       {/* Public Routes - No Layout */}
       <Route path="/" element={
         <PublicRouteWrapper routeName="Home">
-          <AlternateLanding />
+          <Alternate4 />
         </PublicRouteWrapper>
       } />
       <Route path="/platform" element={
@@ -489,6 +493,20 @@ export const LazyRouteManager: React.FC = () => {
         </PublicRouteWrapper>
       } />
       
+      {/* VERA Conversation Interface */}
+      <Route path="/vera" element={
+        <PublicRouteWrapper routeName="Talk to VERA">
+          <VERAConversation />
+        </PublicRouteWrapper>
+      } />
+      
+      {/* Workflow Intelligence Library */}
+      <Route path="/workflows" element={
+        <PublicRouteWrapper routeName="Workflow Library">
+          <WorkflowLibrary />
+        </PublicRouteWrapper>
+      } />
+      
       {/* Enterprise Routes - Protected with Enterprise Layout */}
       <Route path="/enterprise/dashboard" element={
         <EnterpriseRouteWrapper routeName="Enterprise Dashboard">
@@ -539,6 +557,11 @@ export const LazyRouteManager: React.FC = () => {
         <EnterpriseRouteWrapper routeName="Policy Sandbox">
           <Sandbox />
         </EnterpriseRouteWrapper>
+      } />
+      <Route path="/enterprise/mission-control" element={
+        <PublicRouteWrapper routeName="VERA Mission Control">
+          <MissionControlDemo />
+        </PublicRouteWrapper>
       } />
       <Route path="/enterprise/partners" element={
         <EnterpriseRouteWrapper routeName="Partners">

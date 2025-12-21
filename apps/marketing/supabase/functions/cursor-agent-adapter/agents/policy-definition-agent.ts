@@ -1,5 +1,12 @@
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// Type for the observability context passed from cursor-agent-adapter
+interface ObservabilityContext {
+  logReasoning: (reasoning: string) => Promise<{ id: string } | null>;
+  logToolCall: (toolName: string, args: Record<string, unknown>, result?: unknown, durationMs?: number, error?: string) => Promise<{ callId: string; responseId: string } | null>;
+  getStepCount: () => number;
+}
+
 /**
  * PolicyDefinitionAgent - Conversational Policy Creation
  * 
@@ -161,6 +168,9 @@ export class PolicyDefinitionAgent {
     context: Record<string, unknown>
   ): Promise<PolicyDefinitionOutput> {
     const startTime = Date.now();
+    
+    // Get observability context if provided
+    const obsContext = context._observability as ObservabilityContext | undefined;
 
     console.log('PolicyDefinitionAgent processing:', {
       conversation_id: input.conversation_id,
@@ -169,13 +179,29 @@ export class PolicyDefinitionAgent {
     });
 
     try {
+      // Log reasoning: Starting conversation processing
+      await obsContext?.logReasoning(
+        `Processing policy definition message for enterprise ${input.enterprise_id}. ` +
+        `Conversation ID: ${input.conversation_id || 'new'}. Message length: ${input.message.length} chars`
+      );
+
       // Load or initialize conversation state
+      const loadStateStart = Date.now();
       const state = input.conversation_id
         ? await this.loadConversationState(input.conversation_id)
         : this.initializeState(input.enterprise_id, input.user_id);
 
+      // Log tool call for state loading
+      await obsContext?.logToolCall(
+        'loadConversationState',
+        { conversationId: input.conversation_id, enterpriseId: input.enterprise_id },
+        { phase: state.phase, completion: state.completion_percentage },
+        Date.now() - loadStateStart
+      );
+
       // Check for timeout
       if (this.checkConversationTimeout(state)) {
+        await obsContext?.logReasoning('Conversation timed out. Saving draft and returning timeout message.');
         return await this.handleTimeout(state);
       }
 
@@ -187,14 +213,26 @@ export class PolicyDefinitionAgent {
       });
 
       // Extract policy data from user input
-      const extraction = await this.extractPolicyData(input.message, state);
+      await obsContext?.logReasoning(`Extracting policy data from user message. Current phase: ${state.phase}`);
+      const extractionStart = Date.now();
+      const extraction = await this.extractPolicyData(input.message, state, obsContext);
+      
+      // Log the extraction tool call
+      await obsContext?.logToolCall(
+        'extractPolicyData',
+        { messageLength: input.message.length, phase: state.phase },
+        { confidence: extraction.confidence, fieldsExtracted: Object.keys(extraction.data).length, issues: extraction.issues?.length || 0 },
+        Date.now() - extractionStart
+      );
 
       // Handle low confidence
       if (extraction.confidence < this.CONFIDENCE_THRESHOLD) {
+        await obsContext?.logReasoning(`Low confidence extraction (${extraction.confidence.toFixed(2)}). Requesting user confirmation.`);
         return await this.handleLowConfidence(extraction, state);
       }
 
       // Validate consistency
+      await obsContext?.logReasoning('Validating policy consistency across fields...');
       const consistencyIssues = await this.validateConsistency(
         { ...state.pom_draft, ...extraction.data },
         state.phase
@@ -202,6 +240,10 @@ export class PolicyDefinitionAgent {
 
       // Handle critical consistency issues
       if (consistencyIssues.some(i => i.severity === 'critical')) {
+        await obsContext?.logReasoning(
+          `Found ${consistencyIssues.filter(i => i.severity === 'critical').length} critical consistency issues. ` +
+          `Requesting resolution from user.`
+        );
         return await this.handleConsistencyIssues(consistencyIssues, state);
       }
 
@@ -212,10 +254,16 @@ export class PolicyDefinitionAgent {
       };
 
       // Update phase and completion
+      const previousPhase = state.phase;
       const nextPhase = this.determineNextPhase(state);
       state.phase = nextPhase;
       state.completion_percentage = this.calculateCompletion(state);
       state.last_activity_at = new Date().toISOString();
+
+      // Log phase transition
+      if (previousPhase !== nextPhase) {
+        await obsContext?.logReasoning(`Phase transition: ${previousPhase} → ${nextPhase}. Completion: ${state.completion_percentage}%`);
+      }
 
       // Generate follow-up question
       const followUp = await this.generateFollowUpQuestion(state);
@@ -225,7 +273,17 @@ export class PolicyDefinitionAgent {
 
       // Check if policy is complete
       if (nextPhase === 'complete') {
+        await obsContext?.logReasoning('Policy definition complete. Finalizing and saving policy to database.');
+        const finalizeStart = Date.now();
         const policyId = await this.finalizePolicy(state);
+        
+        // Log the finalization
+        await obsContext?.logToolCall(
+          'finalizePolicy',
+          { enterpriseId: state.enterprise_id, phasesCompleted: ['context_gathering', 'policy_goals', 'boundary_rules', 'controls_governance', 'validation_refinement'] },
+          { policyId, success: true },
+          Date.now() - finalizeStart
+        );
         
         console.log('Policy definition complete:', {
           policy_id: policyId,
@@ -260,6 +318,9 @@ export class PolicyDefinitionAgent {
     } catch (error) {
       console.error('PolicyDefinitionAgent error:', error);
       
+      // Log the error
+      await obsContext?.logReasoning(`Policy definition failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      
       return {
         message: "I encountered an error processing your request. Could you please rephrase your last input?",
         phase: 'context_gathering',
@@ -275,7 +336,8 @@ export class PolicyDefinitionAgent {
    */
   private async extractPolicyData(
     userMessage: string,
-    state: ConversationState
+    state: ConversationState,
+    obsContext?: ObservabilityContext
   ): Promise<ExtractionResult> {
     const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
     if (!lovableApiKey) {
@@ -286,6 +348,7 @@ export class PolicyDefinitionAgent {
     const tools = [this.getPOMExtractionTool()];
 
     try {
+      const llmCallStart = Date.now();
       const response = await fetch(this.LOVABLE_AI_URL, {
         method: 'POST',
         headers: {
@@ -304,9 +367,20 @@ export class PolicyDefinitionAgent {
         })
       });
 
+      const llmDuration = Date.now() - llmCallStart;
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Lovable AI Gateway error:', response.status, errorText);
+        
+        // Log the failed LLM call
+        await obsContext?.logToolCall(
+          'lovable_ai_gateway',
+          { model: 'google/gemini-2.5-flash', messageCount: state.conversation_history.length + 2 },
+          undefined,
+          llmDuration,
+          `API error: ${response.status}`
+        );
         
         // FAILURE TYPE A: API error - use fallback
         return this.fallbackTextExtraction(userMessage, state);
@@ -314,6 +388,14 @@ export class PolicyDefinitionAgent {
 
       const data = await response.json();
       const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+
+      // Log the successful LLM call
+      await obsContext?.logToolCall(
+        'lovable_ai_gateway',
+        { model: 'google/gemini-2.5-flash', messageCount: state.conversation_history.length + 2, toolRequested: 'extract_policy_data' },
+        { toolCallReceived: !!toolCall, usage: data.usage },
+        llmDuration
+      );
 
       if (!toolCall) {
         // No tool call - use fallback

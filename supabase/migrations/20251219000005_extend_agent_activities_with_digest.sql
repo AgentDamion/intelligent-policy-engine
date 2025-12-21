@@ -107,3 +107,5 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 COMMENT ON FUNCTION public.get_agent_activities_by_trace IS 'Get all agent activities associated with a W3C trace ID';
 COMMENT ON FUNCTION public.get_decisions_by_policy_digest IS 'Get all AI agent decisions made under a specific policy digest';
 
+
+

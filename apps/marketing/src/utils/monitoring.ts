@@ -62,38 +62,22 @@ class MonitoringService {
     }, source);
 
     console.error(logEntry);
-    this.sendToMonitoring(logEntry);
   }
 
   warn(message: string, data?: any, source?: string) {
     const logEntry = this.createLogEntry('WARN', message, data, source);
     console.warn(logEntry);
-    this.sendToMonitoring(logEntry);
   }
 
   info(message: string, data?: any, source?: string) {
     const logEntry = this.createLogEntry('INFO', message, data, source);
     console.info(logEntry);
-    this.sendToMonitoring(logEntry);
   }
 
   debug(message: string, data?: any, source?: string) {
     if (import.meta.env.DEV) {
       const logEntry = this.createLogEntry('DEBUG', message, data, source);
       console.debug(logEntry);
-      this.sendToMonitoring(logEntry);
-    }
-  }
-
-  private async sendToMonitoring(logEntry: LogEntry) {
-    // In production, send to monitoring service
-    if (import.meta.env.PROD) {
-      try {
-        // TODO: Integrate with monitoring service (Sentry, LogRocket, etc.)
-        // Example: await fetch('/api/logs', { method: 'POST', body: JSON.stringify(logEntry) });
-      } catch (error) {
-        console.error('Failed to send log to monitoring service:', error);
-      }
     }
   }
 

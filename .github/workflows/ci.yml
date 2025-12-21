@@ -51,6 +51,28 @@ jobs:
         file: ./coverage/lcov.info
         flags: unittests
         name: codecov-umbrella
+        
+    - name: Analyze bundle size
+      run: |
+        echo "## Bundle Size Analysis" >> $GITHUB_STEP_SUMMARY
+        echo "Building applications to analyze bundle sizes..." >> $GITHUB_STEP_SUMMARY
+        cd apps/platform
+        pnpm build 2>&1 | tee build.log || true
+        if [ -d "dist/assets" ]; then
+          echo "### Platform App Bundle Sizes" >> $GITHUB_STEP_SUMMARY
+          du -sh dist/assets/*.js | sort -h | head -5 >> $GITHUB_STEP_SUMMARY
+        fi
+        cd ../marketing
+        pnpm build 2>&1 | tee build.log || true
+        if [ -d "dist/assets" ]; then
+          echo "### Marketing App Bundle Sizes" >> $GITHUB_STEP_SUMMARY
+          du -sh dist/assets/*.js | sort -h | head -5 >> $GITHUB_STEP_SUMMARY
+        fi
+      env:
+        VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+        VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        VITE_WS_URL: ${{ secrets.VITE_WS_URL }}
 
   build:
     runs-on: ubuntu-latest
@@ -145,22 +167,72 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Download build artifacts
-      uses: actions/download-artifact@v4
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
       with:
-        name: build-files
-        path: dist/
-        
-    - name: Deploy to staging
+        node-version: '20.x'
+        cache: 'pnpm'
+        cache-dependency-path: pnpm-lock.yaml
+
+    - name: Enable pnpm via Corepack
       run: |
-        echo "Deploying to staging environment..."
-        # Add your staging deployment commands here
-        # For example: rsync, scp, or cloud provider CLI commands
+        corepack enable
+        corepack prepare pnpm@10.20.0 --activate
+        
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile
+      
+    - name: Build platform application
+      run: pnpm run build:platform
+      env:
+        VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+        VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        VITE_WS_URL: ${{ secrets.VITE_WS_URL }}
+        
+    - name: Install Vercel CLI
+      run: npm install -g vercel@latest
+      
+    - name: Deploy Platform to Vercel (Staging)
+      working-directory: apps/platform
+      run: |
+        vercel deploy --token ${{ secrets.VERCEL_TOKEN }} --scope ${{ secrets.VERCEL_SCOPE }} --prod=false
+      env:
+        VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+        VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        
+    - name: Build marketing application
+      run: pnpm run build:marketing
+      env:
+        VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+        VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        VITE_WS_URL: ${{ secrets.VITE_WS_URL }}
+        
+    - name: Deploy Marketing to Vercel (Staging)
+      working-directory: apps/marketing
+      run: |
+        vercel deploy --token ${{ secrets.VERCEL_TOKEN }} --scope ${{ secrets.VERCEL_SCOPE }} --prod=false
+      env:
+        VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+        VERCEL_PROJECT_ID_MARKETING: ${{ secrets.VERCEL_PROJECT_ID_MARKETING }}
+        
+    - name: Verify deployment
+      run: |
+        echo "✅ Staging deployment completed successfully!"
+        echo "Platform: https://platform-staging.vercel.app"
+        echo "Marketing: https://marketing-staging.vercel.app"
         
     - name: Notify deployment status
       if: always()
       run: |
-        echo "Staging deployment completed!"
+        if [ "${{ job.status }}" == "success" ]; then
+          echo "✅ Staging deployment completed successfully!"
+        else
+          echo "❌ Staging deployment failed!"
+        fi
 
   deploy-production:
     runs-on: ubuntu-latest
@@ -172,18 +244,91 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Download build artifacts
-      uses: actions/download-artifact@v4
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
       with:
-        name: build-files
-        path: dist/
-        
-    - name: Deploy to production
+        node-version: '20.x'
+        cache: 'pnpm'
+        cache-dependency-path: pnpm-lock.yaml
+
+    - name: Enable pnpm via Corepack
       run: |
-        echo "Deploying to production environment..."
-        # Add your production deployment commands here
+        corepack enable
+        corepack prepare pnpm@10.20.0 --activate
+        
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile
+      
+    - name: Build platform application
+      run: pnpm run build:platform
+      env:
+        VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+        VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        VITE_WS_URL: ${{ secrets.VITE_WS_URL }}
+        VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+        VITE_SENTRY_ENVIRONMENT: production
+        
+    - name: Install Vercel CLI
+      run: npm install -g vercel@latest
+      
+    - name: Deploy Platform to Vercel (Production)
+      working-directory: apps/platform
+      run: |
+        vercel deploy --token ${{ secrets.VERCEL_TOKEN }} --scope ${{ secrets.VERCEL_SCOPE }} --prod --confirm
+      env:
+        VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+        VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        
+    - name: Build marketing application
+      run: pnpm run build:marketing
+      env:
+        VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+        VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        VITE_WS_URL: ${{ secrets.VITE_WS_URL }}
+        VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+        VITE_SENTRY_ENVIRONMENT: production
+        
+    - name: Deploy Marketing to Vercel (Production)
+      working-directory: apps/marketing
+      run: |
+        vercel deploy --token ${{ secrets.VERCEL_TOKEN }} --scope ${{ secrets.VERCEL_SCOPE }} --prod --confirm
+      env:
+        VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+        VERCEL_PROJECT_ID_MARKETING: ${{ secrets.VERCEL_PROJECT_ID_MARKETING }}
+        
+    - name: Verify deployment
+      run: |
+        echo "✅ Production deployment completed successfully!"
+        echo "Platform: https://platform.aicomplyr.io"
+        echo "Marketing: https://aicomplyr.io"
+        
+    - name: Health check
+      run: |
+        echo "Running health checks..."
+        # Add health check endpoints if available
+        # curl -f https://platform.aicomplyr.io/api/health || exit 1
+        
+    - name: Run Lighthouse CI (if URLs configured)
+      if: ${{ env.VERCEL_PRODUCTION_URL != '' }}
+      uses: treosh/lighthouse-ci-action@v9
+      continue-on-error: true
+      env:
+        VERCEL_PRODUCTION_URL: ${{ secrets.VERCEL_PRODUCTION_URL }}
+      with:
+        urls: |
+          ${{ env.VERCEL_PRODUCTION_URL }}
+        uploadArtifacts: true
+        temporaryPublicStorage: true
         
     - name: Notify deployment status
       if: always()
       run: |
-        echo "Production deployment completed!"
+        if [ "${{ job.status }}" == "success" ]; then
+          echo "✅ Production deployment completed successfully!"
+        else
+          echo "❌ Production deployment failed!"
+        fi

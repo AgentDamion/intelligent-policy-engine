@@ -4,11 +4,17 @@ export const boundaryContent = {
     links: [
       { label: "How it Works", href: "/how-it-works" },
       { label: "Who it's For", href: "/who-its-for" },
-      { label: "Boundary Lab", href: "/boundary-lab" }
+      { label: "Workflows", href: "/workflows" },
+      { label: "Governance Lab", href: "/boundary-lab" },
+      { label: "Pricing", href: "/pricing" }
     ],
+    talkToVera: {
+      label: "Talk to VERA",
+      href: "/vera"
+    },
     cta: {
-      label: "Book a Session",
-      href: "/book-demo"
+      label: "Request Pilot Access",
+      href: "/founding-partners"
     }
   },
   

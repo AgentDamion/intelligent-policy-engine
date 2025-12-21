@@ -1,10 +1,16 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { initSentry, captureException, captureMessage } from '../_shared/sentry.ts';
+import { initLogger, logInfo, logError, logWarn, measureTime } from '../_shared/logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Initialize monitoring
+await initSentry();
+initLogger();
 
 interface ComplianceScoringRequest {
   toolName: string;
@@ -34,6 +40,8 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const endTiming = measureTime('compliance-scoring');
+  
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -41,11 +49,16 @@ serve(async (req) => {
     );
 
     const requestData = await req.json() as ComplianceScoringRequest;
-    console.log(`[ComplianceScoring] Analyzing ${requestData.toolName} for enterprise ${requestData.enterpriseId}`);
+    await logInfo(`Analyzing ${requestData.toolName} for compliance`, {
+      enterpriseId: requestData.enterpriseId,
+      toolName: requestData.toolName,
+      useCase: requestData.useCase,
+    });
 
     // Get Lovable AI API key
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
+      await logError('LOVABLE_API_KEY not configured', new Error('Missing LOVABLE_API_KEY'));
       throw new Error('LOVABLE_API_KEY not configured');
     }
 
@@ -72,7 +85,12 @@ serve(async (req) => {
     });
 
     if (!aiResponse.ok) {
-      throw new Error(`AI analysis failed: ${aiResponse.status}`);
+      const error = new Error(`AI analysis failed: ${aiResponse.status}`);
+      await logError('AI analysis request failed', error, {
+        status: aiResponse.status,
+        enterpriseId: requestData.enterpriseId,
+      });
+      throw error;
     }
 
     const aiResult = await aiResponse.json();
@@ -99,12 +117,26 @@ serve(async (req) => {
       }
     });
 
+    await logInfo('Compliance analysis completed', {
+      enterpriseId: requestData.enterpriseId,
+      toolName: requestData.toolName,
+      complianceScore: complianceResult.complianceScore,
+      riskLevel: complianceResult.riskLevel,
+    });
+    
+    await endTiming();
+
     return new Response(JSON.stringify(complianceResult), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
-    console.error('Compliance scoring error:', error);
+    await logError('Compliance scoring error', error instanceof Error ? error : new Error(String(error)), {
+      function: 'compliance-scoring',
+    });
+    await captureException(error instanceof Error ? error : new Error(String(error)), {
+      function: 'compliance-scoring',
+    });
     
     // Return fallback response
     const fallbackResponse: ComplianceScoringResponse = {

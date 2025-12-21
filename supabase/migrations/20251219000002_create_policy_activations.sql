@@ -247,3 +247,5 @@ COMMENT ON TABLE public.policy_activations IS 'Audit trail of when policy digest
 COMMENT ON FUNCTION public.get_active_policy_digest IS 'Returns the currently active policy digest for an enterprise/workspace scope';
 COMMENT ON FUNCTION public.get_policy_digest_at_time IS 'Returns the policy digest that was active at a specific point in time';
 
+
+

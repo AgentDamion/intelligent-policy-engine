@@ -1,9 +1,15 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, MessageSquare, ChevronDown } from 'lucide-react';
 import { boundaryContent } from '@/content/boundaryContent';
 import { trackEvent, Events } from '@/utils/analytics';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export const BoundaryNav = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -48,10 +54,42 @@ export const BoundaryNav = () => {
               </Link>
             ))}
             
+            {/* Product Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-1 text-sm font-medium text-foreground/80 hover:text-foreground transition-colors">
+                Product <ChevronDown className="w-3 h-3" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem asChild>
+                  <Link to="/platform">Platform Overview</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/enterprise/mission-control">Mission Control</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/vera">Talk to VERA</Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Talk to VERA Button */}
+            <Button 
+              asChild 
+              variant="outline"
+              size="sm"
+              className="gap-2 border-primary text-primary hover:bg-primary/10"
+            >
+              <Link to={boundaryContent.navigation.talkToVera.href}>
+                <MessageSquare className="w-4 h-4" />
+                {boundaryContent.navigation.talkToVera.label}
+              </Link>
+            </Button>
+            
+            {/* Primary CTA */}
             <Button 
               asChild 
               size="sm"
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              className="bg-coral-500 hover:bg-coral-600 text-white"
               onClick={handleCtaClick}
             >
               <Link to={boundaryContent.navigation.cta.href}>
@@ -84,6 +122,26 @@ export const BoundaryNav = () => {
                   {link.label}
                 </Link>
               ))}
+              
+              <Link
+                to="/platform"
+                className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors px-2 py-1"
+                onClick={() => handleNavClick('Platform', '/platform')}
+              >
+                Platform
+              </Link>
+              
+              <Button 
+                asChild 
+                variant="outline"
+                size="sm"
+                className="gap-2 w-full"
+              >
+                <Link to={boundaryContent.navigation.talkToVera.href}>
+                  <MessageSquare className="w-4 h-4" />
+                  {boundaryContent.navigation.talkToVera.label}
+                </Link>
+              </Button>
               
               <Button 
                 asChild 

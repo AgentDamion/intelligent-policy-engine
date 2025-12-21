@@ -2,6 +2,13 @@ import React, { useEffect } from 'react';
 import { BoundaryNav } from '@/components/boundary/BoundaryNav';
 import { ManifestoHero } from '@/components/alternate4/ManifestoHero';
 import { Day1Outcomes } from '@/components/alternate4/Day1Outcomes';
+import { MeasuredImpactStats } from '@/components/alternate4/MeasuredImpactStats';
+import { OneSimpleFlow } from '@/components/alternate4/OneSimpleFlow';
+import { WorkflowTemplatesPreview } from '@/components/alternate4/WorkflowTemplatesPreview';
+import { TestimonialSection } from '@/components/alternate4/TestimonialSection';
+import { MeetVERASection } from '@/components/alternate4/MeetVERASection';
+import { EnterpriseBadges } from '@/components/alternate4/EnterpriseBadges';
+import { FinalCTASection } from '@/components/alternate4/FinalCTASection';
 import { BoundaryFooter } from '@/components/boundary/BoundaryFooter';
 
 const Alternate4 = () => {
@@ -22,7 +29,14 @@ const Alternate4 = () => {
     <div className="min-h-screen bg-background">
       <BoundaryNav />
       <ManifestoHero />
+      <MeasuredImpactStats />
       <Day1Outcomes />
+      <OneSimpleFlow />
+      <WorkflowTemplatesPreview />
+      <TestimonialSection />
+      <MeetVERASection />
+      <EnterpriseBadges />
+      <FinalCTASection />
       <BoundaryFooter />
     </div>
   );

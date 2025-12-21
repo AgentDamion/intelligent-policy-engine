@@ -1,6 +1,13 @@
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import type { AIRequestEvent } from "./policy-agent.ts";
 
+// Type for the observability context passed from cursor-agent-adapter
+interface ObservabilityContext {
+  logReasoning: (reasoning: string) => Promise<{ id: string } | null>;
+  logToolCall: (toolName: string, args: Record<string, unknown>, result?: unknown, durationMs?: number, error?: string) => Promise<{ callId: string; responseId: string } | null>;
+  getStepCount: () => number;
+}
+
 /**
  * RequestAnalysis - Context analysis result
  */
@@ -42,6 +49,9 @@ export class ContextAgent {
   async process(input: AIRequestEvent, context: Record<string, unknown>): Promise<RequestAnalysis> {
     const startTime = Date.now();
     
+    // Get observability context if provided
+    const obsContext = context._observability as ObservabilityContext | undefined;
+    
     console.log('ContextAgent analyzing request:', {
       partner_id: input.partner_id,
       model: input.model,
@@ -49,7 +59,14 @@ export class ContextAgent {
     });
 
     try {
+      // Log reasoning: Starting analysis
+      await obsContext?.logReasoning(
+        `Starting context analysis for request from partner ${input.partner_id}. ` +
+        `Prompt length: ${input.prompt?.length || 0} chars, Model: ${input.model}`
+      );
+
       // Parallel analysis
+      const analysisStart = Date.now();
       const [
         complexityLevel,
         dataSensitivity,
@@ -64,7 +81,28 @@ export class ContextAgent {
         this.calculateRiskScore(input)
       ]);
 
+      // Log tool call for the parallel analysis
+      await obsContext?.logToolCall(
+        'parallelContextAnalysis',
+        { partnerId: input.partner_id, model: input.model, promptLength: input.prompt?.length },
+        {
+          complexityLevel,
+          dataSensitivity,
+          costTier,
+          anomalyFlags,
+          riskScore
+        },
+        Date.now() - analysisStart
+      );
+
       const analysisTimeMs = Date.now() - startTime;
+
+      // Log reasoning: Analysis results
+      await obsContext?.logReasoning(
+        `Context analysis complete. Risk score: ${riskScore}/100. ` +
+        `Complexity: ${complexityLevel}. Sensitivity: ${dataSensitivity}. ` +
+        `Cost tier: ${costTier}. Anomalies detected: ${anomalyFlags.length}`
+      );
 
       const result: RequestAnalysis = {
         risk_score: riskScore,
@@ -92,6 +130,9 @@ export class ContextAgent {
 
     } catch (error) {
       console.error('ContextAgent analysis error:', error);
+      
+      // Log the error
+      await obsContext?.logReasoning(`Context analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       
       // Fail-safe: Return conservative analysis
       return {

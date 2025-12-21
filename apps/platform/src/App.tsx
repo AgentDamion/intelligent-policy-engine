@@ -1,5 +1,6 @@
 ﻿import React, { useEffect } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { ErrorBoundary } from 'react-error-boundary'
 import { useAuth } from './contexts/AuthContext'
 import { useEnterprise } from './contexts/EnterpriseContext'
 import { ensureOnPlatformOrigin } from './utils/platformOrigin'
@@ -101,6 +102,52 @@ const OnboardingRoute: React.FC<{ children: React.ReactNode }> = ({ children }) 
   return <>{children}</>
 }
 
+// Error fallback component
+function ErrorFallback({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) {
+  useEffect(() => {
+    // Send to Sentry if available
+    if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
+      import('@sentry/react').then((Sentry) => {
+        Sentry.captureException(error);
+      });
+    }
+  }, [error]);
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">Something went wrong</h2>
+        <p className="text-gray-600 mb-4">
+          We encountered an unexpected error. Please try refreshing the page.
+        </p>
+        {import.meta.env.DEV && (
+          <details className="mb-4">
+            <summary className="cursor-pointer text-sm text-gray-500">Error details</summary>
+            <pre className="mt-2 text-xs bg-gray-100 p-2 rounded overflow-auto">
+              {error.message}
+              {error.stack && `\n\n${error.stack}`}
+            </pre>
+          </details>
+        )}
+        <div className="flex gap-2">
+          <button
+            onClick={resetErrorBoundary}
+            className="px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700"
+          >
+            Try again
+          </button>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+          >
+            Refresh page
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   // If a Supabase callback ever lands on the marketing domain, bounce to the platform.
   useEffect(() => {
@@ -108,7 +155,8 @@ function App() {
   }, [])
 
   return (
-    <Routes>
+    <ErrorBoundary FallbackComponent={ErrorFallback}>
+      <Routes>
       {/* Public Routes */}
       <Route path="/login" element={<AuthHubPage />} />
       <Route path="/login-legacy" element={<LoginPage />} />
@@ -163,7 +211,8 @@ function App() {
 
       {/* Catch all route */}
       <Route path="*" element={<Navigate to="/vera-plus" replace />} />
-    </Routes>
+      </Routes>
+    </ErrorBoundary>
   )
 }
 

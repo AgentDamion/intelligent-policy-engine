@@ -1,5 +1,12 @@
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// Type for the observability context passed from cursor-agent-adapter
+interface ObservabilityContext {
+  logReasoning: (reasoning: string) => Promise<{ id: string } | null>;
+  logToolCall: (toolName: string, args: Record<string, unknown>, result?: unknown, durationMs?: number, error?: string) => Promise<{ callId: string; responseId: string } | null>;
+  getStepCount: () => number;
+}
+
 /**
  * AIRequestEvent - Replaces ToolUsageEvent for boundary governance
  */
@@ -64,6 +71,9 @@ export class PolicyAgent {
   async process(input: AIRequestEvent, context: Record<string, unknown>): Promise<PolicyEvaluationResult> {
     const startTime = Date.now();
     
+    // Get observability context if provided
+    const obsContext = context._observability as ObservabilityContext | undefined;
+    
     console.log('PolicyAgent evaluating request:', {
       partner_id: input.partner_id,
       enterprise_id: input.enterprise_id,
@@ -72,10 +82,25 @@ export class PolicyAgent {
     });
 
     try {
+      // Log reasoning: Loading policies
+      await obsContext?.logReasoning(`Loading boundary policies for enterprise ${input.enterprise_id} and partner ${input.partner_id}`);
+      
       // Load active policies for enterprise-partner relationship
+      const loadPoliciesStart = Date.now();
       const policies = await this.loadBoundaryPolicies(input.enterprise_id, input.partner_id);
       
+      // Log tool call: loadBoundaryPolicies
+      await obsContext?.logToolCall(
+        'loadBoundaryPolicies',
+        { enterpriseId: input.enterprise_id, partnerId: input.partner_id },
+        { policyCount: policies.length, policyIds: policies.map(p => p.id) },
+        Date.now() - loadPoliciesStart
+      );
+      
       console.log(`Loaded ${policies.length} boundary policies`);
+
+      // Log reasoning: Evaluating policies
+      await obsContext?.logReasoning(`Evaluating ${policies.length} policies across 4 rule types: model_restriction, content_filter, rate_limit, cost_control`);
 
       // Evaluate each policy type
       const evaluations = await Promise.all([
@@ -91,19 +116,26 @@ export class PolicyAgent {
       const reasons: string[] = [];
       let decision: 'allow' | 'block' | 'warn' = 'allow';
 
-      for (const eval of evaluations) {
-        if (eval.decision === 'block') {
+      for (const evalResult of evaluations) {
+        if (evalResult.decision === 'block') {
           decision = 'block';
-          violations.push(...eval.violated_rules);
-          reasons.push(...eval.reasons);
-        } else if (eval.decision === 'warn' && decision !== 'block') {
+          violations.push(...evalResult.violated_rules);
+          reasons.push(...evalResult.reasons);
+        } else if (evalResult.decision === 'warn' && decision !== 'block') {
           decision = 'warn';
-          warnings.push(...eval.reasons);
+          warnings.push(...evalResult.reasons);
         }
-        reasons.push(...eval.reasons);
+        reasons.push(...evalResult.reasons);
       }
 
       const evaluationTimeMs = Date.now() - startTime;
+
+      // Log reasoning: Decision summary
+      await obsContext?.logReasoning(
+        `Policy evaluation complete. Decision: ${decision.toUpperCase()}. ` +
+        `Violations: ${violations.length}. Warnings: ${warnings.length}. ` +
+        `Evaluation time: ${evaluationTimeMs}ms`
+      );
 
       const result: PolicyEvaluationResult = {
         allowed: decision !== 'block',
@@ -129,6 +161,9 @@ export class PolicyAgent {
 
     } catch (error) {
       console.error('PolicyAgent evaluation error:', error);
+      
+      // Log the error in observability
+      await obsContext?.logReasoning(`Policy evaluation failed with error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       
       // Fail-safe: Allow request but log error
       return {

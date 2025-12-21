@@ -94,3 +94,5 @@ COMMENT ON COLUMN public.policy_artifacts.oci_digest IS 'Immutable SHA256 digest
 COMMENT ON COLUMN public.policy_artifacts.content_sha256 IS 'SHA256 hash of the policy JSON content for verification';
 COMMENT ON COLUMN public.policy_artifacts.build_provenance IS 'SLSA-compliant build provenance metadata';
 
+
+

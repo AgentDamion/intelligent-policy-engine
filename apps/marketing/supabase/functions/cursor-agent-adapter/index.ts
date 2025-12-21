@@ -1,6 +1,23 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { AgentRegistry } from "./agents/cursor-agent-registry.ts";
+import { 
+  detectPromptInjection, 
+  type InjectionDetectionResult 
+} from "./guards/prompt-injection-guard.ts";
+import {
+  createAgentAuthorityValidator,
+  type AuthorityContext,
+  type AuthorityValidationResult,
+} from "./guards/agent-authority-validator.ts";
+import {
+  createToolMisuseDetector,
+  detectToolMisuse,
+  type MisuseDetectionResult,
+} from "./guards/tool-misuse-detector.ts";
+
+// Global tool misuse detector (singleton for session tracking)
+const toolMisuseDetector = createToolMisuseDetector();
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -50,6 +67,76 @@ serve(async (req) => {
       throw new Error('Either query (legacy) or agentName+action (new) is required');
     }
 
+    // === SECURITY CHECK: Prompt Injection Detection ===
+    const inputToCheck = isAgentRequest 
+      ? (typeof input === 'string' ? input : JSON.stringify(input))
+      : query;
+    
+    const injectionResult = detectPromptInjection(inputToCheck);
+    
+    if (injectionResult.detected && injectionResult.riskLevel !== 'low') {
+      console.warn('⚠️ Prompt injection detected:', {
+        category: injectionResult.category,
+        confidence: injectionResult.confidence,
+        riskLevel: injectionResult.riskLevel,
+        pattern: injectionResult.pattern,
+        matchedText: injectionResult.matchedText?.substring(0, 100)
+      });
+
+      // Log security event to agent_activities (before we have workspace context)
+      // This is a best-effort log - we'll try to get context later
+      const securityLogClient = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_ANON_KEY')!
+      );
+
+      await securityLogClient.from('agent_activities').insert({
+        agent: 'SecurityGuard',
+        action: 'prompt_injection_detected',
+        status: injectionResult.riskLevel === 'critical' || injectionResult.riskLevel === 'high' 
+          ? 'blocked' 
+          : 'flagged',
+        severity: injectionResult.riskLevel,
+        details: {
+          category: injectionResult.category,
+          confidence: injectionResult.confidence,
+          riskLevel: injectionResult.riskLevel,
+          pattern: injectionResult.pattern,
+          matchedText: injectionResult.matchedText,
+          inputPreview: inputToCheck.substring(0, 200),
+          requestType: isAgentRequest ? 'agent' : 'legacy',
+          agentName: agentName || 'legacy',
+          action: action || 'query',
+          userId: user.id,
+          userEmail: user.email,
+          timestamp: new Date().toISOString()
+        }
+      }).then(({ error }) => {
+        if (error) console.error('Failed to log security event:', error);
+      });
+
+      // Block critical and high-risk injections
+      if (injectionResult.riskLevel === 'critical' || injectionResult.riskLevel === 'high') {
+        return new Response(JSON.stringify({
+          success: false,
+          error: 'Request blocked by security policy',
+          code: 'SECURITY_VIOLATION',
+          details: {
+            reason: 'Potential prompt injection detected',
+            category: injectionResult.category,
+            riskLevel: injectionResult.riskLevel
+          }
+        }), { 
+          status: 403, 
+          headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+        });
+      }
+      
+      // For medium risk, we continue but log the warning
+      console.warn('⚠️ Medium-risk injection detected but allowing request to proceed with monitoring');
+    }
+    // === END SECURITY CHECK ===
+
     console.log('Request received:', { 
       userId: user.id,
       mode: isAgentRequest ? 'agent-based' : 'legacy-query',
@@ -82,14 +169,217 @@ serve(async (req) => {
     // Initialize agent registry
     const agentRegistry = new AgentRegistry(supabase);
 
+    // === SECURITY CHECK: Agent Authority Validation ===
+    const authorityValidator = createAgentAuthorityValidator(supabase);
+    let authorityContext: AuthorityContext | null = null;
+
+    // Build authority context for the authenticated user
+    authorityContext = await authorityValidator.buildAuthorityContext(user.id);
+    
+    if (!authorityContext) {
+      console.warn('⚠️ Failed to build authority context for user:', user.id);
+      // Allow request to continue but log the issue - user might be new or have no enterprise
+    } else {
+      // Extract any tenant IDs from the input for validation
+      const extractedIds = authorityValidator.extractTenantIds(input || {});
+      
+      // Validate enterprise access if enterprise IDs are present in input
+      for (const requestedEnterpriseId of extractedIds.enterpriseIds) {
+        const enterpriseValidation = authorityValidator.validateEnterpriseAccess(
+          authorityContext,
+          requestedEnterpriseId
+        );
+        
+        if (!enterpriseValidation.authorized) {
+          console.error('🚫 Cross-tenant access attempt blocked:', {
+            userId: user.id,
+            requestedEnterprise: requestedEnterpriseId,
+            authorizedEnterprise: authorityContext.authenticatedEnterpriseId,
+            violation: enterpriseValidation.violation
+          });
+
+          // Log security violation
+          const securityLogClient = createClient(
+            Deno.env.get('SUPABASE_URL')!,
+            Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_ANON_KEY')!
+          );
+
+          await securityLogClient.from('agent_activities').insert({
+            agent: 'SecurityGuard',
+            action: 'cross_tenant_access_blocked',
+            status: 'blocked',
+            severity: 'critical',
+            details: {
+              violation_type: enterpriseValidation.violation?.type,
+              requested_resource: enterpriseValidation.violation?.requestedResource,
+              authorized_scope: enterpriseValidation.violation?.authorizedScope,
+              reason: enterpriseValidation.reason,
+              userId: user.id,
+              userEmail: user.email,
+              agentName: agentName || 'legacy',
+              action: action || 'query',
+              timestamp: new Date().toISOString()
+            },
+            enterprise_id: authorityContext.authenticatedEnterpriseId
+          });
+
+          return new Response(JSON.stringify({
+            success: false,
+            error: 'Access denied',
+            code: 'CROSS_TENANT_VIOLATION',
+            details: {
+              reason: 'You do not have access to the requested resource',
+            }
+          }), { 
+            status: 403, 
+            headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+          });
+        }
+      }
+
+      // Validate workspace access if workspace IDs are present in input
+      for (const requestedWorkspaceId of extractedIds.workspaceIds) {
+        const workspaceValidation = authorityValidator.validateWorkspaceAccess(
+          authorityContext,
+          requestedWorkspaceId
+        );
+        
+        if (!workspaceValidation.authorized) {
+          console.error('🚫 Unauthorized workspace access attempt blocked:', {
+            userId: user.id,
+            requestedWorkspace: requestedWorkspaceId,
+            authorizedWorkspaces: authorityContext.authenticatedWorkspaceIds,
+            violation: workspaceValidation.violation
+          });
+
+          // Log security violation
+          const securityLogClient = createClient(
+            Deno.env.get('SUPABASE_URL')!,
+            Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_ANON_KEY')!
+          );
+
+          await securityLogClient.from('agent_activities').insert({
+            agent: 'SecurityGuard',
+            action: 'unauthorized_workspace_access_blocked',
+            status: 'blocked',
+            severity: 'critical',
+            details: {
+              violation_type: workspaceValidation.violation?.type,
+              requested_resource: workspaceValidation.violation?.requestedResource,
+              authorized_scope: workspaceValidation.violation?.authorizedScope,
+              reason: workspaceValidation.reason,
+              userId: user.id,
+              userEmail: user.email,
+              agentName: agentName || 'legacy',
+              action: action || 'query',
+              timestamp: new Date().toISOString()
+            },
+            enterprise_id: authorityContext.authenticatedEnterpriseId
+          });
+
+          return new Response(JSON.stringify({
+            success: false,
+            error: 'Access denied',
+            code: 'UNAUTHORIZED_WORKSPACE',
+            details: {
+              reason: 'You do not have access to the requested workspace',
+            }
+          }), { 
+            status: 403, 
+            headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+          });
+        }
+      }
+    }
+    // === END AUTHORITY VALIDATION ===
+
     let result: any;
     let agentResponse: string;
     let processingTimeMs: number;
+    let misuseResult: MisuseDetectionResult | null = null;
 
     if (isAgentRequest) {
       // NEW: Agent-based request (boundary governance)
       console.log(`Processing agent request: ${agentName}.${action}`);
       
+      // === TOOL MISUSE DETECTION ===
+      const sessionId = `${user.id}:${Date.now().toString(36)}`;
+      const toolName = `${agentName}:${action}`;
+      
+      misuseResult = detectToolMisuse(
+        toolMisuseDetector,
+        sessionId,
+        toolName,
+        input as Record<string, unknown> || {},
+        enterpriseId || 'unknown',
+        workspaceId || undefined,
+        true // Assume success initially, will update if fails
+      );
+
+      if (misuseResult.detected) {
+        console.warn('⚠️ Tool misuse pattern detected:', {
+          type: misuseResult.misuseType,
+          confidence: misuseResult.confidence,
+          severity: misuseResult.severity,
+          details: misuseResult.details,
+          recommendation: misuseResult.recommendation
+        });
+
+        // Log the detection
+        const securityLogClient = createClient(
+          Deno.env.get('SUPABASE_URL')!,
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_ANON_KEY')!
+        );
+
+        await securityLogClient.from('agent_activities').insert({
+          agent: 'SecurityGuard',
+          action: 'tool_misuse_detected',
+          status: misuseResult.recommendation === 'block' || misuseResult.recommendation === 'terminate' 
+            ? 'blocked' 
+            : 'flagged',
+          severity: misuseResult.severity,
+          details: {
+            misuse_type: misuseResult.misuseType,
+            confidence: misuseResult.confidence,
+            severity: misuseResult.severity,
+            details: misuseResult.details,
+            recommendation: misuseResult.recommendation,
+            tool_name: toolName,
+            session_stats: toolMisuseDetector.getSessionStats(sessionId),
+            userId: user.id,
+            userEmail: user.email,
+            timestamp: new Date().toISOString()
+          },
+          enterprise_id: enterpriseId
+        });
+
+        // Block or terminate based on recommendation
+        if (misuseResult.recommendation === 'block' || misuseResult.recommendation === 'terminate') {
+          // Clear the session if terminating
+          if (misuseResult.recommendation === 'terminate') {
+            toolMisuseDetector.clearSession(sessionId);
+          }
+
+          return new Response(JSON.stringify({
+            success: false,
+            error: 'Request blocked by security policy',
+            code: 'TOOL_MISUSE_DETECTED',
+            details: {
+              reason: misuseResult.details,
+              type: misuseResult.misuseType,
+              severity: misuseResult.severity
+            }
+          }), { 
+            status: 403, 
+            headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+          });
+        }
+        
+        // For warn, continue but log
+        console.warn('⚠️ Allowing request with misuse warning');
+      }
+      // === END TOOL MISUSE DETECTION ===
+
       const startTime = Date.now();
       
       // Get agent from registry
