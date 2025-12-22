@@ -1,7 +1,9 @@
-import React, { Suspense, lazy, useEffect } from 'react';
+import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import NotFound from '@/pages/NotFound';
+import { shouldRedirectToPlatform, redirectToPlatformIfNeeded } from '@/utils/platformRedirect';
+import { PlatformRedirect } from '@/components/route/PlatformRedirect';
 
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -278,6 +280,17 @@ const VendorRouteWrapper: React.FC<VendorRouteWrapperProps> = ({ children, route
 export const LazyRouteManager: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
+  // Check for platform-only routes and redirect in production
+  useEffect(() => {
+    if (shouldRedirectToPlatform(location.pathname)) {
+      setIsRedirecting(true);
+      redirectToPlatformIfNeeded(location.pathname);
+    } else {
+      setIsRedirecting(false);
+    }
+  }, [location.pathname]);
 
   // Listen for profile type changes and handle navigation
   useEffect(() => {
@@ -311,6 +324,11 @@ export const LazyRouteManager: React.FC = () => {
       console.groupEnd();
     }
   }, [location.pathname]);
+
+  // Show redirect screen for platform-only routes (in production, redirectToPlatformIfNeeded handles the actual redirect)
+  if (isRedirecting && import.meta.env.PROD) {
+    return <PlatformRedirect />;
+  }
 
   return (
     <Routes>

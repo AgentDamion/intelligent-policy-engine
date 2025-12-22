@@ -11,13 +11,6 @@ const GuardrailOrchestratorAgent = require('./guardrail-orchestrator-agent');
 const HumanEscalationAgent = require('./human-escalation-agent');
 const MultiTenantOrchestratorAgent = require('./multi-tenant-orchestrator-agent');
 
-// New external data discovery and monitoring agents
-const ToolDiscoveryAgent = require('./tool-discovery-agent');
-const DataExtractionAgent = require('./data-extraction-agent');
-const MonitoringAgent = require('./monitoring-agent');
-const VendorOutreachAgent = require('./vendor-outreach-agent');
-const ComplianceScoringAgent = require('./compliance-scoring-agent');
-
 const registry = {
   policy: new PolicyAgent(),
   audit: new AuditAgent(),
@@ -32,16 +25,29 @@ const registry = {
   'human-escalation': new HumanEscalationAgent(),
   'multi-tenant-orchestrator': new MultiTenantOrchestratorAgent(),
   
-  // New external data discovery and monitoring agents
-  'tool-discovery': new ToolDiscoveryAgent(),
-  'data-extraction': new DataExtractionAgent(),
-  'monitoring': new MonitoringAgent(),
-  'vendor-outreach': new VendorOutreachAgent(),
-  'compliance-scoring': new ComplianceScoringAgent(),
-  
   getAgent(name) {
     return this[name];
   }
 };
+
+// Optional external-data agents (can require heavy deps like puppeteer). Keep them OFF by default.
+if (process.env.ENABLE_EXTERNAL_AGENTS === 'true') {
+  try {
+    // New external data discovery and monitoring agents
+    const ToolDiscoveryAgent = require('./tool-discovery-agent');
+    const DataExtractionAgent = require('./data-extraction-agent');
+    const MonitoringAgent = require('./monitoring-agent');
+    const VendorOutreachAgent = require('./vendor-outreach-agent');
+    const ComplianceScoringAgent = require('./compliance-scoring-agent');
+
+    registry['tool-discovery'] = new ToolDiscoveryAgent();
+    registry['data-extraction'] = new DataExtractionAgent();
+    registry['monitoring'] = new MonitoringAgent();
+    registry['vendor-outreach'] = new VendorOutreachAgent();
+    registry['compliance-scoring'] = new ComplianceScoringAgent();
+  } catch (e) {
+    console.warn('⚠️  External agents enabled but failed to load. Continuing without them:', e?.message || e);
+  }
+}
 
 module.exports = registry;

@@ -209,6 +209,29 @@ const INJECTION_PATTERNS: PatternRule[] = [
     riskLevel: 'critical',
     description: 'Sensitive data extraction attempt'
   },
+  {
+    pattern: /(print|dump|list|export|show|reveal)\s+(all|every)\s+(user|customer|client)\s+(emails?|email\s+addresses?)\b/i,
+    category: 'data_exfiltration',
+    confidence: 0.92,
+    riskLevel: 'critical',
+    description: 'Attempt to extract user email data'
+  },
+  {
+    pattern: /(print|dump|list|export|show|reveal)\s+(all|every)\s+.*\b(passwords?|credentials?|secrets?|api\s+keys?|tokens?)\b.*\b(from\s+the\s+database|in\s+the\s+database)\b/i,
+    category: 'data_exfiltration',
+    confidence: 0.95,
+    riskLevel: 'critical',
+    description: 'Attempt to extract credentials/secrets from database'
+  },
+
+  // Policy/Security Rule Override (common “internal rules” phrasing)
+  {
+    pattern: /ignore\s+(the\s+)?(policy|security|compliance)\s+(rules?|restrictions?|controls?|checks?|guardrails?)/i,
+    category: 'instruction_override',
+    confidence: 0.90,
+    riskLevel: 'critical',
+    description: 'Attempt to ignore internal policy/security rules'
+  },
 
   // Context Manipulation
   {

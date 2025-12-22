@@ -1,7 +1,8 @@
 // File: api/auth/hierarchical-auth.js
 
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
+// Use pure-JS bcrypt implementation to avoid native build issues in dev environments.
+const bcrypt = require('bcryptjs');
 const { Pool } = require('pg');
 const db = require('../../database/connection');
 const { getCacheService } = require('../services/cache-service');

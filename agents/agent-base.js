@@ -13,4 +13,6 @@ class AgentBase {
     return { name: this.name, type: this.constructor.name };
   }
 }
-module.exports = AgentBase; 
+module.exports = AgentBase;
+// Backwards-compatible named export for modules doing `const { AgentBase } = require('./agent-base')`
+module.exports.AgentBase = AgentBase;

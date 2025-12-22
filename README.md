@@ -167,6 +167,42 @@ npm run type-check
 npm run lint
 ```
 
+### Architecture: Marketing vs Platform
+
+This monorepo contains two distinct frontend applications with strict separation of concerns:
+
+#### Marketing Site (`apps/marketing`)
+- **Domain**: `www.aicomplyr.io` (production)
+- **Purpose**: Education, demos, lead capture
+- **Routes**:
+  - `/` - Homepage
+  - `/vera` - Demo VERA conversation (mock responses)
+  - `/workflows` - Workflow template library
+  - `/pricing`, `/contact`, `/about` - Lead capture
+  - `/governance-lab`, `/boundary-lab` - Interactive demos
+  - `/terms`, `/privacy` - Legal pages
+- **E2E Tests**: `pnpm test:e2e:marketing`
+  - Tests public marketing pages only
+  - Set `NO_API=true` to skip backend health check
+
+#### Platform App (`apps/platform`)  
+- **Domain**: `app.aicomplyr.io` (production)
+- **Purpose**: Authenticated governance (VERA+, Decisions, Inbox)
+- **Routes**:
+  - `/login`, `/onboarding` - Auth flows
+  - `/vera-plus` - Main dashboard (default landing)
+  - `/vera-settings` - VERA configuration
+  - `/agentic` - Weave/Workbench
+  - `/policies`, `/workspaces`, `/settings` - Management
+- **E2E Tests**: `pnpm test:e2e:platform`
+  - Tests authenticated flows
+  - Requires platform dev server on :8080
+
+#### Redirect Behavior
+When users visit platform-only routes on the marketing site (e.g., `/enterprise/*`, `/governance/*`, `/vendor/*`, `/login`), they are automatically redirected to `app.aicomplyr.io`.
+
+Set `VITE_PLATFORM_ORIGIN` in marketing `.env.local` to configure the redirect target.
+
 ## 🚀 Deployment
 
 ### Build for Production

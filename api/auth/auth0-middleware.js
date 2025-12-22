@@ -1,7 +1,7 @@
 // api/auth/auth0-middleware.js
 const { expressjwt: jwt } = require('express-jwt');
 const jwksRsa = require('jwks-rsa');
-const { config } = require('../../auth0-config');
+const { config } = require('../../auth0-config.cjs');
 
 // JWT validation middleware
 const checkJwt = jwt({

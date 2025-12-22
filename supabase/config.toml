@@ -40,3 +40,16 @@ jwt_expiry = 3600
 
 [edge_runtime]
 enabled = true
+
+# Edge Functions Configuration
+[functions.policy-process]
+verify_jwt = true
+
+[functions.distribute_policy]
+verify_jwt = true
+
+[functions.platform-webhook]
+verify_jwt = false
+
+[functions.export_audit_package]
+verify_jwt = true

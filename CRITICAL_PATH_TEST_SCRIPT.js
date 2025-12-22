@@ -5,7 +5,9 @@
  * Run this to confirm the 85% readiness assessment
  */
 
-const axios = require('axios');
+import { pathToFileURL } from 'node:url';
+
+// This repo is ESM ("type": "module"). Use global fetch (Node 18+) instead of require('axios').
 
 class PlatformReadinessTester {
   constructor() {
@@ -19,6 +21,37 @@ class PlatformReadinessTester {
       metaLoop: {},
       overall: { passed: 0, total: 0 }
     };
+  }
+
+  async http(method, url, body) {
+    const res = await fetch(url, {
+      method,
+      headers: body ? { 'Content-Type': 'application/json' } : undefined,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+
+    const text = await res.text();
+    let data = text;
+    try {
+      data = text ? JSON.parse(text) : null;
+    } catch {
+      // non-JSON response
+    }
+
+    if (!res.ok) {
+      const msg = typeof data === 'string' ? data : JSON.stringify(data);
+      throw new Error(`${method} ${url} failed (${res.status}): ${msg}`);
+    }
+
+    return { status: res.status, data };
+  }
+
+  httpGet(url) {
+    return this.http('GET', url);
+  }
+
+  httpPost(url, body) {
+    return this.http('POST', url, body);
   }
 
   async runAllTests() {
@@ -56,7 +89,7 @@ class PlatformReadinessTester {
     
     try {
       // Test 1.1: Create enterprise tenant
-      const enterpriseResponse = await axios.post(`${this.baseUrl}/api/enterprises`, {
+      const enterpriseResponse = await this.httpPost(`${this.baseUrl}/api/enterprises`, {
         name: 'TestPharma',
         type: 'pharma',
         subscription_tier: 'enterprise'
@@ -71,7 +104,7 @@ class PlatformReadinessTester {
       }
 
       // Test 1.2: Create agency seat
-      const seatResponse = await axios.post(`${this.baseUrl}/api/enterprises/${enterpriseResponse.data.enterprise.id}/seats`, {
+      const seatResponse = await this.httpPost(`${this.baseUrl}/api/enterprises/${enterpriseResponse.data.enterprise.id}/seats`, {
         name: 'Pfizer Account Team',
         slug: 'pfizer-team',
         seat_type: 'standard'
@@ -86,7 +119,7 @@ class PlatformReadinessTester {
       }
 
       // Test 1.3: Data isolation
-      const isolationResponse = await axios.get(`${this.baseUrl}/api/policies?enterprise_id=${enterpriseResponse.data.enterprise.id}`);
+      const isolationResponse = await this.httpGet(`${this.baseUrl}/api/policies?enterprise_id=${enterpriseResponse.data.enterprise.id}`);
       
       if (isolationResponse.data.success) {
         this.testResults.multiTenancy.dataIsolation = 'PASS';
@@ -111,7 +144,7 @@ class PlatformReadinessTester {
     
     try {
       // Test 2.1: Role-based access
-      const rolesResponse = await axios.get(`${this.baseUrl}/api/auth/roles`);
+      const rolesResponse = await this.httpGet(`${this.baseUrl}/api/auth/roles`);
       
       if (rolesResponse.data.success && rolesResponse.data.roles.length >= 5) {
         this.testResults.rbac.roleDefinitions = 'PASS';
@@ -122,7 +155,7 @@ class PlatformReadinessTester {
       }
 
       // Test 2.2: Permission enforcement
-      const permissionResponse = await axios.get(`${this.baseUrl}/api/auth/permissions`);
+      const permissionResponse = await this.httpGet(`${this.baseUrl}/api/auth/permissions`);
       
       if (permissionResponse.data.success) {
         this.testResults.rbac.permissionEnforcement = 'PASS';
@@ -133,7 +166,7 @@ class PlatformReadinessTester {
       }
 
       // Test 2.3: Context switching
-      const contextResponse = await axios.post(`${this.baseUrl}/api/auth/context/switch`, {
+      const contextResponse = await this.httpPost(`${this.baseUrl}/api/auth/context/switch`, {
         contextId: 'test-context-id'
       });
       
@@ -160,7 +193,7 @@ class PlatformReadinessTester {
     
     try {
       // Test 3.1: Create policy
-      const createPolicyResponse = await axios.post(`${this.baseUrl}/api/policies`, {
+      const createPolicyResponse = await this.httpPost(`${this.baseUrl}/api/policies`, {
         name: 'AI Usage Policy',
         description: 'Test policy for AI tool usage',
         policy_type: 'ai_governance',
@@ -180,7 +213,7 @@ class PlatformReadinessTester {
       }
 
       // Test 3.2: Policy inheritance
-      const inheritanceResponse = await axios.get(`${this.baseUrl}/api/policies/inheritance`);
+      const inheritanceResponse = await this.httpGet(`${this.baseUrl}/api/policies/inheritance`);
       
       if (inheritanceResponse.data.success) {
         this.testResults.policyEngine.policyInheritance = 'PASS';
@@ -191,7 +224,7 @@ class PlatformReadinessTester {
       }
 
       // Test 3.3: Conflict detection
-      const conflictResponse = await axios.post(`${this.baseUrl}/api/policies/conflict-detection`, {
+      const conflictResponse = await this.httpPost(`${this.baseUrl}/api/policies/conflict-detection`, {
         policies: ['policy-1', 'policy-2']
       });
       
@@ -218,7 +251,7 @@ class PlatformReadinessTester {
     
     try {
       // Test 4.1: Audit logging
-      const auditResponse = await axios.post(`${this.baseUrl}/api/audit/log`, {
+      const auditResponse = await this.httpPost(`${this.baseUrl}/api/audit/log`, {
         action: 'test_action',
         resource_type: 'policy',
         resource_id: 'test-id',
@@ -234,7 +267,7 @@ class PlatformReadinessTester {
       }
 
       // Test 4.2: Governance packet export
-      const exportResponse = await axios.get(`${this.baseUrl}/api/audit/export/test-session-id`);
+      const exportResponse = await this.httpGet(`${this.baseUrl}/api/audit/export/test-session-id`);
       
       if (exportResponse.data.success) {
         this.testResults.auditEngine.governanceExport = 'PASS';
@@ -245,7 +278,7 @@ class PlatformReadinessTester {
       }
 
       // Test 4.3: Evidence attachment
-      const evidenceResponse = await axios.post(`${this.baseUrl}/api/audit/evidence`, {
+      const evidenceResponse = await this.httpPost(`${this.baseUrl}/api/audit/evidence`, {
         session_id: 'test-session-id',
         evidence_type: 'document',
         file_name: 'test.pdf'
@@ -274,7 +307,7 @@ class PlatformReadinessTester {
     
     try {
       // Test 5.1: Agency invitation
-      const inviteResponse = await axios.post(`${this.baseUrl}/api/agency-onboarding/invite`, {
+      const inviteResponse = await this.httpPost(`${this.baseUrl}/api/agency-onboarding/invite`, {
         agencyEmail: 'test@agency.com',
         agencyName: 'Test Agency'
       });
@@ -288,7 +321,7 @@ class PlatformReadinessTester {
       }
 
       // Test 5.2: User invitation
-      const userInviteResponse = await axios.post(`${this.baseUrl}/api/enterprises/test-enterprise/seats/test-seat/invite-user`, {
+      const userInviteResponse = await this.httpPost(`${this.baseUrl}/api/enterprises/test-enterprise/seats/test-seat/invite-user`, {
         email: 'user@test.com',
         role: 'seat_user'
       });
@@ -302,7 +335,7 @@ class PlatformReadinessTester {
       }
 
       // Test 5.3: Onboarding flow
-      const onboardingResponse = await axios.get(`${this.baseUrl}/api/onboarding/status`);
+      const onboardingResponse = await this.httpGet(`${this.baseUrl}/api/onboarding/status`);
       
       if (onboardingResponse.data.success) {
         this.testResults.userOnboarding.onboardingFlow = 'PASS';
@@ -327,7 +360,7 @@ class PlatformReadinessTester {
     
     try {
       // Test 6.1: Agent orchestration
-      const orchestrationResponse = await axios.post(`${this.baseUrl}/api/metaloop/orchestrate`, {
+      const orchestrationResponse = await this.httpPost(`${this.baseUrl}/api/metaloop/orchestrate`, {
         input: 'Test AI tool submission',
         workflow_type: 'agency-tool-submission'
       });
@@ -341,7 +374,7 @@ class PlatformReadinessTester {
       }
 
       // Test 6.2: AI processing
-      const aiResponse = await axios.post(`${this.baseUrl}/api/metaloop/process`, {
+      const aiResponse = await this.httpPost(`${this.baseUrl}/api/metaloop/process`, {
         message: 'Test AI processing',
         context: { user_id: 'test-user' }
       });
@@ -355,7 +388,7 @@ class PlatformReadinessTester {
       }
 
       // Test 6.3: Learning system
-      const learningResponse = await axios.post(`${this.baseUrl}/api/metaloop/learn`, {
+      const learningResponse = await this.httpPost(`${this.baseUrl}/api/metaloop/learn`, {
         interaction: 'test_interaction',
         outcome: 'success'
       });
@@ -427,9 +460,10 @@ class PlatformReadinessTester {
 }
 
 // Run the tests
-if (require.main === module) {
+const isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isMain) {
   const tester = new PlatformReadinessTester();
   tester.runAllTests();
 }
 
-module.exports = PlatformReadinessTester;
+export default PlatformReadinessTester;

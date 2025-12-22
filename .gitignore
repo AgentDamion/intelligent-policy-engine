@@ -90,6 +90,15 @@ out/
 coverage/
 .nyc_output/
 
+# Playwright
+**/test-results/
+**/playwright-report/
+**/playwright/.cache/
+**/e2e/screenshots/
+
+# Generated security test reports
+**/security-test-report-*.json
+
 # Misc
 *.tgz
 *.tar.gz

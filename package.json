@@ -21,11 +21,32 @@
     "test:run": "pnpm -C apps/platform test:run",
     "coverage": "pnpm -C apps/platform coverage",
     "test:platform": "pnpm -C apps/platform test:run",
+    "test:e2e:marketing": "pnpm -C apps/marketing exec playwright test",
+    "test:e2e:platform": "pnpm -C apps/platform exec playwright test",
     "build:packages": "pnpm -r --filter \"./packages/**\" build",
     "build:all": "pnpm run build:packages && pnpm run build:platform && pnpm run build:marketing"
   },
   "devDependencies": {
     "@types/node": "^20.19.24",
     "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.80.0",
+    "axios": "^1.13.2",
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
+    "cheerio": "^1.1.2",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^4.21.2",
+    "express-jwt": "^8.5.1",
+    "express-rate-limit": "^8.2.1",
+    "express-session": "^1.18.2",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "jwks-rsa": "^3.2.0",
+    "pg": "^8.16.3",
+    "uuid": "^13.0.0",
+    "ws": "^8.18.3"
   }
 }
