@@ -46,7 +46,8 @@ serve(async (req) => {
 
       // Use SERVICE_ROLE_KEY for reads/writes, but DO NOT trust request context.
       const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-      const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+      const serviceKey =
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? Deno.env.get('SUPABASE_SERVICE_KEY') ?? '';
       const supabaseAdmin = createClient(supabaseUrl, serviceKey);
 
       const { tool_version_id, workspace_id, usage_context }: ValidationRequest = await req.json();
@@ -173,7 +174,16 @@ serve(async (req) => {
 
     if (bindingsError) {
       console.error('Error fetching runtime bindings:', bindingsError);
-      throw new Error('Failed to fetch policy bindings');
+      return new Response(
+        JSON.stringify({
+          error: 'Failed to fetch policy bindings',
+          details: {
+            message: bindingsError.message,
+            code: (bindingsError as any).code ?? null,
+          },
+        }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
     }
 
     console.log(`Found ${bindings?.length || 0} active bindings`);

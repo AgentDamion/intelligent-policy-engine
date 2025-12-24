@@ -361,7 +361,8 @@ serve(async (req) => {
 
         // Service role admin client (for membership verification + security logs)
         const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-        const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+        const serviceKey =
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? Deno.env.get('SUPABASE_SERVICE_KEY') ?? '';
         const supabaseAdmin = createClient(supabaseUrl, serviceKey);
 
         // Handle batch processing for agencies

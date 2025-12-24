@@ -48,7 +48,9 @@ export class AuthError extends Error {
 }
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
-const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_KEY') ?? undefined
+// Support both names across Supabase projects / older code.
+const SERVICE_KEY =
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? Deno.env.get('SUPABASE_SERVICE_KEY') ?? undefined
 const JWKS = SUPABASE_URL
   ? createRemoteJWKSet(new URL('/auth/v1/certs', SUPABASE_URL))
   : undefined
