@@ -120,7 +120,13 @@ async function compileProofBundle(
   
   // 3. Fetch policy rules that were applied
   try {
-    const { data: policyBindings } = await supabaseClient
+    // Schema drift handling:
+    // - Newer schema: runtime_bindings.tool_version_id
+    // - Older schema: runtime_bindings.tool_id
+    // Also: this event payload uses `tool_id`, so we attempt both.
+    let policyBindings: any[] | null = null;
+
+    const attemptToolVersionId = await supabaseClient
       .from('runtime_bindings')
       .select(`
         id,
@@ -136,6 +142,29 @@ async function compileProofBundle(
       .eq('workspace_id', event.workspace_id)
       .eq('status', 'active')
       .limit(5);
+
+    if (attemptToolVersionId.error?.code === '42703' &&
+        String(attemptToolVersionId.error?.message ?? '').includes('tool_version_id')) {
+      const attemptToolId = await supabaseClient
+        .from('runtime_bindings')
+        .select(`
+          id,
+          effective_pom,
+          policy_instances!inner(
+            id,
+            policy_template_id,
+            version,
+            status
+          )
+        `)
+        .eq('tool_id', event.tool_id)
+        .eq('workspace_id', event.workspace_id)
+        .eq('status', 'active')
+        .limit(5);
+      policyBindings = attemptToolId.data;
+    } else {
+      policyBindings = attemptToolVersionId.data;
+    }
     
     if (policyBindings && policyBindings.length > 0) {
       evidence.push({

@@ -9,8 +9,10 @@ const corsHeaders = {
 };
 
 interface ValidationRequest {
-  tool_version_id: string;
-  workspace_id: string;
+  // Some deployments use tool_id instead of tool_version_id (schema drift).
+  tool_version_id?: string;
+  tool_id?: string;
+  workspace_id?: string;
   usage_context: {
     use_case?: string;
     data_classification?: string[];
@@ -48,12 +50,40 @@ serve(async (req) => {
       const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
       const serviceKey =
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? Deno.env.get('SUPABASE_SERVICE_KEY') ?? '';
+
+      if (!supabaseUrl || !serviceKey) {
+        return new Response(
+          JSON.stringify({
+            error: 'server_misconfigured',
+            message: 'Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY (Edge Function secret).',
+          }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        );
+      }
+
       const supabaseAdmin = createClient(supabaseUrl, serviceKey);
 
-      const { tool_version_id, workspace_id, usage_context }: ValidationRequest = await req.json();
+      const body: ValidationRequest = await req.json().catch(() => ({} as ValidationRequest));
+      const tool_version_id = body.tool_version_id;
+      const tool_id = body.tool_id;
+      const workspace_id = body.workspace_id;
+      const usage_context = body.usage_context ?? {};
+
+      const toolKey = tool_version_id ?? tool_id ?? null;
+
+      if (!toolKey || !workspace_id) {
+        return new Response(
+          JSON.stringify({
+            error: 'bad_request',
+            message: 'tool_version_id (or tool_id) and workspace_id are required',
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        );
+      }
 
       console.log('[validate-ai-usage] request:', {
-        tool_version_id,
+        tool_version_id: tool_version_id ?? null,
+        tool_id: tool_id ?? null,
         workspace_id,
         enterprise_id: authCtx.enterpriseId,
         user_id: authCtx.userId,
@@ -149,7 +179,13 @@ serve(async (req) => {
     const EPS_FALLBACK = (Deno.env.get('EPS_FALLBACK_ENABLED') ?? 'true').toLowerCase() === 'true';
 
     // Get active runtime bindings with policy instance and EPS data
-    const { data: bindings, error: bindingsError } = await supabaseAdmin
+    // Schema drift handling:
+    // - Newer schema: runtime_bindings.tool_version_id
+    // - Older schema: runtime_bindings.tool_id
+    let bindings: any[] | null = null;
+    let bindingsError: any | null = null;
+
+    const attemptToolVersionId = await supabaseAdmin
       .from('runtime_bindings')
       .select(`
         id,
@@ -168,9 +204,40 @@ serve(async (req) => {
           workspace_id
         )
       `)
-      .eq('tool_version_id', tool_version_id)
+      .eq('tool_version_id', toolKey)
       .eq('workspace_id', workspace_id)
       .eq('status', 'active');
+
+    bindings = attemptToolVersionId.data as any[] | null;
+    bindingsError = attemptToolVersionId.error;
+
+    if (bindingsError?.code === '42703' && String(bindingsError?.message ?? '').includes('tool_version_id')) {
+      const attemptToolId = await supabaseAdmin
+        .from('runtime_bindings')
+        .select(`
+          id,
+          policy_instance_id,
+          scope_path,
+          status,
+          policy_instances (
+            id,
+            use_case,
+            jurisdiction,
+            audience,
+            pom,
+            status,
+            current_eps_id,
+            enterprise_id,
+            workspace_id
+          )
+        `)
+        .eq('tool_id', toolKey)
+        .eq('workspace_id', workspace_id)
+        .eq('status', 'active');
+
+      bindings = attemptToolId.data as any[] | null;
+      bindingsError = attemptToolId.error;
+    }
 
     if (bindingsError) {
       console.error('Error fetching runtime bindings:', bindingsError);
@@ -179,7 +246,7 @@ serve(async (req) => {
           error: 'Failed to fetch policy bindings',
           details: {
             message: bindingsError.message,
-            code: (bindingsError as any).code ?? null,
+            code: bindingsError.code ?? null,
           },
         }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
