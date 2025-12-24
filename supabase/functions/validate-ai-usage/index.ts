@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { withAuth } from "../shared/auth-context.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -38,23 +39,116 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const startedAt = Date.now();
+  return await withAuth(
+    req,
+    async (authCtx) => {
+      const startedAt = Date.now();
 
-  try {
-    // Use SERVICE_ROLE_KEY for cross-tenant validation
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-    );
+      // Use SERVICE_ROLE_KEY for reads/writes, but DO NOT trust request context.
+      const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+      const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+      const supabaseAdmin = createClient(supabaseUrl, serviceKey);
 
-    const { tool_version_id, workspace_id, usage_context }: ValidationRequest = await req.json();
+      const { tool_version_id, workspace_id, usage_context }: ValidationRequest = await req.json();
 
-    console.log('Validating AI usage:', { tool_version_id, workspace_id, usage_context });
+      console.log('[validate-ai-usage] request:', {
+        tool_version_id,
+        workspace_id,
+        enterprise_id: authCtx.enterpriseId,
+        user_id: authCtx.userId,
+        is_service_role: authCtx.isServiceRole,
+      });
+
+      // ---------------------------------------------------------------------
+      // Tenant validation (P1 hardening)
+      // ---------------------------------------------------------------------
+      // If this is not a trusted service role invocation, enforce membership
+      // and workspace-to-enterprise binding before any privileged access.
+      if (!authCtx.isServiceRole) {
+        // 1) Validate enterprise membership
+        const { data: membership, error: membershipError } = await supabaseAdmin
+          .from('enterprise_members')
+          .select('enterprise_id')
+          .eq('user_id', authCtx.userId)
+          .eq('enterprise_id', authCtx.enterpriseId)
+          .maybeSingle();
+
+        if (membershipError || !membership) {
+          await supabaseAdmin.from('agent_activities').insert({
+            agent: 'security-guard',
+            action: 'validate_ai_usage.denied.no_membership',
+            status: 'warning',
+            enterprise_id: authCtx.enterpriseId,
+            workspace_id,
+            details: {
+              reason: 'user_not_enterprise_member',
+              user_id: authCtx.userId,
+              enterprise_id: authCtx.enterpriseId,
+              tool_version_id,
+            },
+          });
+
+          return new Response(JSON.stringify({ error: 'forbidden' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        // 2) Validate workspace belongs to the authenticated enterprise
+        const { data: ws, error: wsError } = await supabaseAdmin
+          .from('workspaces')
+          .select('id, enterprise_id')
+          .eq('id', workspace_id)
+          .maybeSingle();
+
+        if (wsError || !ws) {
+          await supabaseAdmin.from('agent_activities').insert({
+            agent: 'security-guard',
+            action: 'validate_ai_usage.denied.workspace_not_found',
+            status: 'warning',
+            enterprise_id: authCtx.enterpriseId,
+            workspace_id,
+            details: {
+              reason: 'workspace_not_found',
+              user_id: authCtx.userId,
+              enterprise_id: authCtx.enterpriseId,
+              tool_version_id,
+            },
+          });
+
+          return new Response(JSON.stringify({ error: 'forbidden' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        if (ws.enterprise_id !== authCtx.enterpriseId) {
+          await supabaseAdmin.from('agent_activities').insert({
+            agent: 'security-guard',
+            action: 'validate_ai_usage.denied.workspace_enterprise_mismatch',
+            status: 'warning',
+            enterprise_id: authCtx.enterpriseId,
+            workspace_id,
+            details: {
+              reason: 'workspace_enterprise_mismatch',
+              user_id: authCtx.userId,
+              enterprise_id_claimed: authCtx.enterpriseId,
+              enterprise_id_workspace: ws.enterprise_id,
+              tool_version_id,
+            },
+          });
+
+          return new Response(JSON.stringify({ error: 'forbidden' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+      }
 
     const EPS_FALLBACK = (Deno.env.get('EPS_FALLBACK_ENABLED') ?? 'true').toLowerCase() === 'true';
 
     // Get active runtime bindings with policy instance and EPS data
-    const { data: bindings, error: bindingsError } = await supabaseClient
+    const { data: bindings, error: bindingsError } = await supabaseAdmin
       .from('runtime_bindings')
       .select(`
         id,
@@ -130,7 +224,7 @@ serve(async (req) => {
 
       // ✅ Phase 3.B: Prefer EPS
       if (policyInstance.current_eps_id) {
-        const { data: epsData } = await supabaseClient
+        const { data: epsData } = await supabaseAdmin
           .from('effective_policy_snapshots')
           .select('id, effective_pom, content_hash')
           .eq('id', policyInstance.current_eps_id)
@@ -151,7 +245,7 @@ serve(async (req) => {
         epsHash = 'FALLBACK';
 
         // Log fallback event for monitoring
-        await supabaseClient.from('audit_events').insert({
+        await supabaseAdmin.from('audit_events').insert({
           event_type: 'EPS_MISSING_FALLBACK',
           entity_type: 'policy_instance',
           entity_id: binding.policy_instance_id,
@@ -177,7 +271,7 @@ serve(async (req) => {
         violations.push(violation);
 
         // Log blocked validation event
-        await supabaseClient.from('policy_validation_events').insert({
+        await supabaseAdmin.from('policy_validation_events').insert({
           enterprise_id: policyInstance.enterprise_id,
           tool_version_id,
           workspace_id,
@@ -275,7 +369,7 @@ serve(async (req) => {
       const bindingWarnings = warnings.filter(w => w.binding_id === binding.id);
       const decision = bindingViolations.length === 0 ? 'allowed' : 'blocked';
 
-      await supabaseClient.from('policy_validation_events').insert({
+      await supabaseAdmin.from('policy_validation_events').insert({
         enterprise_id: policyInstance.enterprise_id,
         tool_version_id,
         workspace_id,
@@ -296,7 +390,7 @@ serve(async (req) => {
       const bindingViolations = violations.filter(v => v.binding_id === bindingId);
       
       if (bindingViolations.length > 0) {
-        const { error: updateError } = await supabaseClient
+        const { error: updateError } = await supabaseAdmin
           .from('runtime_bindings')
           .update({
             last_violation_at: new Date().toISOString(),
@@ -324,26 +418,12 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
-  } catch (error) {
-    console.error('Error in validate-ai-usage:', error);
-    return new Response(
-      JSON.stringify({ 
-        error: error.message,
-        allowed: false,
-        violations: [{
-          rule_id: 'system-error',
-          severity: 'error',
-          message: `System error during validation: ${error.message}`,
-          policy_instance_id: '',
-          binding_id: ''
-        }],
-        warnings: [],
-        binding_ids_checked: []
-      }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
-  }
+    },
+    {
+      corsHeaders,
+      // Allow internal automation to call this endpoint with service key.
+      // Non-service callers must pass JWT and will be membership-validated.
+      allowServiceRoleBypass: true,
+    },
+  );
 });
