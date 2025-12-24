@@ -57,12 +57,31 @@ WHERE tablename IN (
 ORDER BY tablename, policyname;
 
 -- 6) Quick data check - are there any rows?
--- Note: this block will error if tables don't exist; that's expected and useful.
-SELECT '=== ROW COUNTS ===' as section;
-SELECT 'enterprise_members' as table_name, count(*) as row_count
-FROM enterprise_members
-UNION ALL
-SELECT 'user_contexts', count(*) FROM user_contexts
-UNION ALL
-SELECT 'partner_client_contexts', count(*) FROM partner_client_contexts;
+-- Safe version: does not error if tables don't exist.
+SELECT '=== ROW COUNTS (SAFE) ===' as section;
+DO $$
+DECLARE
+  v_count bigint;
+BEGIN
+  IF to_regclass('public.enterprise_members') IS NOT NULL THEN
+    EXECUTE 'SELECT count(*) FROM public.enterprise_members' INTO v_count;
+    RAISE NOTICE 'enterprise_members: %', v_count;
+  ELSE
+    RAISE NOTICE 'enterprise_members: <missing>';
+  END IF;
+
+  IF to_regclass('public.user_contexts') IS NOT NULL THEN
+    EXECUTE 'SELECT count(*) FROM public.user_contexts' INTO v_count;
+    RAISE NOTICE 'user_contexts: %', v_count;
+  ELSE
+    RAISE NOTICE 'user_contexts: <missing>';
+  END IF;
+
+  IF to_regclass('public.partner_client_contexts') IS NOT NULL THEN
+    EXECUTE 'SELECT count(*) FROM public.partner_client_contexts' INTO v_count;
+    RAISE NOTICE 'partner_client_contexts: %', v_count;
+  ELSE
+    RAISE NOTICE 'partner_client_contexts: <missing>';
+  END IF;
+END $$;
 
