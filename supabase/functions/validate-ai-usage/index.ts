@@ -9,8 +9,10 @@ const corsHeaders = {
 };
 
 interface ValidationRequest {
-  // Some deployments use tool_id instead of tool_version_id (schema drift).
+  // In this project's DB schema, runtime bindings map via policy_instances.tool_version_id.
+  // Prefer sending tool_version_id (ai_tool_versions.id).
   tool_version_id?: string;
+  // tool_id is accepted but cannot always be resolved without extra lookups.
   tool_id?: string;
   workspace_id?: string;
   usage_context: {
@@ -75,7 +77,7 @@ serve(async (req) => {
         return new Response(
           JSON.stringify({
             error: 'bad_request',
-            message: 'tool_version_id (or tool_id) and workspace_id are required',
+            message: 'tool_version_id and workspace_id are required',
           }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
         );
@@ -178,22 +180,23 @@ serve(async (req) => {
 
     const EPS_FALLBACK = (Deno.env.get('EPS_FALLBACK_ENABLED') ?? 'true').toLowerCase() === 'true';
 
-    // Get active runtime bindings with policy instance and EPS data
-    // Schema drift handling:
-    // - Newer schema: runtime_bindings.tool_version_id
-    // - Older schema: runtime_bindings.tool_id
+    // Get active runtime bindings with policy instance and EPS data.
+    //
+    // IMPORTANT: In this project schema, runtime_bindings does NOT carry tool_id/tool_version_id.
+    // The tool version is on policy_instances.tool_version_id, reachable via runtime_bindings.policy_instance_id.
     let bindings: any[] | null = null;
     let bindingsError: any | null = null;
 
-    const attemptToolVersionId = await supabaseAdmin
+    const attempt = await supabaseAdmin
       .from('runtime_bindings')
       .select(`
         id,
         policy_instance_id,
         scope_path,
         status,
-        policy_instances (
+        policy_instances!inner (
           id,
+          tool_version_id,
           use_case,
           jurisdiction,
           audience,
@@ -204,40 +207,13 @@ serve(async (req) => {
           workspace_id
         )
       `)
-      .eq('tool_version_id', toolKey)
       .eq('workspace_id', workspace_id)
-      .eq('status', 'active');
+      .eq('status', 'active')
+      // filter through the joined policy_instances row
+      .eq('policy_instances.tool_version_id', toolKey);
 
-    bindings = attemptToolVersionId.data as any[] | null;
-    bindingsError = attemptToolVersionId.error;
-
-    if (bindingsError?.code === '42703' && String(bindingsError?.message ?? '').includes('tool_version_id')) {
-      const attemptToolId = await supabaseAdmin
-        .from('runtime_bindings')
-        .select(`
-          id,
-          policy_instance_id,
-          scope_path,
-          status,
-          policy_instances (
-            id,
-            use_case,
-            jurisdiction,
-            audience,
-            pom,
-            status,
-            current_eps_id,
-            enterprise_id,
-            workspace_id
-          )
-        `)
-        .eq('tool_id', toolKey)
-        .eq('workspace_id', workspace_id)
-        .eq('status', 'active');
-
-      bindings = attemptToolId.data as any[] | null;
-      bindingsError = attemptToolId.error;
-    }
+    bindings = attempt.data as any[] | null;
+    bindingsError = attempt.error;
 
     if (bindingsError) {
       console.error('Error fetching runtime bindings:', bindingsError);

@@ -120,51 +120,26 @@ async function compileProofBundle(
   
   // 3. Fetch policy rules that were applied
   try {
-    // Schema drift handling:
-    // - Newer schema: runtime_bindings.tool_version_id
-    // - Older schema: runtime_bindings.tool_id
-    // Also: this event payload uses `tool_id`, so we attempt both.
-    let policyBindings: any[] | null = null;
-
-    const attemptToolVersionId = await supabaseClient
+    // In this project's schema, runtime_bindings does NOT have tool_id/tool_version_id.
+    // Bindings are keyed by policy_instance_id, and tool version lives at policy_instances.tool_version_id.
+    const { data: policyBindings } = await supabaseClient
       .from('runtime_bindings')
       .select(`
         id,
         effective_pom,
         policy_instances!inner(
           id,
+          tool_version_id,
           policy_template_id,
           version,
           status
         )
       `)
-      .eq('tool_version_id', event.tool_id)
       .eq('workspace_id', event.workspace_id)
       .eq('status', 'active')
+      // evidence-compile receives tool_id (registry id) not tool_version_id, so we *cannot*
+      // filter precisely here without an additional lookup. We keep it workspace-scoped.
       .limit(5);
-
-    if (attemptToolVersionId.error?.code === '42703' &&
-        String(attemptToolVersionId.error?.message ?? '').includes('tool_version_id')) {
-      const attemptToolId = await supabaseClient
-        .from('runtime_bindings')
-        .select(`
-          id,
-          effective_pom,
-          policy_instances!inner(
-            id,
-            policy_template_id,
-            version,
-            status
-          )
-        `)
-        .eq('tool_id', event.tool_id)
-        .eq('workspace_id', event.workspace_id)
-        .eq('status', 'active')
-        .limit(5);
-      policyBindings = attemptToolId.data;
-    } else {
-      policyBindings = attemptToolVersionId.data;
-    }
     
     if (policyBindings && policyBindings.length > 0) {
       evidence.push({
