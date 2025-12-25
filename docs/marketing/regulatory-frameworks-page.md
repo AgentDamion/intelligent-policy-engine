@@ -21,10 +21,13 @@ We track and map AI governance requirements across jurisdictions so your complia
 - $1,000-$5,000 penalties per violation
 - Effective June 2026
 
-### December 2024: EU Fines X €120M Under DSA
-- First major DSA enforcement action
-- Cited: Opaque ad repository, poor audit trail, barriers to researcher access
-- Demonstrates enforcement teeth for transparency requirements
+### Illustrative scenario: EU DSA transparency fine (hypothetical example)
+- Included as an illustrative enforcement scenario to highlight audit-trail and transparency expectations
+- If used externally, ensure you cite a verifiable public enforcement action (or keep this explicitly labeled as hypothetical)
+
+## Master Reference
+
+- **Global AI Regulatory Landscape: Master Report**: `docs/marketing/global-ai-regulatory-landscape-master-report.md`
 
 ## How It Works
 
