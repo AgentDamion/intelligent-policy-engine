@@ -7,10 +7,9 @@
 - $1,000-$5,000 penalties per violation
 - Effective June 2026
 
-### December 2024: EU fines X €120M under Digital Services Act
-- Cited: Opaque ad repository, poor audit trail
-- Cited: Barriers to researcher/regulator access
-- First DSA enforcement action
+### Illustrative scenario: EU DSA transparency fine (hypothetical example)
+- Included as an illustrative enforcement scenario to highlight audit-trail and transparency expectations
+- If used externally, ensure you cite a verifiable public enforcement action (or keep this explicitly labeled as hypothetical)
 
 ---
 
@@ -37,4 +36,8 @@
 This isn't pitch theater. This is documented regulatory gap.
 
 The "ungoverned seam" between enterprises and partners isn't just an operational risk—it's becoming a regulatory liability. And the regulatory bar is moving from "have a policy" to "prove you followed it."
+
+## Master Reference
+
+- `docs/marketing/global-ai-regulatory-landscape-master-report.md`
 
