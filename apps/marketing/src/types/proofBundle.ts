@@ -1,5 +1,24 @@
 // Proof Bundle Types for Immutable Audit Records
 
+export interface RegulatoryCompliance {
+  frameworks_addressed: Array<{
+    framework_id: string;
+    framework_name: string;
+    requirements_met: string[];
+    requirements_partial: string[];
+    requirements_missing: string[];
+    coverage_percentage: number;
+  }>;
+  export_formats_available: string[];
+  disclosure_attestations?: Array<{
+    framework_id: string;
+    requirement_id: string;
+    attested: boolean;
+    attested_at: string;
+    attested_by?: string;
+  }>;
+}
+
 export interface ProofBundle {
   id: string;
   claim: string;
@@ -13,6 +32,7 @@ export interface ProofBundle {
   enterprise_id: string;
   workspace_id?: string;
   created_at: string;
+  regulatory_compliance?: RegulatoryCompliance;
 }
 
 export interface ProofBundleScope {

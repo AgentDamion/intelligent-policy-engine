@@ -1,7 +1,7 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const { body, validationResult } = require('express-validator');
-const { Pool } = require('pg');
+import { body, validationResult } from 'express-validator';
+import { Pool } from 'pg';
 
 // Database connection
 const pool = new Pool({
@@ -116,13 +116,15 @@ router.post('/organizations',
 // GET /api/policy-templates - List policy templates
 router.get('/policy-templates', authenticateToken, async (req, res) => {
   try {
-    const { industry, regulation_framework } = req.query;
+    const { industry, regulation_framework, framework_id } = req.query;
     
     let query = `
-      SELECT id, name, description, industry, regulation_framework, 
-             template_rules, risk_categories, is_public, version, created_at
-      FROM policy_templates_enhanced
-      WHERE is_public = true
+      SELECT pt.id, pt.name, pt.description, pt.industry, pt.regulation_framework, 
+             pt.template_rules, pt.risk_categories, pt.is_public, pt.version, pt.created_at,
+             COUNT(DISTINCT fpm.framework_id) as framework_count
+      FROM policy_templates_enhanced pt
+      LEFT JOIN framework_policy_mappings fpm ON pt.id = fpm.policy_template_id
+      WHERE pt.is_public = true
     `;
     
     const params = [];
@@ -130,19 +132,39 @@ router.get('/policy-templates', authenticateToken, async (req, res) => {
     
     if (industry) {
       paramCount++;
-      query += ` AND industry = $${paramCount}`;
+      query += ` AND pt.industry = $${paramCount}`;
       params.push(industry);
     }
     
     if (regulation_framework) {
       paramCount++;
-      query += ` AND regulation_framework = $${paramCount}`;
+      query += ` AND pt.regulation_framework = $${paramCount}`;
       params.push(regulation_framework);
     }
     
-    query += ' ORDER BY name';
+    if (framework_id) {
+      paramCount++;
+      query += ` AND fpm.framework_id = $${paramCount}`;
+      params.push(framework_id);
+    }
+    
+    query += ' GROUP BY pt.id ORDER BY pt.name';
     
     const result = await pool.query(query, params);
+    
+    // If framework_id provided, include mapping details
+    if (framework_id) {
+      for (const template of result.rows) {
+        const mappingResult = await pool.query(`
+          SELECT * FROM framework_policy_mappings 
+          WHERE framework_id = $1 AND policy_template_id = $2
+        `, [framework_id, template.id]);
+        
+        if (mappingResult.rows.length > 0) {
+          template.framework_mapping = mappingResult.rows[0];
+        }
+      }
+    }
     
     res.json({
       success: true,
@@ -1031,4 +1053,567 @@ router.get('/dashboard/stats', authenticateToken, async (req, res) => {
   }
 });
 
-module.exports = router;
+// ============================================================================
+// REGULATORY FRAMEWORK ROUTES
+// ============================================================================
+
+// GET /api/regulatory-frameworks - List all frameworks (public reference)
+router.get('/regulatory-frameworks', authenticateToken, async (req, res) => {
+  try {
+    const { jurisdiction, framework_type, status } = req.query;
+    
+    let query = `
+      SELECT rf.*, 
+             COUNT(DISTINCT fr.id) as requirement_count,
+             COUNT(DISTINCT fpm.policy_template_id) as template_count
+      FROM regulatory_frameworks rf
+      LEFT JOIN framework_requirements fr ON rf.id = fr.framework_id
+      LEFT JOIN framework_policy_mappings fpm ON rf.id = fpm.framework_id
+      WHERE 1=1
+    `;
+    
+    const params = [];
+    let paramCount = 0;
+    
+    if (jurisdiction) {
+      paramCount++;
+      query += ` AND rf.jurisdiction = $${paramCount}`;
+      params.push(jurisdiction);
+    }
+    
+    if (framework_type) {
+      paramCount++;
+      query += ` AND rf.framework_type = $${paramCount}`;
+      params.push(framework_type);
+    }
+    
+    if (status) {
+      paramCount++;
+      query += ` AND rf.status = $${paramCount}`;
+      params.push(status);
+    }
+    
+    query += ` GROUP BY rf.id ORDER BY rf.enforcement_date DESC NULLS LAST, rf.name`;
+    
+    const result = await pool.query(query, params);
+    
+    res.json({
+      success: true,
+      data: result.rows,
+      count: result.rows.length
+    });
+  } catch (error) {
+    console.error('Error fetching regulatory frameworks:', error);
+    res.status(500).json({ error: 'Failed to fetch regulatory frameworks' });
+  }
+});
+
+// GET /api/regulatory-frameworks/:id - Get framework details with requirements
+router.get('/regulatory-frameworks/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Get framework
+    const frameworkResult = await pool.query(`
+      SELECT * FROM regulatory_frameworks WHERE id = $1
+    `, [id]);
+    
+    if (frameworkResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Regulatory framework not found' });
+    }
+    
+    // Get requirements
+    const requirementsResult = await pool.query(`
+      SELECT * FROM framework_requirements 
+      WHERE framework_id = $1 
+      ORDER BY 
+        CASE priority 
+          WHEN 'critical' THEN 1 
+          WHEN 'high' THEN 2 
+          WHEN 'medium' THEN 3 
+          WHEN 'low' THEN 4 
+        END,
+        requirement_code
+    `, [id]);
+    
+    // Get policy template mappings
+    const mappingsResult = await pool.query(`
+      SELECT fpm.*, 
+             pt.id as template_id,
+             pt.name as template_name, 
+             pt.description as template_description,
+             pt.industry as template_industry
+      FROM framework_policy_mappings fpm
+      JOIN policy_templates_enhanced pt ON fpm.policy_template_id = pt.id
+      WHERE fpm.framework_id = $1
+      ORDER BY fpm.coverage_percentage DESC
+    `, [id]);
+    
+    const framework = frameworkResult.rows[0];
+    framework.requirements = requirementsResult.rows;
+    framework.policy_templates = mappingsResult.rows;
+    
+    res.json({
+      success: true,
+      data: framework
+    });
+  } catch (error) {
+    console.error('Error fetching regulatory framework:', error);
+    res.status(500).json({ error: 'Failed to fetch regulatory framework' });
+  }
+});
+
+// GET /api/regulatory-frameworks/:id/requirements - Get requirements for a framework
+router.get('/regulatory-frameworks/:id/requirements', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await pool.query(`
+      SELECT fr.*, rf.name as framework_name, rf.short_name as framework_short_name
+      FROM framework_requirements fr
+      JOIN regulatory_frameworks rf ON fr.framework_id = rf.id
+      WHERE fr.framework_id = $1
+      ORDER BY 
+        CASE fr.priority 
+          WHEN 'critical' THEN 1 
+          WHEN 'high' THEN 2 
+          WHEN 'medium' THEN 3 
+          WHEN 'low' THEN 4 
+        END,
+        fr.requirement_code
+    `, [id]);
+    
+    res.json({
+      success: true,
+      data: result.rows,
+      count: result.rows.length
+    });
+  } catch (error) {
+    console.error('Error fetching framework requirements:', error);
+    res.status(500).json({ error: 'Failed to fetch framework requirements' });
+  }
+});
+
+// POST /api/organizations/:id/frameworks - Select frameworks for organization
+router.post('/organizations/:id/frameworks', 
+  authenticateToken,
+  requireRole(['admin', 'compliance_officer']),
+  [
+    body('framework_ids').isArray({ min: 1 }),
+    body('framework_ids.*').isUUID(),
+    body('notes').optional().trim().escape()
+  ],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const { id } = req.params;
+      const { framework_ids, notes } = req.body;
+      const { user_id, organization_id } = req.user;
+      
+      // Verify organization access (user's org must match or be admin)
+      const orgCheck = await pool.query(`
+        SELECT id FROM organizations_enhanced WHERE id = $1
+      `, [id]);
+      
+      if (orgCheck.rows.length === 0) {
+        return res.status(404).json({ error: 'Organization not found' });
+      }
+      
+      // Verify user has access to this organization
+      if (organization_id !== id && req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Access denied to this organization' });
+      }
+
+      // Verify all frameworks exist
+      const frameworksCheck = await pool.query(`
+        SELECT id, name FROM regulatory_frameworks WHERE id = ANY($1)
+      `, [framework_ids]);
+      
+      if (frameworksCheck.rows.length !== framework_ids.length) {
+        return res.status(400).json({ error: 'One or more frameworks not found' });
+      }
+
+      // Insert framework selections
+      const selections = [];
+      for (const framework_id of framework_ids) {
+        const result = await pool.query(`
+          INSERT INTO organization_frameworks (organization_id, framework_id, selected_by, notes)
+          VALUES ($1, $2, $3, $4)
+          ON CONFLICT (organization_id, framework_id) 
+          DO UPDATE SET selected_at = NOW(), selected_by = $3, notes = $4
+          RETURNING *
+        `, [id, framework_id, user_id, notes]);
+        
+        if (result.rows.length > 0) {
+          selections.push(result.rows[0]);
+        }
+      }
+
+      // Log audit trail
+      await pool.query(`
+        INSERT INTO audit_logs_enhanced (organization_id, user_id, action, entity_type, details)
+        VALUES ($1, $2, 'frameworks_selected', 'organization', $3)
+      `, [id, user_id, JSON.stringify({ 
+        framework_ids, 
+        framework_names: frameworksCheck.rows.map(f => f.name),
+        count: selections.length 
+      })]);
+
+      res.json({
+        success: true,
+        data: selections,
+        message: `Selected ${selections.length} regulatory framework(s)`
+      });
+    } catch (error) {
+      console.error('Error selecting frameworks:', error);
+      res.status(500).json({ error: 'Failed to select frameworks' });
+    }
+  }
+);
+
+// GET /api/organizations/:id/frameworks - Get organization's selected frameworks
+router.get('/organizations/:id/frameworks', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { organization_id } = req.user;
+    
+    // Verify organization access
+    if (organization_id !== id && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Access denied to this organization' });
+    }
+    
+    const result = await pool.query(`
+      SELECT rf.*, 
+             of.selected_at, 
+             of.notes,
+             u.full_name as selected_by_name,
+             COUNT(DISTINCT fr.id) as requirement_count,
+             COUNT(DISTINCT fpm.policy_template_id) as available_template_count
+      FROM organization_frameworks of
+      JOIN regulatory_frameworks rf ON of.framework_id = rf.id
+      LEFT JOIN users_enhanced u ON of.selected_by = u.id
+      LEFT JOIN framework_requirements fr ON rf.id = fr.framework_id
+      LEFT JOIN framework_policy_mappings fpm ON rf.id = fpm.framework_id
+      WHERE of.organization_id = $1
+      GROUP BY rf.id, of.selected_at, of.notes, u.full_name
+      ORDER BY rf.jurisdiction, rf.name
+    `, [id]);
+    
+    res.json({
+      success: true,
+      data: result.rows,
+      count: result.rows.length
+    });
+  } catch (error) {
+    console.error('Error fetching organization frameworks:', error);
+    res.status(500).json({ error: 'Failed to fetch organization frameworks' });
+  }
+});
+
+// DELETE /api/organizations/:id/frameworks/:framework_id - Remove framework from organization
+router.delete('/organizations/:id/frameworks/:framework_id', 
+  authenticateToken,
+  requireRole(['admin', 'compliance_officer']),
+  async (req, res) => {
+    try {
+      const { id, framework_id } = req.params;
+      const { user_id, organization_id } = req.user;
+      
+      // Verify organization access
+      if (organization_id !== id && req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Access denied to this organization' });
+      }
+      
+      // Verify framework selection exists
+      const selectionCheck = await pool.query(`
+        SELECT of.*, rf.name as framework_name
+        FROM organization_frameworks of
+        JOIN regulatory_frameworks rf ON of.framework_id = rf.id
+        WHERE of.organization_id = $1 AND of.framework_id = $2
+      `, [id, framework_id]);
+      
+      if (selectionCheck.rows.length === 0) {
+        return res.status(404).json({ error: 'Framework selection not found' });
+      }
+
+      // Delete the selection
+      await pool.query(`
+        DELETE FROM organization_frameworks 
+        WHERE organization_id = $1 AND framework_id = $2
+      `, [id, framework_id]);
+
+      // Log audit trail
+      await pool.query(`
+        INSERT INTO audit_logs_enhanced (organization_id, user_id, action, entity_type, details)
+        VALUES ($1, $2, 'framework_removed', 'organization', $3)
+      `, [id, user_id, JSON.stringify({ 
+        framework_id,
+        framework_name: selectionCheck.rows[0].framework_name
+      })]);
+
+      res.json({
+        success: true,
+        message: 'Framework removed from organization'
+      });
+    } catch (error) {
+      console.error('Error removing framework:', error);
+      res.status(500).json({ error: 'Failed to remove framework' });
+    }
+  }
+);
+
+// ============================================================================
+// COMPLIANCE MAPPING ROUTES
+// ============================================================================
+
+// GET /api/organizations/:id/compliance-mapping - Get compliance status
+router.get('/organizations/:id/compliance-mapping', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { organization_id } = req.user;
+    
+    // Verify organization access
+    if (organization_id !== id && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Access denied to this organization' });
+    }
+    
+    // Get selected frameworks
+    const frameworksResult = await pool.query(`
+      SELECT rf.*, of.selected_at
+      FROM organization_frameworks of
+      JOIN regulatory_frameworks rf ON of.framework_id = rf.id
+      WHERE of.organization_id = $1
+      ORDER BY rf.jurisdiction, rf.name
+    `, [id]);
+    
+    // Get all policies for the organization
+    const policiesResult = await pool.query(`
+      SELECT id, name, policy_rules, compliance_framework
+      FROM policies_enhanced
+      WHERE organization_id = $1 AND status = 'active'
+    `, [id]);
+    
+    // Calculate compliance mappings for each policy
+    const policyMappings = [];
+    for (const policy of policiesResult.rows) {
+      const frameworks = [];
+      
+      for (const framework of frameworksResult.rows) {
+        // Get framework requirements
+        const requirementsResult = await pool.query(`
+          SELECT * FROM framework_requirements
+          WHERE framework_id = $1
+        `, [framework.id]);
+        
+        const totalRequirements = requirementsResult.rows.length;
+        let metCount = 0;
+        let partialCount = 0;
+        const requirementsMet = [];
+        const requirementsPartial = [];
+        const requirementsMissing = [];
+        
+        // Analyze policy against requirements
+        for (const requirement of requirementsResult.rows) {
+          const evidence = requirement.compliance_evidence || {};
+          const policyRules = policy.policy_rules || {};
+          
+          let isMet = false;
+          let isPartial = false;
+          
+          if (requirement.requirement_type === 'audit_trail') {
+            isMet = evidence.immutable_logs === true && 
+              (policyRules.audit_logging !== undefined || policyRules.data_retention !== undefined);
+            isPartial = (policyRules.audit_logging !== undefined || policyRules.data_retention !== undefined) && !evidence.immutable_logs;
+          } else if (requirement.requirement_type === 'disclosure') {
+            isMet = evidence.disclosure_attestation === true &&
+              (policyRules.disclosure !== undefined || policyRules.transparency !== undefined);
+            isPartial = (policyRules.disclosure !== undefined || policyRules.transparency !== undefined) && !evidence.disclosure_attestation;
+          } else if (requirement.requirement_type === 'transparency') {
+            isMet = evidence.ad_repository === true || evidence.audit_trail === true;
+            isPartial = policyRules.transparency !== undefined && !evidence.ad_repository && !evidence.audit_trail;
+          } else if (requirement.requirement_type === 'documentation') {
+            isMet = evidence.documentation === true && policyRules.documentation !== undefined;
+            isPartial = policyRules.documentation !== undefined && !evidence.documentation;
+          }
+          
+          if (isMet) {
+            metCount++;
+            requirementsMet.push(requirement.id);
+          } else if (isPartial) {
+            partialCount++;
+            requirementsPartial.push(requirement.id);
+          } else {
+            requirementsMissing.push(requirement.id);
+          }
+        }
+        
+        const coveragePercentage = totalRequirements > 0
+          ? Math.round(((metCount + partialCount * 0.5) / totalRequirements) * 100)
+          : 0;
+        
+        frameworks.push({
+          framework_id: framework.id,
+          framework_name: framework.name,
+          coverage_percentage: coveragePercentage,
+          requirements_met: requirementsMet,
+          requirements_partial: requirementsPartial,
+          requirements_missing: requirementsMissing,
+          total_requirements: totalRequirements
+        });
+      }
+      
+      policyMappings.push({
+        policy_id: policy.id,
+        policy_name: policy.name,
+        frameworks: frameworks
+      });
+    }
+    
+    // Calculate overall coverage
+    let totalCoverage = 0;
+    let frameworkCount = 0;
+    for (const policyMapping of policyMappings) {
+      for (const framework of policyMapping.frameworks) {
+        totalCoverage += framework.coverage_percentage;
+        frameworkCount++;
+      }
+    }
+    const overallCoverage = frameworkCount > 0 ? Math.round(totalCoverage / frameworkCount) : 0;
+    
+    res.json({
+      success: true,
+      data: {
+        organization_id: id,
+        selected_frameworks: frameworksResult.rows.map(f => ({
+          framework_id: f.id,
+          framework_name: f.name,
+          status: f.status
+        })),
+        overall_coverage: overallCoverage,
+        policy_mappings: policyMappings,
+        gaps: [] // Gaps would be calculated separately if needed
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching compliance mapping:', error);
+    res.status(500).json({ error: 'Failed to fetch compliance mapping' });
+  }
+});
+
+// GET /api/policies/:id/framework-mapping - Get policy-to-framework mappings
+router.get('/policies/:id/framework-mapping', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { framework_id } = req.query;
+    const { organization_id } = req.user;
+    
+    // Verify policy belongs to organization
+    const policyCheck = await pool.query(`
+      SELECT id, name, policy_rules, organization_id
+      FROM policies_enhanced
+      WHERE id = $1 AND organization_id = $2
+    `, [id, organization_id]);
+    
+    if (policyCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Policy not found' });
+    }
+    
+    const policy = policyCheck.rows[0];
+    
+    // Get organization's selected frameworks
+    let frameworksQuery = `
+      SELECT rf.*
+      FROM organization_frameworks of
+      JOIN regulatory_frameworks rf ON of.framework_id = rf.id
+      WHERE of.organization_id = $1
+    `;
+    const frameworksParams = [organization_id];
+    
+    if (framework_id) {
+      frameworksQuery += ` AND rf.id = $2`;
+      frameworksParams.push(framework_id);
+    }
+    
+    frameworksQuery += ` ORDER BY rf.jurisdiction, rf.name`;
+    
+    const frameworksResult = await pool.query(frameworksQuery, frameworksParams);
+    
+    // Calculate mappings
+    const mappings = [];
+    for (const framework of frameworksResult.rows) {
+      const requirementsResult = await pool.query(`
+        SELECT * FROM framework_requirements
+        WHERE framework_id = $1
+      `, [framework.id]);
+      
+      const totalRequirements = requirementsResult.rows.length;
+      let metCount = 0;
+      let partialCount = 0;
+      const requirementsMet = [];
+      const requirementsPartial = [];
+      const requirementsMissing = [];
+      
+      for (const requirement of requirementsResult.rows) {
+        const evidence = requirement.compliance_evidence || {};
+        const policyRules = policy.policy_rules || {};
+        
+        let isMet = false;
+        let isPartial = false;
+        
+        if (requirement.requirement_type === 'audit_trail') {
+          isMet = evidence.immutable_logs === true && 
+            (policyRules.audit_logging !== undefined || policyRules.data_retention !== undefined);
+          isPartial = (policyRules.audit_logging !== undefined || policyRules.data_retention !== undefined) && !evidence.immutable_logs;
+        } else if (requirement.requirement_type === 'disclosure') {
+          isMet = evidence.disclosure_attestation === true &&
+            (policyRules.disclosure !== undefined || policyRules.transparency !== undefined);
+          isPartial = (policyRules.disclosure !== undefined || policyRules.transparency !== undefined) && !evidence.disclosure_attestation;
+        } else if (requirement.requirement_type === 'transparency') {
+          isMet = evidence.ad_repository === true || evidence.audit_trail === true;
+          isPartial = policyRules.transparency !== undefined && !evidence.ad_repository && !evidence.audit_trail;
+        } else if (requirement.requirement_type === 'documentation') {
+          isMet = evidence.documentation === true && policyRules.documentation !== undefined;
+          isPartial = policyRules.documentation !== undefined && !evidence.documentation;
+        }
+        
+        if (isMet) {
+          metCount++;
+          requirementsMet.push(requirement.id);
+        } else if (isPartial) {
+          partialCount++;
+          requirementsPartial.push(requirement.id);
+        } else {
+          requirementsMissing.push(requirement.id);
+        }
+      }
+      
+      const coveragePercentage = totalRequirements > 0
+        ? Math.round(((metCount + partialCount * 0.5) / totalRequirements) * 100)
+        : 0;
+      
+      mappings.push({
+        framework_id: framework.id,
+        framework_name: framework.name,
+        coverage_percentage: coveragePercentage,
+        requirements_met: requirementsMet,
+        requirements_partial: requirementsPartial,
+        requirements_missing: requirementsMissing,
+        total_requirements: totalRequirements
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: mappings
+    });
+  } catch (error) {
+    console.error('Error fetching policy framework mapping:', error);
+    res.status(500).json({ error: 'Failed to fetch policy framework mapping' });
+  }
+});
+
+export default router;

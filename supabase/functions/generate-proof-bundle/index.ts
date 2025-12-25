@@ -21,6 +21,125 @@ const corsHeaders = {
   'Content-Type': 'application/json',
 }
 
+/**
+ * Generate regulatory compliance metadata for a proof bundle
+ * Maps the proof bundle content to organization's selected regulatory frameworks
+ */
+async function generateRegulatoryCompliance(
+  supabase: any,
+  organizationId: string,
+  bundleContent: any
+): Promise<any> {
+  try {
+    // Get organization's selected frameworks
+    const { data: orgFrameworks, error: frameworksError } = await supabase
+      .from('organization_frameworks')
+      .select(`
+        framework_id,
+        regulatory_frameworks (
+          id,
+          name,
+          short_name,
+          framework_type
+        )
+      `)
+      .eq('organization_id', organizationId)
+
+    if (frameworksError || !orgFrameworks || orgFrameworks.length === 0) {
+      // No frameworks selected, return empty compliance
+      return {
+        frameworks_addressed: [],
+        export_formats_available: ['pdf', 'json']
+      }
+    }
+
+    const frameworksAddressed = []
+
+    // For each selected framework, analyze compliance
+    for (const orgFramework of orgFrameworks) {
+      const framework = orgFramework.regulatory_frameworks
+      if (!framework) continue
+
+      // Get framework requirements
+      const { data: requirements, error: reqError } = await supabase
+        .from('framework_requirements')
+        .select('*')
+        .eq('framework_id', framework.id)
+
+      if (reqError || !requirements || requirements.length === 0) {
+        continue
+      }
+
+      // Analyze which requirements are met by the proof bundle
+      const requirementsMet: string[] = []
+      const requirementsPartial: string[] = []
+      const requirementsMissing: string[] = []
+
+      for (const requirement of requirements) {
+        const evidence = requirement.compliance_evidence || {}
+        const hasAuditTrail = bundleContent.auditTrail && bundleContent.auditTrail.length > 0
+        const hasDecisions = bundleContent.decisions && bundleContent.decisions.length > 0
+        const hasPolicySnapshot = bundleContent.policySnapshot !== undefined
+
+        // Check if requirement is met based on evidence criteria
+        let isMet = false
+        let isPartial = false
+
+        if (requirement.requirement_type === 'audit_trail') {
+          isMet = hasAuditTrail && evidence.immutable_logs === true
+          isPartial = hasAuditTrail && !evidence.immutable_logs
+        } else if (requirement.requirement_type === 'disclosure') {
+          isMet = evidence.disclosure_attestation === true && hasPolicySnapshot
+          isPartial = hasPolicySnapshot && !evidence.disclosure_attestation
+        } else if (requirement.requirement_type === 'transparency') {
+          isMet = hasAuditTrail && hasDecisions && evidence.ad_repository === true
+          isPartial = (hasAuditTrail || hasDecisions) && !evidence.ad_repository
+        } else if (requirement.requirement_type === 'documentation') {
+          isMet = hasPolicySnapshot && evidence.documentation === true
+          isPartial = hasPolicySnapshot && !evidence.documentation
+        }
+
+        if (isMet) {
+          requirementsMet.push(requirement.id)
+        } else if (isPartial) {
+          requirementsPartial.push(requirement.id)
+        } else {
+          requirementsMissing.push(requirement.id)
+        }
+      }
+
+      // Calculate coverage percentage
+      const totalRequirements = requirements.length
+      const metCount = requirementsMet.length
+      const partialCount = requirementsPartial.length
+      const coveragePercentage = totalRequirements > 0
+        ? Math.round(((metCount + partialCount * 0.5) / totalRequirements) * 100)
+        : 0
+
+      frameworksAddressed.push({
+        framework_id: framework.id,
+        framework_name: framework.name,
+        requirements_met: requirementsMet,
+        requirements_partial: requirementsPartial,
+        requirements_missing: requirementsMissing,
+        coverage_percentage: coveragePercentage
+      })
+    }
+
+    return {
+      frameworks_addressed: frameworksAddressed,
+      export_formats_available: ['pdf', 'json', 'fda_ectd']
+    }
+  } catch (error) {
+    console.error('Error generating regulatory compliance:', error)
+    // Return empty compliance on error
+    return {
+      frameworks_addressed: [],
+      export_formats_available: ['pdf', 'json']
+    }
+  }
+}
+
 interface ProofBundleRequest {
   enterpriseId: string
   workspaceId?: string
@@ -261,7 +380,14 @@ serve(async (req) => {
       }
     }
 
-    // 8. Generate content hash
+    // 8. Generate regulatory compliance metadata
+    const regulatoryCompliance = await generateRegulatoryCompliance(
+      supabase,
+      enterpriseId,
+      bundleContent
+    )
+
+    // 9. Generate content hash
     const encoder = new TextEncoder()
     const bundleBytes = encoder.encode(JSON.stringify(bundleContent))
     const hashBuffer = await crypto.subtle.digest('SHA-256', bundleBytes)
@@ -269,7 +395,7 @@ serve(async (req) => {
       .map(b => b.toString(16).padStart(2, '0'))
       .join('')
 
-    // 9. Store the proof bundle
+    // 10. Store the proof bundle
     const { data: proofBundle, error: bundleError } = await supabase
       .from('proof_bundles')
       .insert({
@@ -286,6 +412,7 @@ serve(async (req) => {
         },
         atom_states_snapshot: bundleContent,
         decision: null, // Set based on content analysis if needed
+        regulatory_compliance: regulatoryCompliance,
         created_by: requestedBy,
         created_at: new Date().toISOString()
       })
@@ -392,6 +519,10 @@ serve(async (req) => {
     })
   }
 })
+
+
+
+
 
 
 

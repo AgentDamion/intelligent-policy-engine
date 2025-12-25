@@ -14,6 +14,25 @@ import { supabase } from '../../lib/supabase'
 export type ProofBundleStatus = 'draft' | 'verified' | 'blocked' | 'pending_verification'
 export type DecisionType = 'approved' | 'rejected' | 'escalated' | 'auto_cleared' | 'needs_review'
 
+export interface RegulatoryCompliance {
+  frameworks_addressed: Array<{
+    framework_id: string
+    framework_name: string
+    requirements_met: string[]
+    requirements_partial: string[]
+    requirements_missing: string[]
+    coverage_percentage: number
+  }>
+  export_formats_available: string[]
+  disclosure_attestations?: Array<{
+    framework_id: string
+    requirement_id: string
+    attested: boolean
+    attested_at: string
+    attested_by?: string
+  }>
+}
+
 export interface ProofBundle {
   id: string
   enterpriseId: string
@@ -24,6 +43,54 @@ export interface ProofBundle {
   decision: DecisionType | null
   draftDecision?: string
   draftReasoning?: string
+  
+  // Rationale fields for audit compliance
+  rationaleHuman?: string | null  // ≤140 char human-readable justification
+  rationaleStructured?: {
+    policy_id: string
+    policy_version: string
+    rule_matched: string
+    inputs: {
+      tool: string
+      tool_version?: string
+      dataset_class: string
+      request_type: string
+    }
+    actor: {
+      type: 'human' | 'automated' | 'hybrid'
+      name?: string
+      id?: string
+      role?: string
+    }
+    confidence_score?: number
+    secondary_rules?: string[]
+    timestamp: string
+  } | null
+  
+  // Justification object (alternative format from evidence-compile)
+  justification?: {
+    human_readable: string
+    structured: {
+      policy_id: string
+      policy_version: string
+      rule_matched: string
+      inputs: {
+        tool: string
+        tool_version?: string
+        dataset_class: string
+        request_type: string
+      }
+      actor: {
+        type: 'human' | 'automated' | 'hybrid'
+        name?: string
+        id?: string
+        role?: string
+      }
+      confidence_score?: number
+      secondary_rules?: string[]
+      timestamp: string
+    }
+  }
   
   // Status
   status: ProofBundleStatus
@@ -73,6 +140,9 @@ export interface ProofBundle {
   // Certificate
   certificateUrl?: string
   qrCodeData?: string
+  
+  // Regulatory Compliance
+  regulatoryCompliance?: RegulatoryCompliance
 }
 
 export interface ProofBundleListItem {
@@ -468,7 +538,9 @@ function mapToProofBundle(data: any): ProofBundle {
     createdAt: new Date(data.created_at),
     updatedAt: new Date(data.created_at), // Table doesn't have updated_at
     certificateUrl: undefined,
-    qrCodeData: undefined
+    qrCodeData: undefined,
+    // Regulatory Compliance
+    regulatoryCompliance: data.regulatory_compliance || undefined
   }
 }
 

@@ -1,12 +1,15 @@
-﻿import React, { useState } from 'react'
+﻿import React, { useEffect, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useEnterprise } from '../contexts/EnterpriseContext'
 import { supabase } from '../lib/supabase'
 import { useLocation, useNavigate } from 'react-router-dom'
 import {
   CheckCircle,
-  Loader2
+  Loader2,
+  ArrowRight,
+  ArrowLeft
 } from 'lucide-react'
+import RegulatoryFrameworkSelector from '../components/onboarding/RegulatoryFrameworkSelector'
 
 interface OnboardingData {
   enterpriseName: string
@@ -36,6 +39,9 @@ const OnboardingPage: React.FC = () => {
   
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [step, setStep] = useState<'basic' | 'frameworks'>('basic')
+  const [createdEnterpriseId, setCreatedEnterpriseId] = useState<string | null>(null)
+  const [selectedFrameworkIds, setSelectedFrameworkIds] = useState<string[]>([])
   const [onboardingData, setOnboardingData] = useState<OnboardingData>({
     enterpriseName: '',
     enterpriseType: 'agency',
@@ -114,9 +120,10 @@ const OnboardingPage: React.FC = () => {
 
       // Update context
       setCurrentEnterprise(enterprise)
+      setCreatedEnterpriseId(enterprise.id)
 
-      // Navigate to dashboard
-      navigate(redirectTo || '/dashboard', { replace: true })
+      // Move to framework selection step
+      setStep('frameworks')
 
     } catch (error: any) {
       console.error('Onboarding error:', error)
@@ -126,7 +133,87 @@ const OnboardingPage: React.FC = () => {
     }
   }
 
-  // Basic step components and render logic will be added next...
+  const handleFrameworkSelection = async () => {
+    if (!createdEnterpriseId || selectedFrameworkIds.length === 0) {
+      return
+    }
+
+    try {
+      setLoading(true)
+      setError(null)
+
+      // Save framework selections
+      const token = localStorage.getItem('token') || ''
+      const response = await fetch(`/api/organizations/${createdEnterpriseId}/frameworks`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          framework_ids: selectedFrameworkIds
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to save framework selections')
+      }
+
+      // Navigate to dashboard
+      navigate(redirectTo || '/dashboard', { replace: true })
+    } catch (error: any) {
+      console.error('Framework selection error:', error)
+      setError(error.message || 'Failed to save framework selections')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSkipFrameworks = () => {
+    // Allow skipping framework selection
+    navigate(redirectTo || '/dashboard', { replace: true })
+  }
+
+  if (step === 'frameworks' && createdEnterpriseId) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+        <div className="sm:mx-auto sm:w-full sm:max-w-4xl">
+          <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+            {error && (
+              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
+
+            <RegulatoryFrameworkSelector
+              organizationId={createdEnterpriseId}
+              selectedFrameworkIds={selectedFrameworkIds}
+              onSelectionChange={setSelectedFrameworkIds}
+              onContinue={handleFrameworkSelection}
+            />
+
+            <div className="mt-6 flex justify-between items-center pt-4 border-t border-slate-200">
+              <button
+                onClick={handleSkipFrameworks}
+                className="text-sm text-slate-600 hover:text-slate-900"
+              >
+                Skip for now
+              </button>
+              <button
+                onClick={() => setStep('basic')}
+                className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-2xl">
