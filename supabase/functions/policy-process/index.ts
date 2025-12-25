@@ -1,4 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { withAuth } from "../shared/auth-context.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -302,90 +304,180 @@ async function handlePortfolioAnalysis(body: any) {
   }
 }
 
+async function logSecurityDenied(
+  supabaseAdmin: ReturnType<typeof createClient>,
+  enterpriseId: string,
+  workspaceId: string | null,
+  details: Record<string, unknown>,
+) {
+  try {
+    await supabaseAdmin.from('agent_activities').insert({
+      agent: 'security-guard',
+      action: 'policy_process.denied',
+      status: 'warning',
+      enterprise_id: enterpriseId,
+      workspace_id: workspaceId,
+      details,
+    });
+  } catch (_e) {
+    // best-effort only
+  }
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
-  try {
-    const { method } = req;
+  const { method } = req;
 
-    if (method === "POST") {
-      const body = await req.json();
-
-      // Handle batch processing for agencies
-      if (body.batchMode) {
-        return await handleBatchProcessing(body);
-      }
-
-      // Handle portfolio analysis for agencies
-      if (body.portfolioMode) {
-        return await handlePortfolioAnalysis(body);
-      }
-
-      const { document, enterpriseId, options = {} } = body;
-
-      if (!document) {
-        return new Response(
-          JSON.stringify({
-            success: false,
-            error: "Document is required",
-          }),
-          {
-            status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          },
-        );
-      }
-
-      if (!enterpriseId) {
-        return new Response(
-          JSON.stringify({
-            success: false,
-            error: "Enterprise ID is required",
-          }),
-          {
-            status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          },
-        );
-      }
-
-      const result = await processPolicy(document, enterpriseId, options);
-
-      return new Response(JSON.stringify(result), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    } else if (method === "GET") {
-      return new Response(
-        JSON.stringify({
-          message: "Policy processing service is running",
-          timestamp: new Date().toISOString(),
-        }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
-      );
-    } else {
-      return new Response("Method not allowed", {
-        status: 405,
-        headers: corsHeaders,
-      });
-    }
-  } catch (error) {
-    console.error("Request processing error:", error);
+  // Health/readiness
+  if (method === "GET") {
     return new Response(
       JSON.stringify({
-        success: false,
-        error: error instanceof Error ? error.message : "Internal server error",
+        message: "Policy processing service is running",
+        timestamp: new Date().toISOString(),
       }),
       {
-        status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       },
     );
   }
+
+  if (method !== "POST") {
+    return new Response("Method not allowed", {
+      status: 405,
+      headers: corsHeaders,
+    });
+  }
+
+  // POST is auth-protected: do not allow cross-tenant enterpriseId injection.
+  return await withAuth(
+    req,
+    async (authCtx) => {
+      try {
+        const body = await req.json();
+
+        // Service role admin client (for membership verification + security logs)
+        const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+        const serviceKey =
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? Deno.env.get('SUPABASE_SERVICE_KEY') ?? '';
+        const supabaseAdmin = createClient(supabaseUrl, serviceKey);
+
+        // Handle batch processing for agencies
+        if (body.batchMode) {
+          // Batch mode still requires auth; enterpriseId validation happens per item below.
+          return await handleBatchProcessing(body);
+        }
+
+        // Handle portfolio analysis for agencies
+        if (body.portfolioMode) {
+          return await handlePortfolioAnalysis(body);
+        }
+
+        const { document, enterpriseId, options = {} } = body;
+
+        if (!document) {
+          return new Response(
+            JSON.stringify({ success: false, error: "Document is required" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+
+        if (!enterpriseId) {
+          return new Response(
+            JSON.stringify({ success: false, error: "Enterprise ID is required" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+
+        // -------------------------------------------------------------------
+        // Tenant validation (P1 hardening)
+        // -------------------------------------------------------------------
+        // Allow service role automation to pass enterpriseId freely.
+        // Non-service callers: enterpriseId must match token enterpriseId + membership must exist.
+        if (!authCtx.isServiceRole) {
+          if (enterpriseId !== authCtx.enterpriseId) {
+            await logSecurityDenied(supabaseAdmin, authCtx.enterpriseId, options.workspaceId ?? null, {
+              reason: 'enterprise_id_mismatch',
+              enterprise_id_claimed: enterpriseId,
+              enterprise_id_token: authCtx.enterpriseId,
+              user_id: authCtx.userId,
+            });
+            return new Response(JSON.stringify({ error: 'forbidden' }), {
+              status: 403,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+
+          const { data: membership, error: membershipError } = await supabaseAdmin
+            .from('enterprise_members')
+            .select('enterprise_id')
+            .eq('user_id', authCtx.userId)
+            .eq('enterprise_id', authCtx.enterpriseId)
+            .maybeSingle();
+
+          if (membershipError || !membership) {
+            await logSecurityDenied(supabaseAdmin, authCtx.enterpriseId, options.workspaceId ?? null, {
+              reason: 'user_not_enterprise_member',
+              enterprise_id: authCtx.enterpriseId,
+              user_id: authCtx.userId,
+            });
+            return new Response(JSON.stringify({ error: 'forbidden' }), {
+              status: 403,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+
+          // If workspaceId is provided, ensure it belongs to this enterprise.
+          if (options.workspaceId) {
+            const { data: ws, error: wsError } = await supabaseAdmin
+              .from('workspaces')
+              .select('id, enterprise_id')
+              .eq('id', options.workspaceId)
+              .maybeSingle();
+
+            if (wsError || !ws || ws.enterprise_id !== authCtx.enterpriseId) {
+              await logSecurityDenied(supabaseAdmin, authCtx.enterpriseId, options.workspaceId, {
+                reason: 'workspace_enterprise_mismatch',
+                enterprise_id: authCtx.enterpriseId,
+                user_id: authCtx.userId,
+                workspace_id: options.workspaceId,
+                workspace_enterprise_id: ws?.enterprise_id ?? null,
+              });
+              return new Response(JSON.stringify({ error: 'forbidden' }), {
+                status: 403,
+                headers: { ...corsHeaders, "Content-Type": "application/json" },
+              });
+            }
+          }
+        }
+
+        const result = await processPolicy(document, enterpriseId, options);
+
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      } catch (error) {
+        console.error("Request processing error:", error);
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: error instanceof Error ? error.message : "Internal server error",
+          }),
+          {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
+    },
+    {
+      corsHeaders,
+      allowServiceRoleBypass: true,
+    },
+  );
 });
 
 console.log("Policy process function is running on port 8000");

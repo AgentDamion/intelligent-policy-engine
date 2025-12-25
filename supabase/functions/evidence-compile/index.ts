@@ -120,6 +120,8 @@ async function compileProofBundle(
   
   // 3. Fetch policy rules that were applied
   try {
+    // In this project's schema, runtime_bindings does NOT have tool_id/tool_version_id.
+    // Bindings are keyed by policy_instance_id, and tool version lives at policy_instances.tool_version_id.
     const { data: policyBindings } = await supabaseClient
       .from('runtime_bindings')
       .select(`
@@ -127,14 +129,16 @@ async function compileProofBundle(
         effective_pom,
         policy_instances!inner(
           id,
+          tool_version_id,
           policy_template_id,
           version,
           status
         )
       `)
-      .eq('tool_version_id', event.tool_id)
       .eq('workspace_id', event.workspace_id)
       .eq('status', 'active')
+      // evidence-compile receives tool_id (registry id) not tool_version_id, so we *cannot*
+      // filter precisely here without an additional lookup. We keep it workspace-scoped.
       .limit(5);
     
     if (policyBindings && policyBindings.length > 0) {
