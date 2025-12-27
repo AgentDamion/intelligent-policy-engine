@@ -10,6 +10,8 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner'
 export default function ComplianceMappingPage() {
   const [loading, setLoading] = useState(true)
   const [complianceStatus, setComplianceStatus] = useState<OrganizationComplianceStatus | null>(null)
+  const [selectedPolicy, setSelectedPolicy] = useState<string | null>(null)
+  const [policyMapping, setPolicyMapping] = useState<PolicyFrameworkMapping | null>(null)
 
   useEffect(() => {
     setLoading(false) // Stub for now
@@ -220,4 +222,3 @@ export default function ComplianceMappingPage() {
     </div>
   )
 }
-
