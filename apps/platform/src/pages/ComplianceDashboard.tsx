@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { RefreshCw, Download, AlertTriangle, CheckCircle, AlertCircle, TrendingUp } from 'lucide-react'
 import { SurfaceLayout } from '@/components/SurfaceLayout'
@@ -43,11 +43,9 @@ interface ComplianceData {
 
 export default function ComplianceDashboard() {
   const { workspaceId } = useParams<{ workspaceId: string }>()
-  const { currentEnterprise } = useEnterprise()
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [complianceData, setComplianceData] = useState<ComplianceData | null>(null)
-  const [selectedFramework, setSelectedFramework] = useState<string | null>(null)
 
   useEffect(() => {
     if (workspaceId) {

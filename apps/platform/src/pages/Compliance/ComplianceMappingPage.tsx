@@ -51,7 +51,6 @@ export default function ComplianceMappingPage() {
     if (!selectedPolicy || !currentEnterprise?.id) return
     
     try {
-      const mapping = await getPolicyFrameworkMapping(selectedPolicy)
       // Find the policy in compliance status
       const policy = complianceStatus?.policy_mappings.find(p => p.policy_id === selectedPolicy)
       if (policy) {

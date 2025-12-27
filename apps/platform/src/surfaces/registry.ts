@@ -5,7 +5,7 @@
  * Defines the "Surface Contract" for VERA handoffs and UI guardrails.
  */
 
-export type SurfaceNoun = 'mission' | 'inbox' | 'decisions' | 'forge' | 'proof' | 'lab';
+export type SurfaceNoun = 'mission' | 'inbox' | 'decisions' | 'forge' | 'proof' | 'lab' | 'compliance';
 
 export type GuardrailTone = 'info' | 'warning' | 'success' | 'neutral'
 
@@ -91,6 +91,17 @@ export const SURFACE_REGISTRY: Record<SurfaceNoun, SurfaceDefinition> = {
     allowedActions: ['run_replay', 'run_simulation', 'compare_impact'],
     ownedActions: [],
     forbiddenActions: ['change_production_state'],
+    stepUpAuthActions: []
+  },
+  compliance: {
+    id: 'compliance',
+    label: 'Compliance Center',
+    subtitle: 'Regulatory compliance tracking and reporting',
+    guardrail: { label: 'Guardrails: view only', tone: 'neutral' },
+    basePath: '/compliance',
+    allowedActions: ['view_compliance', 'generate_reports'],
+    ownedActions: [],
+    forbiddenActions: ['modify_compliance_data'],
     stepUpAuthActions: []
   }
 };

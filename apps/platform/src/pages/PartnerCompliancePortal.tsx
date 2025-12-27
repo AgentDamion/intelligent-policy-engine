@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { FileText, CheckCircle, AlertCircle, Upload, Download } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Upload } from 'lucide-react'
 import { SurfaceLayout } from '@/components/SurfaceLayout'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { Button } from '@/components/ui/button'

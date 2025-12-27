@@ -1,4 +1,3 @@
-import React from 'react'
 import { AlertTriangle, CheckCircle2, Clock, Download, RefreshCw, TrendingUp } from 'lucide-react'
 import { useEnterprise } from '../../contexts/EnterpriseContext'
 import { useVERADashboard } from '../../hooks/useVERADashboard'
