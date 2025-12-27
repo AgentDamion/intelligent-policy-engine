@@ -35,7 +35,6 @@ import toast from 'react-hot-toast'
 
 interface PolicyVersionHistoryProps {
   policyId: string
-  onClose?: () => void
 }
 
 // =============================================================================
@@ -362,7 +361,7 @@ function ComparisonMode({
 // Main PolicyVersionHistory Component
 // =============================================================================
 
-export function PolicyVersionHistory({ policyId, onClose }: PolicyVersionHistoryProps) {
+export function PolicyVersionHistory({ policyId }: PolicyVersionHistoryProps) {
   const [versions, setVersions] = useState<PolicyVersion[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedVersion, setSelectedVersion] = useState<PolicyVersion | null>(null)

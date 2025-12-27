@@ -242,7 +242,6 @@ const DecisionDialog = memo(({ isOpen, onClose, actionType, thread, onConfirm }:
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showSignature, setShowSignature] = useState(false)
   const [signatureToken, setSignatureToken] = useState('')
-  const { canMakeFinalDecision } = useSurface()
   const { canPerformAction, currentSurfaceId } = useSurfaceGuard()
   const { user } = useAuth()
 

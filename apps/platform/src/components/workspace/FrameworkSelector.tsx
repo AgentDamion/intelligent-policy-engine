@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react'
-import { Search, Check, Globe, Building2, Calendar, AlertCircle, ChevronDown, ChevronUp, Settings } from 'lucide-react'
+import { useState, useEffect, useMemo } from 'react'
+import { Search, Check, Calendar, AlertCircle, ChevronDown, ChevronUp, Settings } from 'lucide-react'
 import { Input } from '../ui/Input'
-import { Button } from '../ui/button'
 import LoadingSpinner from '../ui/LoadingSpinner'
 import { supabase } from '@/lib/supabase'
 
@@ -34,14 +33,12 @@ export interface FrameworkConfig {
 }
 
 interface FrameworkSelectorProps {
-  workspaceId: string
   selectedFrameworks: FrameworkSelection[]
   onSelectionChange: (frameworks: FrameworkSelection[]) => void
   className?: string
 }
 
 export default function FrameworkSelector({
-  workspaceId,
   selectedFrameworks,
   onSelectionChange,
   className = ''
