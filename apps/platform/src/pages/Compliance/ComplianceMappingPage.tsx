@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react'
 import {
-  getOrganizationComplianceStatus,
-  identifyComplianceGaps,
   type OrganizationComplianceStatus,
   type PolicyFrameworkMapping,
   type ComplianceGap
@@ -10,81 +8,12 @@ import { AlertCircle, CheckCircle, XCircle, TrendingUp, Shield, FileText } from 
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
 
 export default function ComplianceMappingPage() {
-  const [complianceStatus, setComplianceStatus] = useState<OrganizationComplianceStatus | null>(null)
-  const [selectedPolicy, setSelectedPolicy] = useState<string | null>(null)
-  const [policyMapping, setPolicyMapping] = useState<PolicyFrameworkMapping | null>(null)
-  const [gaps, setGaps] = useState<ComplianceGap[]>([])
   const [loading, setLoading] = useState(true)
-  const [loadingGaps, setLoadingGaps] = useState(false)
 
   useEffect(() => {
-    // TODO: Get enterprise ID from route params or context
-    // if (currentEnterprise?.id) {
-    //   loadComplianceStatus()
-    // }
     setLoading(false) // Stub for now
   }, [])
 
-  useEffect(() => {
-    // TODO: Get enterprise ID from route params or context
-    // if (selectedPolicy && currentEnterprise?.id) {
-    //   loadPolicyMapping()
-    //   loadGaps()
-    // }
-  }, [selectedPolicy])
-
-  const loadComplianceStatus = async () => {
-    // TODO: Implement with enterprise ID from route params
-    // if (!currentEnterprise?.id) return
-
-    // try {
-    //   setLoading(true)
-    //   const status = await getOrganizationComplianceStatus(currentEnterprise.id)
-    //   setComplianceStatus(status)
-    // } catch (error) {
-    //   console.error('Error loading compliance status:', error)
-    // } finally {
-    //   setLoading(false)
-    // }
-  }
-
-  const loadPolicyMapping = async () => {
-    // TODO: Implement with enterprise ID from route params
-    // if (!selectedPolicy || !currentEnterprise?.id) return
-
-    // try {
-    //   // Find the policy in compliance status
-    //   const policy = complianceStatus?.policy_mappings.find(p => p.policy_id === selectedPolicy)
-    //   if (policy) {
-    //     setPolicyMapping(policy)
-    //   }
-    // } catch (error) {
-    //   console.error('Error loading policy mapping:', error)
-    // }
-  }
-
-  const loadGaps = async () => {
-    // TODO: Implement with enterprise ID from route params
-    // if (!selectedPolicy || !currentEnterprise?.id) return
-
-    // try {
-    //   setLoadingGaps(true)
-    //   const allGaps: ComplianceGap[] = []
-
-    //   if (complianceStatus) {
-    //     for (const framework of complianceStatus.selected_frameworks) {
-    //       const frameworkGaps = await identifyComplianceGaps(selectedPolicy, framework.framework_id)
-    //       allGaps.push(...frameworkGaps)
-    //     }
-    //   }
-
-    //   setGaps(allGaps)
-    // } catch (error) {
-    //   console.error('Error loading gaps:', error)
-    // } finally {
-    //   setLoadingGaps(false)
-    // }
-  }
 
   const getCoverageColor = (percentage: number) => {
     if (percentage >= 80) return 'text-green-600 bg-green-50 border-green-200'
