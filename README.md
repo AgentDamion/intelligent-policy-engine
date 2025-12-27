@@ -78,6 +78,64 @@ The application will be available at `http://localhost:3000`
 
 ## 🏗️ Project Structure
 
+## AICOMPLYR Proof Bundles (Dev-only, filesystem + ngrok CI)
+
+This repo includes a minimal **proof bundle receiver** that stores incoming proof bundles on disk under `proof_bundles/`.
+
+### Local run
+
+- Generate a CI/dev API key:
+
+```bash
+python scripts/aicomplyr_keygen.py
+```
+
+- Install the minimal Python deps (server + uploader):
+
+```bash
+python -m pip install -r requirements-proof-bundles.txt
+```
+
+- Start the server (in one terminal):
+
+```bash
+python -m uvicorn aicomplyr_server:app --host 127.0.0.1 --port 8000
+```
+
+- Configure allowed keys (example):
+
+```bash
+# comma-separated allowlist (PowerShell)
+$env:AICOMPLYR_API_KEYS="DEV_MODE_TEST_KEY_001,<paste-generated-key-here>"
+
+# (cmd.exe)
+# set AICOMPLYR_API_KEYS=DEV_MODE_TEST_KEY_001,<paste-generated-key-here>
+```
+
+- Upload a proof bundle (in another terminal):
+
+```bash
+# PowerShell
+$env:AICOMPLYR_API_KEY="<paste-one-allowed-key-here>"
+$env:TASK_ID="TEST-001"
+python scripts/aicomplyr_upload.py
+```
+
+- Expose via ngrok (in another terminal):
+
+```bash
+ngrok http 8000
+```
+
+### GitHub Actions secrets
+
+To let CI upload proof bundles to your local server via ngrok, add these secrets:
+
+- `AICOMPLYR_API_URL`: your ngrok https URL + `/v1/proof-bundles`
+- `AICOMPLYR_API_KEY`: one key from your `AICOMPLYR_API_KEYS` allowlist
+
+Note: The workflow will **skip uploading** if `AICOMPLYR_API_URL` is not set.
+
 ```
 src/
 ├── components/          # Reusable UI components

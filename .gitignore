@@ -48,6 +48,10 @@ __pycache__/
 .venv/
 venv/
 
+# AICOMPLYR local proof bundle receiver (runtime data)
+proof_bundles/
+uploads/
+
 # Database
 *.db
 *.sqlite

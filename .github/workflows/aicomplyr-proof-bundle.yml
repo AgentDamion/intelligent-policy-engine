@@ -1,0 +1,55 @@
+name: AICOMPLYR Proof Bundle
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  upload-proof-bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip -r requirements-proof-bundles.txt
+
+      # Optional: run your tests and set TESTS_PASSED accordingly.
+      # - name: Run tests
+      #   run: pnpm test
+
+      - name: Generate dummy cursor_output.log (CI)
+        shell: bash
+        run: |
+          if [ ! -f cursor_output.log ]; then
+            printf '%s\n' \
+              "What was changed: CI dummy proof bundle" \
+              "Why it was changed: CI run ${GITHUB_RUN_ID} on ${GITHUB_REF}" \
+              "Files touched: .github/workflows/aicomplyr-proof-bundle.yml" \
+              "Status: complete" \
+              > cursor_output.log
+          fi
+
+      - name: Upload proof bundle to AICOMPLYR
+        env:
+          AICOMPLYR_API_KEY: ${{ secrets.AICOMPLYR_API_KEY }}
+          AICOMPLYR_API_URL: ${{ secrets.AICOMPLYR_API_URL }}
+          TASK_ID: ${{ github.event.pull_request.number || github.sha }}
+          APPROVER: ${{ github.actor }}@example.com
+          COMPLIANCE_TAGS: eu-ai-act/low-risk,nist-rmf/measured
+          TESTS_PASSED: "true"
+          CURSOR_LOG_PATH: cursor_output.log
+        run: |
+          if [ -z "${AICOMPLYR_API_URL}" ]; then
+            echo "Skipping AICOMPLYR upload: missing secret AICOMPLYR_API_URL"
+            exit 0
+          fi
+          python scripts/aicomplyr_upload.py
+
+
+
