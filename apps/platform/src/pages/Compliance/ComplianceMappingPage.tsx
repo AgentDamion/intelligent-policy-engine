@@ -1,19 +1,9 @@
-import { useState, useEffect } from 'react'
-import {
-  type OrganizationComplianceStatus,
-  type PolicyFrameworkMapping,
-  type ComplianceGap
-} from '../../services/complianceMappingService'
+import { useState } from 'react'
 import { AlertCircle, CheckCircle, XCircle, TrendingUp, Shield, FileText } from 'lucide-react'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
 
 export default function ComplianceMappingPage() {
   const [loading, setLoading] = useState(true)
-  const [complianceStatus, setComplianceStatus] = useState<OrganizationComplianceStatus | null>(null)
-  const [selectedPolicy, setSelectedPolicy] = useState<string | null>(null)
-  const [policyMapping, setPolicyMapping] = useState<PolicyFrameworkMapping | null>(null)
-  const [gaps, setGaps] = useState<ComplianceGap[]>([])
-  const [loadingGaps, setLoadingGaps] = useState(false)
 
   useEffect(() => {
     setLoading(false) // Stub for now
@@ -26,18 +16,6 @@ export default function ComplianceMappingPage() {
     return 'text-red-600 bg-red-50 border-red-200'
   }
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'critical':
-        return 'text-red-700 bg-red-100'
-      case 'high':
-        return 'text-orange-700 bg-orange-100'
-      case 'medium':
-        return 'text-yellow-700 bg-yellow-100'
-      default:
-        return 'text-gray-700 bg-gray-100'
-    }
-  }
 
   if (loading) {
     return (
