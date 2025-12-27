@@ -9,6 +9,7 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner'
 
 export default function ComplianceMappingPage() {
   const [loading, setLoading] = useState(true)
+  const [complianceStatus, setComplianceStatus] = useState<OrganizationComplianceStatus | null>(null)
 
   useEffect(() => {
     setLoading(false) // Stub for now
