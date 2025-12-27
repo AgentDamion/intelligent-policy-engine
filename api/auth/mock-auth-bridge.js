@@ -1,9 +1,9 @@
 // Mock Authentication Hub Bridge for Testing
 // This provides working endpoints without requiring database setup
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const jwt = require('jsonwebtoken');
+import jwt from 'jsonwebtoken';
 
 // Mock data store (replace with database later)
 const mockUsers = new Map();
@@ -265,4 +265,4 @@ router.get('/debug/mock-data', (req, res) => {
 
 console.log('[MOCK AUTH] Mock Authentication Bridge loaded - no database required');
 
-module.exports = router;
+export default router;

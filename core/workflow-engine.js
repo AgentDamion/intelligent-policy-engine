@@ -1,5 +1,5 @@
-const EventBus = require('./event-bus');
-const agentRegistry = require('../agents/agent-registry');
+import EventBus from './event-bus.js';
+import agentRegistry from '../agents/agent-registry.js';
 
 class WorkflowEngine {
   constructor(registry = agentRegistry) {
@@ -232,4 +232,4 @@ class WorkflowEngine {
   }
 }
 
-module.exports = new WorkflowEngine(agentRegistry); 
+export default new WorkflowEngine(agentRegistry); 

@@ -25,7 +25,6 @@ import {
   Copy,
   Download,
   QrCode,
-  RefreshCw,
   Loader2,
   Eye,
   Lock,
@@ -313,6 +312,59 @@ export function ProofBundleViewer({
             </div>
             {bundle.draftReasoning && (
               <p className="text-sm text-slate-600 mt-2">{bundle.draftReasoning}</p>
+            )}
+          </div>
+        )}
+
+        {/* Justification Section - Audit Compliance */}
+        {(bundle.rationaleHuman || bundle.justification?.human_readable) && (
+          <div className="p-4 rounded-xl bg-slate-900 text-white border border-slate-800">
+            <div className="flex items-center gap-2 mb-3">
+              <Fingerprint className="w-4 h-4 text-indigo-400" />
+              <span className="text-sm font-bold text-indigo-400 uppercase tracking-wider">
+                Decision Justification
+              </span>
+            </div>
+            
+            {/* Human-readable rationale - prominently displayed */}
+            <div className="px-3 py-2 bg-slate-800 rounded-lg font-mono text-sm text-slate-200 mb-3">
+              {bundle.rationaleHuman || bundle.justification?.human_readable}
+            </div>
+            
+            {/* Structured rationale details */}
+            {(bundle.rationaleStructured || bundle.justification?.structured) && (
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                <div>
+                  <span className="text-slate-400">Policy:</span>
+                  <span className="ml-2 font-medium">
+                    {(bundle.rationaleStructured || bundle.justification?.structured)?.policy_id}
+                    {' v'}
+                    {(bundle.rationaleStructured || bundle.justification?.structured)?.policy_version}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-slate-400">Rule:</span>
+                  <span className="ml-2 font-medium truncate" title={(bundle.rationaleStructured || bundle.justification?.structured)?.rule_matched}>
+                    {(bundle.rationaleStructured || bundle.justification?.structured)?.rule_matched}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-slate-400">Confidence:</span>
+                  <span className="ml-2 font-medium">
+                    {((bundle.rationaleStructured || bundle.justification?.structured)?.confidence_score !== undefined) 
+                      ? `${Math.round(((bundle.rationaleStructured || bundle.justification?.structured)?.confidence_score || 0) * 100)}%`
+                      : 'N/A'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-slate-400">Actor:</span>
+                  <span className="ml-2 font-medium">
+                    {(bundle.rationaleStructured || bundle.justification?.structured)?.actor?.name || 
+                     (bundle.rationaleStructured || bundle.justification?.structured)?.actor?.type || 
+                     'automated'}
+                  </span>
+                </div>
+              </div>
             )}
           </div>
         )}

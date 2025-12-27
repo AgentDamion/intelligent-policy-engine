@@ -422,73 +422,102 @@ serve(async (req) => {
     }
 
     // Log user activity
-    const { data: userActivity, error: activityError } = await supabase
-      .from('agent_activities')
-      .insert({
-        agent: isAgentRequest ? agentName : 'user',
-        action: isAgentRequest ? action : 'question_asked',
-        status: 'complete',
-        details: {
-          reasoning: isAgentRequest ? undefined : query,
-          input: isAgentRequest ? input : undefined,
-          result: isAgentRequest ? result : undefined,
-          context: {
-            threadId: context?.threadId,
-            policySnapshotId: context?.policySnapshotId,
-            policy_snapshot_id: context?.policySnapshotId,
-            userId: user.id,
-            userEmail: user.email,
-            mode: isAgentRequest ? 'agent-based' : 'legacy-query'
+    let userActivity: any = null;
+    try {
+      const { data, error: activityError } = await supabase
+        .from('agent_activities')
+        .insert({
+          agent: isAgentRequest ? agentName : 'user',
+          action: isAgentRequest ? action : 'question_asked',
+          status: 'complete',
+          details: {
+            reasoning: isAgentRequest ? undefined : query,
+            input: isAgentRequest ? input : undefined,
+            result: isAgentRequest ? result : undefined,
+            context: {
+              threadId: context?.threadId,
+              policySnapshotId: context?.policySnapshotId,
+              policy_snapshot_id: context?.policySnapshotId,
+              userId: user.id,
+              userEmail: user.email,
+              mode: isAgentRequest ? 'agent-based' : 'legacy-query'
+            },
+            metadata: {
+              processing_time_ms: processingTimeMs,
+              timestamp: new Date().toISOString(),
+            }
           },
-          metadata: {
-            processing_time_ms: processingTimeMs,
-            timestamp: new Date().toISOString(),
-          }
-        },
-        workspace_id: workspaceId,
-        enterprise_id: enterpriseId,
-      })
-      .select()
-      .single();
+          workspace_id: workspaceId,
+          enterprise_id: enterpriseId,
+        })
+        .select();
 
-    if (activityError) {
-      console.error('Error creating activity:', activityError);
+      if (activityError) {
+        console.error('Error creating activity:', JSON.stringify(activityError, null, 2));
+        console.error('Error details:', {
+          message: activityError.message,
+          code: activityError.code,
+          details: activityError.details,
+          hint: activityError.hint
+        });
+        // Don't throw - continue processing
+      } else if (data && data.length > 0) {
+        userActivity = data[0];
+      } else {
+        console.warn('Activity insert succeeded but returned no data');
+      }
+    } catch (err) {
+      console.error('Exception creating activity:', err);
       // Don't throw - continue processing
     }
 
     // Create agent activity record for agent response
-    const { data: agentActivity, error: agentResponseError } = await supabase
-      .from('agent_activities')
-      .insert({
-        agent: 'cursor_ai',
-        action: 'question_answered',
-        status: 'complete',
-        details: {
-          reasoning: agentResponse,
-          context: {
-            threadId: context?.threadId,
-            policySnapshotId: context?.policySnapshotId,
-            policy_snapshot_id: context?.policySnapshotId,
-            inResponseTo: userActivity.id,
+    let agentActivity: any = null;
+    try {
+      const { data, error: agentResponseError } = await supabase
+        .from('agent_activities')
+        .insert({
+          agent: 'cursor_ai',
+          action: 'question_answered',
+          status: 'complete',
+          details: {
+            reasoning: agentResponse,
+            context: {
+              threadId: context?.threadId,
+              policySnapshotId: context?.policySnapshotId,
+              policy_snapshot_id: context?.policySnapshotId,
+              inResponseTo: userActivity?.id,
+            },
+            metadata: {
+              response_length: agentResponse.length,
+              processing_time_ms: 100,
+              timestamp: new Date().toISOString(),
+            }
           },
-          metadata: {
-            response_length: agentResponse.length,
-            processing_time_ms: 100,
-            timestamp: new Date().toISOString(),
-          }
-        },
-        workspace_id: workspaceId,
-        enterprise_id: enterpriseId,
-      })
-      .select()
-      .single();
+          workspace_id: workspaceId,
+          enterprise_id: enterpriseId,
+        })
+        .select();
 
-    if (agentResponseError) {
-      console.error('Error creating agent response activity:', agentResponseError);
-      throw agentResponseError;
+      if (agentResponseError) {
+        console.error('Error creating agent response activity:', JSON.stringify(agentResponseError, null, 2));
+        console.error('Error details:', {
+          message: agentResponseError.message,
+          code: agentResponseError.code,
+          details: agentResponseError.details,
+          hint: agentResponseError.hint
+        });
+        // Don't throw - logging failure shouldn't break the response
+      } else if (data && data.length > 0) {
+        agentActivity = data[0];
+        console.log('Agent response activity created:', agentActivity.id);
+      } else {
+        console.warn('Agent response activity insert succeeded but returned no data');
+      }
+    } catch (err) {
+      console.error('Exception creating agent response activity:', err);
+      // Don't throw - logging failure shouldn't break the response
     }
-
-    console.log('Agent response activity created:', agentActivity.id);
 
     if (!isAgentRequest && context?.threadId) {
       // Legacy: Write to chat_messages for ACChatWidget

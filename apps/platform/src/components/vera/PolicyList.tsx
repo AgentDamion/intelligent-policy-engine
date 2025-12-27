@@ -297,6 +297,13 @@ export function PolicyList({
 
   // Fetch policies
   const fetchPolicies = useCallback(async () => {
+    // Guard against missing enterpriseId
+    if (!enterpriseId || enterpriseId === 'undefined') {
+      console.warn('[PolicyList] Skipping fetch: enterpriseId is missing or undefined')
+      setLoading(false)
+      return
+    }
+
     try {
       setLoading(true)
       

@@ -1,10 +1,10 @@
 // Dashboard Routes with Caching
 // File: api/routes/dashboards.js
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const dashboardService = require('../services/dashboard-service');
-const hierarchicalAuth = require('../auth/hierarchical-auth');
+import dashboardService from '../services/dashboard-service.js';
+import hierarchicalAuth from '../auth/hierarchical-auth.js';
 
 // All routes require authentication
 router.use(hierarchicalAuth.requireAuth());
@@ -100,5 +100,5 @@ router.get('/compliance/:enterpriseId', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
 

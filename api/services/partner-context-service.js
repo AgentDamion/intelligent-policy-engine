@@ -1,10 +1,10 @@
 // Partner Context Service
 // File: api/services/partner-context-service.js
 
-const db = require('../../database/connection');
-const { getCacheService } = require('./cache-service');
-const relationshipService = require('./relationship-service');
-const contextValidator = require('../auth/context-validator');
+import db from '../../database/connection.js';
+import { getCacheService } from './cache-service.js';
+import relationshipService from './relationship-service.js';
+import contextValidator from '../auth/context-validator.js';
 
 class PartnerContextService {
     constructor() {
@@ -175,5 +175,5 @@ class PartnerContextService {
     }
 }
 
-module.exports = new PartnerContextService();
+export default new PartnerContextService();
 

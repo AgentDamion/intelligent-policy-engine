@@ -1,8 +1,8 @@
 // Dashboard Service with Caching
 // File: api/services/dashboard-service.js
 
-const db = require('../../database/connection');
-const { getCacheService } = require('./cache-service');
+import db from '../../database/connection.js';
+import { getCacheService } from './cache-service.js';
 
 class DashboardService {
     constructor() {
@@ -161,5 +161,5 @@ class DashboardService {
     }
 }
 
-module.exports = new DashboardService();
+export default new DashboardService();
 

@@ -21,6 +21,7 @@ export { ProofBundleList } from './ProofBundleList'
 export { InboxView } from './InboxView'
 export { DecisionsView } from './DecisionsView'
 export { AuditTrailViewer } from './AuditTrailViewer'
+export { DecisionBadge } from './DecisionBadge'
 
 // Policy Studio Components
 export { PolicyList } from './PolicyList'

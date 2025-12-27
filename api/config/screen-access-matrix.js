@@ -320,7 +320,7 @@ function getScreensForContextType(contextType) {
         }));
 }
 
-module.exports = {
+export {
     SCREEN_ACCESS_MATRIX,
     getScreenConfig,
     hasRoleAccess,

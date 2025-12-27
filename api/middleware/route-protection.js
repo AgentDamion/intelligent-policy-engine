@@ -1,8 +1,8 @@
 // Enhanced Route Protection Middleware
 // File: api/middleware/route-protection.js
 
-const hierarchicalAuth = require('../auth/hierarchical-auth');
-const { requireScreenAccess } = require('./screen-access');
+import hierarchicalAuth from '../auth/hierarchical-auth.js';
+import { requireScreenAccess } from './screen-access.js';
 
 /**
  * Enhanced route protection with screen-level checks
@@ -79,10 +79,5 @@ function combineProtection(...middlewares) {
     };
 }
 
-module.exports = {
-    protectRoute,
-    filterRoutesByContext,
-    checkFeatureFlag,
-    combineProtection
-};
+export { protectRoute, filterRoutesByContext, checkFeatureFlag, combineProtection };
 

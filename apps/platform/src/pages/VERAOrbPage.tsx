@@ -1,4 +1,3 @@
-import React from 'react'
 import { VERAOrb } from '../components/vera/VERAOrb'
 
 /**

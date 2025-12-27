@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react'
-import { MessageCircle, Send, Loader2, BookOpen, Shield, HelpCircle, X, Bell, AlertTriangle, CheckCircle, Zap } from 'lucide-react'
+import { Send, Loader2, BookOpen, Shield, HelpCircle, X, AlertTriangle, CheckCircle, Zap } from 'lucide-react'
 import { submitVERAQuery, getPolicyExplanation, getComplianceGuidance, type VERAChatMessage } from '../../services/vera/veraChatService'
 import { useEnterprise } from '../../contexts/EnterpriseContext'
 import { Button } from '../ui/button'

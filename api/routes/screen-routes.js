@@ -1,11 +1,11 @@
 // Screen Routes - All 31 Screens
 // File: api/routes/screen-routes.js
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const { requireScreenAccess } = require('../middleware/screen-access');
-const hierarchicalAuth = require('../auth/hierarchical-auth');
-const { SCREEN_ACCESS_MATRIX } = require('../config/screen-access-matrix');
+import { requireScreenAccess } from '../middleware/screen-access.js';
+import hierarchicalAuth from '../auth/hierarchical-auth.js';
+import { SCREEN_ACCESS_MATRIX } from '../config/screen-access-matrix.js';
 
 // All routes require authentication
 router.use(hierarchicalAuth.requireAuth());
@@ -239,7 +239,7 @@ router.get('/audit/export',
  */
 router.get('/available', async (req, res) => {
     try {
-        const { getScreensForRole, getScreensForContextType } = require('../config/screen-access-matrix');
+        const { getScreensForRole, getScreensForContextType } = await import('../config/screen-access-matrix.js');
         const contextType = req.context.contextType || 'enterprise';
         const role = req.context.role;
 
@@ -264,5 +264,5 @@ router.get('/available', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
 

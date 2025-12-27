@@ -1,9 +1,9 @@
 // Screen Access Middleware
 // File: api/middleware/screen-access.js
 
-const { getScreenConfig, hasRoleAccess, hasContextTypeAccess } = require('../config/screen-access-matrix');
-const relationshipService = require('../services/relationship-service');
-const hierarchicalAuth = require('../auth/hierarchical-auth');
+import { getScreenConfig, hasRoleAccess, hasContextTypeAccess } from '../config/screen-access-matrix.js';
+import relationshipService from '../services/relationship-service.js';
+import hierarchicalAuth from '../auth/hierarchical-auth.js';
 
 /**
  * Middleware factory to require screen access
@@ -149,8 +149,5 @@ async function checkScreenAccess(userId, contextId, screenName) {
     }
 }
 
-module.exports = {
-    requireScreenAccess,
-    checkScreenAccess
-};
+export { requireScreenAccess, checkScreenAccess };
 

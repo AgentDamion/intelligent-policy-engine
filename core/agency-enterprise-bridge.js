@@ -5,8 +5,8 @@
  * between enterprises and agencies with real-time sync capabilities
  */
 
-const pool = require('../database/connection');
-const EventBus = require('./event-bus');
+import pool from '../database/connection.js';
+import EventBus from './event-bus.js';
 
 class AgencyEnterpriseBridge {
   constructor() {
@@ -592,4 +592,4 @@ class AgencyEnterpriseBridge {
   }
 }
 
-module.exports = AgencyEnterpriseBridge; 
+export default AgencyEnterpriseBridge; 

@@ -1,4 +1,4 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 
 // In-memory storage for demo (use database in production)
@@ -361,4 +361,4 @@ router.get('/submissions', (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

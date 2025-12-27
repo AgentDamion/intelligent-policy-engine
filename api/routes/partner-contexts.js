@@ -1,10 +1,10 @@
 // Partner Context Routes
 // File: api/routes/partner-contexts.js
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const partnerContextService = require('../services/partner-context-service');
-const hierarchicalAuth = require('../auth/hierarchical-auth');
+import partnerContextService from '../services/partner-context-service.js';
+import hierarchicalAuth from '../auth/hierarchical-auth.js';
 
 // All routes require authentication
 router.use(hierarchicalAuth.requireAuth());
@@ -112,5 +112,5 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
 

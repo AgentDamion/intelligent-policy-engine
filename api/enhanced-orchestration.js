@@ -5,15 +5,15 @@
  * with Trust & Transparency Layer and Agency-Enterprise Bridge integration
  */
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const pool = require('../database/connection');
-const { checkJwt, requirePermission, requireOrganizationAccess } = require('./auth/auth0-middleware');
+import pool from '../database/connection.js';
+import { checkJwt, requirePermission, requireOrganizationAccess } from './auth/auth0-middleware.js';
 
 // Import the enhanced orchestration engine
-const EnhancedOrchestrationEngine = require('../core/enhanced-orchestration-engine');
-const TrustTransparencyLayer = require('../core/trust-transparency-layer');
-const AgencyEnterpriseBridge = require('../core/agency-enterprise-bridge');
+import EnhancedOrchestrationEngine from '../core/enhanced-orchestration-engine.js';
+import TrustTransparencyLayer from '../core/trust-transparency-layer.js';
+import AgencyEnterpriseBridge from '../core/agency-enterprise-bridge.js';
 
 // Initialize the orchestration engine
 const orchestrationEngine = new EnhancedOrchestrationEngine();
@@ -525,4 +525,4 @@ router.get('/status', checkJwt, requireOrganizationAccess, async (req, res) => {
   }
 });
 
-module.exports = router; 
+export default router; 

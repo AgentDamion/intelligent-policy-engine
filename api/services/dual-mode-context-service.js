@@ -1,9 +1,9 @@
 // Dual-Mode Context Switching Service
 // File: api/services/dual-mode-context-service.js
 
-const hierarchicalAuth = require('../auth/hierarchical-auth');
-const contextValidator = require('../auth/context-validator');
-const { getCacheService } = require('./cache-service');
+import hierarchicalAuth from '../auth/hierarchical-auth.js';
+import contextValidator from '../auth/context-validator.js';
+import { getCacheService } from './cache-service.js';
 
 class DualModeContextService {
     constructor() {
@@ -129,7 +129,7 @@ class DualModeContextService {
      * Get context analytics (switch frequency, most used contexts, etc.)
      */
     async getContextAnalytics(userId, days = 30) {
-        const db = require('../../database/connection');
+        const db = (await import('../../database/connection.js')).default;
         
         const result = await db.query(`
             SELECT 
@@ -186,5 +186,5 @@ class DualModeContextService {
     }
 }
 
-module.exports = new DualModeContextService();
+export default new DualModeContextService();
 

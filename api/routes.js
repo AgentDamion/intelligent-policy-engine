@@ -1,15 +1,15 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 
 // Import all your agents
-const { ConflictDetectionAgent } = require('../agents/conflict-detection-agent.js');
-const AuditAgent = require('../agents/audit-agent.js');
-const PolicyAgent = require('../agents/policy-agent.js');
-const NegotiationAgent = require('../agents/negotiation-agent.js');
-const ContextAgent = require('../agents/context-agent.js');
-const workflowEngine = require('../core/workflow-engine');
-const { logAction } = require('../core/audit-log');
-const agentRegistry = require('../agents/agent-registry');
+import { ConflictDetectionAgent } from '../agents/conflict-detection-agent.js';
+import AuditAgent from '../agents/audit-agent.js';
+import PolicyAgent from '../agents/policy-agent.js';
+import NegotiationAgent from '../agents/negotiation-agent.js';
+import ContextAgent from '../agents/context-agent.js';
+import workflowEngine from '../core/workflow-engine.js';
+import { logAction } from '../core/audit-log.js';
+import agentRegistry from '../agents/agent-registry.js';
 
 // In-memory storage for activities and overrides (replace with database later)
 const agentActivities = [];
@@ -214,6 +214,83 @@ router.get('/onboarding/status', (req, res) => {
             configured: true
         }
     });
+});
+
+// ---------------------------------------------------------------------------
+// Action Catalog & Non-Repudiation Endpoints (Pharma-Ready)
+// ---------------------------------------------------------------------------
+
+/**
+ * HUMAN SIGNATURE ENDPOINT (Intent to Sign)
+ * Required for GxP/21 CFR Part 11 compliance.
+ * Validates the actor's intent before final decision state change.
+ */
+router.post('/actions/sign-decision', async (req, res) => {
+    try {
+        const { threadId, decision, rationale, signatureToken, actor, surfaceContext } = req.body;
+
+        if (!threadId || !decision || !rationale || !signatureToken) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Missing required fields for signature: threadId, decision, rationale, signatureToken' 
+            });
+        }
+
+        // HARD COMPLIANCE BOUNDARY: Signature MUST originate from the 'decisions' surface
+        if (surfaceContext !== 'decisions') {
+            const errorMsg = `HARD COMPLIANCE VIOLATION: Signature attempted from unauthorized surface '${surfaceContext || 'unknown'}'. Regulatory actions are only permitted on the 'decisions' surface.`;
+            console.error(errorMsg);
+            
+            // Log the unauthorized attempt
+            logAgentActivity('System', 'Unauthorized Signature Attempt', {
+                threadId,
+                attemptedSurface: surfaceContext,
+                actor: actor?.user_id
+            });
+
+            return res.status(403).json({ 
+                success: false, 
+                error: errorMsg,
+                code: 'UNAUTHORIZED_SURFACE'
+            });
+        }
+
+        // 1. Verify Actor Authority (Mock)
+        if (actor.role !== 'reviewer' && actor.role !== 'admin') {
+            return res.status(403).json({ 
+                success: false, 
+                error: 'Actor does not have signing authority' 
+            });
+        }
+
+        // 2. Intent to Sign Validation (Mock - in production would verify signatureToken against MFA/Passkey)
+        console.log(`[GxP Signature] Verifying intent for user ${actor.user_id} on thread ${threadId}`);
+        
+        // 3. Immutable Ledger Entry (Mock)
+        const auditEntry = {
+            event_id: `sig_${crypto.randomUUID()}`,
+            occurred_at: new Date().toISOString(),
+            thread_id: threadId,
+            action_type: 'HumanApproveDecision',
+            actor_role: actor.role,
+            rationale: rationale,
+            decision: decision,
+            signature_verified: true
+        };
+
+        logAgentActivity('System', 'Regulatory Signature Captured', auditEntry);
+
+        res.json({
+            success: true,
+            signatureId: auditEntry.event_id,
+            timestamp: auditEntry.occurred_at,
+            message: 'Decision signed and locked in immutable audit ledger'
+        });
+
+    } catch (error) {
+        console.error('Signature error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
 });
 
 // Demo Landing API Endpoints
@@ -2392,4 +2469,4 @@ router.get('/enterprise/:enterpriseId/seats/:seatId/compliance-report', (req, re
     res.json(report);
 });
 
-module.exports = router;
+export default router;

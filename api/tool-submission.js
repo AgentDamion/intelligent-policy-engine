@@ -1,7 +1,7 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const pool = require('../database/connection');
-const { checkJwt, requireOrganizationAccess } = require('./auth/auth0-middleware');
+import pool from '../database/connection.js';
+import { checkJwt, requireOrganizationAccess } from './auth/auth0-middleware.js';
 
 // POST /api/tool-submission
 // Save a partner's tool submission
@@ -98,6 +98,6 @@ router.post('/', checkJwt, requireOrganizationAccess, async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;
 
 

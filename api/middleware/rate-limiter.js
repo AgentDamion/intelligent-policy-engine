@@ -1,9 +1,9 @@
 // Context-Aware Rate Limiter Middleware
 // File: api/middleware/rate-limiter.js
 
-const { getCacheService } = require('../services/cache-service');
-const { getRateLimitConfig, getRateLimitKey, getUserRateLimitKey } = require('../config/rate-limits');
-const db = require('../../database/connection');
+import { getCacheService } from '../services/cache-service.js';
+import { getRateLimitConfig, getRateLimitKey, getUserRateLimitKey } from '../config/rate-limits.js';
+import db from '../../database/connection.js';
 
 class RateLimiter {
     constructor() {
@@ -138,5 +138,5 @@ class RateLimiter {
 // Singleton instance
 const rateLimiter = new RateLimiter();
 
-module.exports = rateLimiter;
+export default rateLimiter;
 

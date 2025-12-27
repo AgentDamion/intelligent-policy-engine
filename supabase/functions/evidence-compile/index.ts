@@ -54,6 +54,32 @@ interface EvidenceItem {
   hash?: string;
 }
 
+interface RationaleStructured {
+  policy_id: string;
+  policy_version: string;
+  rule_matched: string;
+  inputs: {
+    tool: string;
+    tool_version?: string;
+    dataset_class: string;
+    request_type: string;
+  };
+  actor: {
+    type: 'human' | 'automated' | 'hybrid';
+    name?: string;
+    id?: string;
+    role?: string;
+  };
+  confidence_score?: number;
+  secondary_rules?: string[];
+  timestamp: string;
+}
+
+interface Justification {
+  human_readable: string;
+  structured: RationaleStructured;
+}
+
 interface ProofBundle {
   bundle_id: string;
   tool_id: string;
@@ -63,6 +89,8 @@ interface ProofBundle {
     allowed: boolean;
     confidence: number;
   };
+  // NEW: Justification for audit compliance
+  justification?: Justification;
   evidence: EvidenceItem[];
   metadata: {
     created_at: string;
@@ -224,6 +252,9 @@ async function compileProofBundle(
       ? 'non_compliant' 
       : 'requires_review';
   
+  // Build justification for audit compliance
+  const justification = buildJustification(event, verdict, complianceStatus, userId, timestamp);
+  
   const bundle: ProofBundle = {
     bundle_id,
     tool_id: event.tool_id,
@@ -233,6 +264,8 @@ async function compileProofBundle(
       allowed: verdict.allowed,
       confidence: verdict.confidence,
     },
+    // NEW: Justification for audit compliance
+    justification,
     evidence,
     metadata: {
       created_at: timestamp,
@@ -263,6 +296,70 @@ async function compileProofBundle(
   }
   
   return bundle;
+}
+
+/**
+ * Build justification object for proof bundle
+ * Includes human-readable (≤140 chars) and structured rationale
+ */
+function buildJustification(
+  event: ToolUsageEvent,
+  verdict: Verdict,
+  complianceStatus: string,
+  userId: string,
+  timestamp: string
+): Justification {
+  // Decision verb based on verdict
+  const decisionVerb = verdict.allowed 
+    ? 'Allowed under'
+    : verdict.violations.length > 0 
+      ? 'Denied per'
+      : 'Flagged per';
+  
+  // Build human-readable rationale
+  const policyId = event.usage_context?.policy_id || 'tool-validation';
+  const toolName = event.tool_id || 'unknown';
+  const dataClass = event.usage_context?.data_class || 'internal';
+  
+  let humanReadable = `${decisionVerb} ${policyId}: tool=${toolName}, data=${dataClass}`;
+  
+  // Append actor info
+  if (userId) {
+    humanReadable += `, reviewer=${userId.slice(0, 8)}`;
+  } else {
+    humanReadable += ', auto-check';
+  }
+  
+  // Enforce 140 char limit
+  if (humanReadable.length > 140) {
+    humanReadable = humanReadable.substring(0, 137) + '...';
+  }
+  
+  // Build structured rationale
+  const structured: RationaleStructured = {
+    policy_id: policyId,
+    policy_version: event.usage_context?.policy_version || 'v1.0',
+    rule_matched: verdict.violations[0] || verdict.warnings[0] || 'tool_validation',
+    inputs: {
+      tool: event.tool_id,
+      tool_version: event.tool_version,
+      dataset_class: event.usage_context?.data_class || 'unclassified',
+      request_type: event.usage_context?.intended_use || 'general'
+    },
+    actor: {
+      type: userId ? 'human' : 'automated',
+      id: userId || undefined,
+      role: 'reviewer'
+    },
+    confidence_score: verdict.confidence,
+    secondary_rules: [...verdict.violations, ...verdict.warnings],
+    timestamp: timestamp
+  };
+  
+  return {
+    human_readable: humanReadable,
+    structured
+  };
 }
 
 async function calculateHash(data: string): Promise<string> {

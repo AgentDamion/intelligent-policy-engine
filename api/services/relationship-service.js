@@ -1,8 +1,8 @@
 // Partner-Enterprise Relationship Service
 // File: api/services/relationship-service.js
 
-const db = require('../../database/connection');
-const { getCacheService } = require('./cache-service');
+import db from '../../database/connection.js';
+import { getCacheService } from './cache-service.js';
 
 class RelationshipService {
     constructor() {
@@ -306,5 +306,5 @@ class RelationshipService {
     }
 }
 
-module.exports = new RelationshipService();
+export default new RelationshipService();
 

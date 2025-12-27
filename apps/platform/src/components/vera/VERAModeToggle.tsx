@@ -11,14 +11,12 @@
 
 import React, { useState, useCallback } from 'react'
 import {
-  Shield,
   ShieldCheck,
   ShieldOff,
   Eye,
   Zap,
   AlertTriangle,
   Check,
-  X,
   History,
   ChevronRight,
   Loader2

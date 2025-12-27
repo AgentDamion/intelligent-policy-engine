@@ -450,6 +450,26 @@ async function createProofBundle(
 // Store policy decision for future precedent learning
 async function storePolicyDecision(supabaseClient: any, document: any, decision: any, context: any) {
   try {
+    // Generate human-readable rationale (≤140 chars)
+    const rationaleHuman = buildRationaleHuman(decision, document, context);
+    
+    // Build structured rationale for machine parsing
+    const rationaleStructured = {
+      policy_id: context.policyId || 'policy-analysis',
+      policy_version: context.policyVersion || 'v1.0',
+      rule_matched: decision.businessLogic?.policyCompliance?.matchedRule || 'document_analysis',
+      inputs: {
+        tool: 'PolicyAgent',
+        tool_version: '1.0',
+        dataset_class: context.dataClass || 'internal_restricted',
+        request_type: 'analysis'
+      },
+      actor: context.actor || { type: 'automated' },
+      confidence_score: decision.confidence,
+      secondary_rules: decision.businessLogic?.conflictDetection?.rules || [],
+      timestamp: new Date().toISOString()
+    };
+
     const { error } = await supabaseClient
       .from('ai_agent_decisions')
       .insert({
@@ -464,13 +484,49 @@ async function storePolicyDecision(supabaseClient: any, document: any, decision:
           document: { title: document.title, type: document.type },
           context
         },
-        enterprise_id: context.enterpriseId
+        enterprise_id: context.enterpriseId,
+        // NEW: Rationale fields for audit compliance
+        rationale_human: rationaleHuman,
+        rationale_structured: rationaleStructured
       });
 
     if (error) throw error;
   } catch (error) {
     console.error('Failed to store policy decision:', error);
   }
+}
+
+/**
+ * Build human-readable rationale (≤140 chars)
+ * Pattern: [Decision Verb] [Policy-ID]: tool=[Name], data=[Class], [actor]=[Name]
+ */
+function buildRationaleHuman(decision: any, document: any, context: any): string {
+  const decisionVerbs: Record<string, string> = {
+    approved: 'Allowed under',
+    rejected: 'Denied per',
+    flagged: 'Flagged per',
+    escalated: 'Escalate'
+  };
+  
+  const verb = decisionVerbs[decision.decision?.toLowerCase()] || 'Processed under';
+  const policyId = context.policyId || 'policy-analysis';
+  const toolName = document.type || 'document';
+  const dataClass = context.dataClass || 'internal';
+  
+  let rationale = `${verb} ${policyId}: tool=${toolName}, data=${dataClass}`;
+  
+  if (context.actor?.name) {
+    rationale += `, reviewer=${context.actor.name}`;
+  } else {
+    rationale += ', auto-check';
+  }
+  
+  // Enforce 140 char limit
+  if (rationale.length > 140) {
+    rationale = rationale.substring(0, 137) + '...';
+  }
+  
+  return rationale;
 }
 
 // Helper functions for parsing AI responses

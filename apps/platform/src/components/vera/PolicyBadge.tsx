@@ -6,7 +6,7 @@
  */
 
 import { useState } from 'react'
-import { Shield, Copy, Check, ExternalLink } from 'lucide-react'
+import { Shield, Copy, Check } from 'lucide-react'
 import { usePolicyContext } from '@/hooks/usePolicyContext'
 import toast from 'react-hot-toast'
 
@@ -275,6 +275,12 @@ export function PolicyDigestDisplay({
 }
 
 export default PolicyBadge
+
+
+
+
+
+
 
 
 

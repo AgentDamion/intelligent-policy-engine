@@ -1,7 +1,7 @@
 // In-Memory Cache Provider
 // File: api/services/cache-providers/memory-provider.js
 
-class MemoryProvider {
+export default class MemoryProvider {
     constructor() {
         this.cache = new Map();
         this.expiry = new Map();
@@ -75,6 +75,3 @@ class MemoryProvider {
         }
     }
 }
-
-module.exports = MemoryProvider;
-

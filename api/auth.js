@@ -1,9 +1,9 @@
 console.log('Loading api/auth.js');
 
-const express = require('express');
-const session = require('express-session');
-const db = require('../database/connection');
-const jwt = require('jsonwebtoken');
+import express from 'express';
+import session from 'express-session';
+import db from '../database/connection.js';
+import jwt from 'jsonwebtoken';
 const router = express.Router();
 
 router.use(session({
@@ -14,7 +14,7 @@ router.use(session({
 }));
 
 // Middleware: check organization access
-const checkOrganizationAccess = async (req, res, next) => {
+export const checkOrganizationAccess = async (req, res, next) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Unauthorized' });
     const result = await db.query(`
         SELECT u.*, o.name as org_name, o.id as organization_id
@@ -202,13 +202,5 @@ router.post('/login', async (req, res) => {
     res.json({ success: true, user: result.rows[0] });
 });
 
-module.exports = { 
-    authRouter: router,
-    requireAdminAuth,
-    requireSuperAdminAuth,
-    requireActionAuth,
-    checkOrganizationAccess: (req, res, next) => {
-        // Your existing organization access check
-        next();
-    }
-}; 
+export const authRouter = router;
+export { requireAdminAuth, requireSuperAdminAuth, requireActionAuth }; 

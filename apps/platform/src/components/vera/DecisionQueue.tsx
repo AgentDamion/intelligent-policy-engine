@@ -8,7 +8,7 @@
  * - Real-time updates via subscription
  */
 
-import React, { useState, useCallback } from 'react'
+import React, { useState } from 'react'
 import {
   Clock,
   AlertTriangle,
@@ -18,7 +18,6 @@ import {
   User,
   Calendar,
   RefreshCw,
-  FileText,
   Inbox
 } from 'lucide-react'
 import type { DecisionQueueItem } from '../../services/vera/veraDashboardService'

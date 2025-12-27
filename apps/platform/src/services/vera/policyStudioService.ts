@@ -142,6 +142,12 @@ export async function getPolicies(
   enterpriseId: string,
   filters: PolicyFilters = {}
 ): Promise<PolicyListItem[]> {
+  // Guard against missing enterpriseId
+  if (!enterpriseId || enterpriseId === 'undefined') {
+    console.warn('[policyStudioService] getPolicies called without valid enterpriseId')
+    return []
+  }
+
   const { status, search, scope_id, limit = 50, offset = 0 } = filters
 
   let query = supabase
@@ -644,6 +650,17 @@ export interface PolicyStats {
  * Get policy statistics for an enterprise
  */
 export async function getPolicyStats(enterpriseId: string): Promise<PolicyStats> {
+  // Guard against missing enterpriseId
+  if (!enterpriseId || enterpriseId === 'undefined') {
+    console.warn('[policyStudioService] getPolicyStats called without valid enterpriseId')
+    return {
+      total: 0,
+      byStatus: { draft: 0, review: 0, published: 0, archived: 0 },
+      recentlyUpdated: 0,
+      withVersions: 0
+    }
+  }
+
   const { data, error } = await supabase
     .from('policies')
     .select(`

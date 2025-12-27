@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Search, Check, Globe, Building2, Calendar, AlertCircle } from 'lucide-react'
 import { Input } from '../ui/Input'
 import { Button } from '../ui/button'
@@ -20,7 +20,6 @@ export interface RegulatoryFramework {
 }
 
 interface RegulatoryFrameworkSelectorProps {
-  organizationId: string
   selectedFrameworkIds: string[]
   onSelectionChange: (frameworkIds: string[]) => void
   onContinue?: () => void
@@ -28,7 +27,6 @@ interface RegulatoryFrameworkSelectorProps {
 }
 
 export default function RegulatoryFrameworkSelector({
-  organizationId,
   selectedFrameworkIds,
   onSelectionChange,
   onContinue,
@@ -71,15 +69,6 @@ export default function RegulatoryFrameworkSelector({
     onSelectionChange(newSelection)
   }
 
-  // Group frameworks by jurisdiction
-  const frameworksByJurisdiction = frameworks.reduce((acc, framework) => {
-    const jurisdiction = framework.jurisdiction
-    if (!acc[jurisdiction]) {
-      acc[jurisdiction] = []
-    }
-    acc[jurisdiction].push(framework)
-    return acc
-  }, {} as Record<string, RegulatoryFramework[]>)
 
   // Filter frameworks
   const filteredFrameworks = frameworks.filter(framework => {

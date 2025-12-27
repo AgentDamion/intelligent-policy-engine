@@ -350,6 +350,39 @@ router.post('/policies',
         compliance_framework: compliance_framework 
       })]);
 
+      // Calculate regulatory coverage for this policy
+      try {
+        // Get workspace_id from organization (simplified - would need proper lookup)
+        const workspaceResult = await pool.query(`
+          SELECT id FROM workspaces WHERE enterprise_id IN (
+            SELECT enterprise_id FROM enterprise_members WHERE user_id = $1
+          ) LIMIT 1
+        `, [user_id]);
+
+        if (workspaceResult.rows.length > 0) {
+          const workspaceId = workspaceResult.rows[0].id;
+          
+          // Trigger compliance assessment via edge function (async, don't wait)
+          fetch(`${process.env.SUPABASE_URL || 'http://localhost:54321'}/functions/v1/assess-compliance`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY || ''}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              target_type: 'workspace',
+              target_id: workspaceId,
+              options: {
+                calculate_gaps: true
+              }
+            })
+          }).catch(err => console.error('Error triggering compliance assessment:', err));
+        }
+      } catch (error) {
+        console.error('Error calculating policy compliance:', error);
+        // Don't fail policy creation if compliance calculation fails
+      }
+
       res.status(201).json({
         success: true,
         data: result.rows[0],

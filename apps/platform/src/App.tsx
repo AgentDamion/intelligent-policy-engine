@@ -1,4 +1,4 @@
-﻿import React, { useEffect } from 'react'
+﻿import React, { useEffect, Suspense } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { ErrorBoundary } from 'react-error-boundary'
 import { useAuth } from './contexts/AuthContext'
@@ -8,19 +8,21 @@ import { ensureOnPlatformOrigin } from './utils/platformOrigin'
 // Components
 import Layout from './components/Layout'
 import LoginPage from './pages/LoginPage'
-import DashboardPage from './pages/DashboardPage'
-import PoliciesPage from './pages/PoliciesPage'
-import WorkspacesPage from './pages/WorkspacesPage'
-import SettingsPage from './pages/SettingsPage'
-import LoadingSpinner from './components/ui/LoadingSpinner'
-import EnterpriseDashboard from './pages/enterprise/EnterpriseDashboard'
-import EnterpriseDashboardEnhanced from './pages/enterprise/EnterpriseDashboardEnhanced'
 import OnboardingPage from './pages/OnboardingPage'
 import AuthHubPage from './pages/auth/AuthHubPage'
-import AgenticPage from './pages/AgenticPage'
 import VERAOrbPage from './pages/VERAOrbPage'
-import VeraPlusDashboard from './pages/VeraPlusDashboard'
 import VERASettingsPage from './pages/VERASettingsPage'
+import SettingsPage from './pages/SettingsPage'
+import WorkspacesPage from './pages/WorkspacesPage'
+import LoadingSpinner from './components/ui/LoadingSpinner'
+
+// Surface-First Pages
+const MissionControl = React.lazy(() => import('./pages/mission/Overview'))
+const Triage = React.lazy(() => import('./pages/inbox/ThreadList'))
+const DecisionSurface = React.lazy(() => import('./pages/decisions/Queue'))
+const TheForge = React.lazy(() => import('./pages/forge/PolicyStudio'))
+const EvidenceVault = React.lazy(() => import('./pages/proof/Vault'))
+const SimulationLab = React.lazy(() => import('./pages/lab/Replay'))
 
 function getSafeRedirectTo(search: string): string | null {
   const raw = new URLSearchParams(search).get('redirectTo')
@@ -176,7 +178,7 @@ function App() {
         path="/vera-plus"
         element={
           <ProtectedRoute>
-            <VeraPlusDashboard />
+            <MissionControl />
           </ProtectedRoute>
         }
       />
@@ -198,19 +200,39 @@ function App() {
           </ProtectedRoute>
         }
       >
-        <Route index element={<Navigate to="/vera-plus" replace />} />
-        <Route path="dashboard" element={<DashboardPage />} />
-        <Route path="agentic" element={<AgenticPage />} />
-        <Route path="vera" element={<VERAOrbPage />} />
-        <Route path="enterprise" element={<EnterpriseDashboard />} />
-        <Route path="enterprise-ai" element={<EnterpriseDashboardEnhanced />} />
-        <Route path="policies" element={<PoliciesPage />} />
+        <Route index element={<Navigate to="/mission" replace />} />
+        
+        {/* Surface-First Routes */}
+        <Route path="mission" element={<Suspense fallback={<LoadingSpinner />}><MissionControl /></Suspense>} />
+        
+        <Route path="inbox" element={<Suspense fallback={<LoadingSpinner />}><Triage /></Suspense>} />
+        <Route path="inbox/:threadId" element={<Suspense fallback={<LoadingSpinner />}><Triage /></Suspense>} />
+        
+        <Route path="decisions" element={<Suspense fallback={<LoadingSpinner />}><DecisionSurface /></Suspense>} />
+        <Route path="decisions/:decisionId" element={<Suspense fallback={<LoadingSpinner />}><DecisionSurface /></Suspense>} />
+        
+        <Route path="forge" element={<Suspense fallback={<LoadingSpinner />}><TheForge /></Suspense>} />
+        <Route path="forge/policies/:id" element={<Suspense fallback={<LoadingSpinner />}><TheForge /></Suspense>} />
+        
+        <Route path="proof" element={<Suspense fallback={<LoadingSpinner />}><EvidenceVault /></Suspense>} />
+        <Route path="proof/bundles/:id" element={<Suspense fallback={<LoadingSpinner />}><EvidenceVault /></Suspense>} />
+        
+        <Route path="lab" element={<Suspense fallback={<LoadingSpinner />}><SimulationLab /></Suspense>} />
+        <Route path="lab/replays/:id" element={<Suspense fallback={<LoadingSpinner />}><SimulationLab /></Suspense>} />
+        
+        {/* Compatibility Redirects */}
+        <Route path="dashboard" element={<Navigate to="/mission" replace />} />
+        <Route path="vera-plus" element={<Navigate to="/mission" replace />} />
+        <Route path="agentic" element={<Navigate to="/inbox" replace />} />
+        <Route path="enterprise" element={<Navigate to="/mission" replace />} />
+        <Route path="policies" element={<Navigate to="/forge" replace />} />
+        
         <Route path="workspaces" element={<WorkspacesPage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
 
       {/* Catch all route */}
-      <Route path="*" element={<Navigate to="/vera-plus" replace />} />
+      <Route path="*" element={<Navigate to="/mission" replace />} />
       </Routes>
     </ErrorBoundary>
   )

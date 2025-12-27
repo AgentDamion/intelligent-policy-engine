@@ -1,9 +1,9 @@
 // File: api/routes/hierarchical-routes.js
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const hierarchicalAuth = require('../auth/hierarchical-auth');
-const db = require('../../database/connection');
+import hierarchicalAuth from '../auth/hierarchical-auth.js';
+import db from '../../database/connection.js';
 
 // ===== AUTHENTICATION ROUTES =====
 
@@ -64,7 +64,8 @@ router.get('/auth/contexts/available',
     hierarchicalAuth.requireAuth(),
     async (req, res) => {
         try {
-            const dualModeService = require('../services/dual-mode-context-service');
+            const dualModeServiceModule = await import('../services/dual-mode-context-service.js');
+            const dualModeService = dualModeServiceModule.default;
             const contexts = await dualModeService.getAvailableContexts(req.user.id);
             res.json({ success: true, ...contexts });
         } catch (error) {
@@ -78,7 +79,8 @@ router.get('/auth/contexts/partner',
     hierarchicalAuth.requireAuth(),
     async (req, res) => {
         try {
-            const dualModeService = require('../services/dual-mode-context-service');
+            const dualModeServiceModule = await import('../services/dual-mode-context-service.js');
+            const dualModeService = dualModeServiceModule.default;
             const partnerEnterpriseId = req.query.partnerEnterpriseId || null;
             const contexts = await dualModeService.getPartnerContexts(req.user.id, partnerEnterpriseId);
             res.json({ success: true, contexts, count: contexts.length });
@@ -93,7 +95,8 @@ router.get('/auth/contexts/enterprise',
     hierarchicalAuth.requireAuth(),
     async (req, res) => {
         try {
-            const dualModeService = require('../services/dual-mode-context-service');
+            const dualModeServiceModule = await import('../services/dual-mode-context-service.js');
+            const dualModeService = dualModeServiceModule.default;
             const contexts = await dualModeService.getEnterpriseContexts(req.user.id);
             res.json({ success: true, contexts, count: contexts.length });
         } catch (error) {
@@ -107,7 +110,8 @@ router.get('/auth/contexts/analytics',
     hierarchicalAuth.requireAuth(),
     async (req, res) => {
         try {
-            const dualModeService = require('../services/dual-mode-context-service');
+            const dualModeServiceModule = await import('../services/dual-mode-context-service.js');
+            const dualModeService = dualModeServiceModule.default;
             const days = parseInt(req.query.days) || 30;
             const analytics = await dualModeService.getContextAnalytics(req.user.id, days);
             res.json({ success: true, analytics });
@@ -579,4 +583,4 @@ router.get('/dashboard/agency-seat/:seatId',
     }
 );
 
-module.exports = router; 
+export default router; 

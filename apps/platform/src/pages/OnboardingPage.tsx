@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react'
+﻿import React, { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useEnterprise } from '../contexts/EnterpriseContext'
 import { supabase } from '../lib/supabase'
@@ -6,7 +6,6 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import {
   CheckCircle,
   Loader2,
-  ArrowRight,
   ArrowLeft
 } from 'lucide-react'
 import RegulatoryFrameworkSelector from '../components/onboarding/RegulatoryFrameworkSelector'

@@ -34,7 +34,10 @@ import {
 } from 'lucide-react'
 import { Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from '@headlessui/react'
 import toast from 'react-hot-toast'
+import { Link } from 'react-router-dom'
 
+import SplitView from '@/components/layout/SplitView'
+import EmptyState from '@/components/ui/EmptyState'
 import {
   getInboxThreads,
   getResolvedThreads,
@@ -52,6 +55,8 @@ import {
   type ThreadSeverity,
 } from '@/services/vera/governanceThreadService'
 import { SurfaceProvider, useSurface } from '@/contexts/SurfaceContext'
+import { useSurfaceGuard } from '@/surfaces/useSurfaceGuard'
+import { buildSurfaceLink } from '@/surfaces/registry'
 
 // ============================================
 // Types
@@ -482,6 +487,12 @@ const InboxViewInner = memo(({ enterpriseId }: InboxViewProps) => {
 
   // Fetch threads based on active tab
   const fetchThreads = useCallback(async () => {
+    if (!enterpriseId || enterpriseId === 'undefined') {
+      console.warn('[InboxView] Skipping fetch: enterpriseId is missing or undefined');
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true)
     try {
       const result = activeTab === 'inbox'
@@ -597,10 +608,8 @@ const InboxViewInner = memo(({ enterpriseId }: InboxViewProps) => {
     ['open', 'pending_human', 'in_review', 'needs_info'].includes(t.status)
   ).length
 
-  return (
-    <div className="flex h-full bg-slate-50 overflow-hidden">
-      {/* Thread List */}
-      <div className="flex flex-col border-r border-slate-200 bg-white h-full w-full md:w-[420px]">
+  const listPane = (
+      <div className="flex flex-col border-r border-slate-200 bg-white h-full">
         <div className="p-5 border-b border-slate-100 bg-white z-10">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold text-slate-800 tracking-tight flex items-center">
@@ -620,14 +629,6 @@ const InboxViewInner = memo(({ enterpriseId }: InboxViewProps) => {
                 <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
               </button>
             </div>
-          </div>
-
-          {/* Surface Indicator */}
-          <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2">
-            <InboxIcon className="w-4 h-4 text-blue-600" />
-            <span className="text-xs font-medium text-blue-700">
-              Inbox Surface - Triage actions only
-            </span>
           </div>
 
           {/* Tabs */}
@@ -662,17 +663,17 @@ const InboxViewInner = memo(({ enterpriseId }: InboxViewProps) => {
               <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
             </div>
           ) : threads.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-slate-400">
-              <InboxIcon className="w-12 h-12 opacity-20 mb-4" />
-              <p className="text-sm font-medium">
-                {activeTab === 'inbox' ? 'No pending items' : 'No decisions yet'}
-              </p>
-              <p className="text-xs mt-1">
-                {activeTab === 'inbox' 
-                  ? 'All caught up! Check back later.' 
-                  : 'Resolved threads will appear here.'}
-              </p>
-            </div>
+            <EmptyState
+              icon={<InboxIcon className="w-6 h-6 text-slate-400" />}
+              title={activeTab === 'inbox' ? 'No pending items' : 'No resolved items yet'}
+              description={
+                activeTab === 'inbox'
+                  ? 'Threads arrive here from integrations and partner requests. When new items appear, route them to Decisions for sign-off.'
+                  : 'Resolved threads and outcomes will appear here after decisions are signed.'
+              }
+              actions={[{ label: 'Go to Mission Control', href: '/mission', variant: 'outline' }]}
+              className="py-12"
+            />
           ) : (
             threads.map((thread) => (
               <div
@@ -717,17 +718,18 @@ const InboxViewInner = memo(({ enterpriseId }: InboxViewProps) => {
           {totalThreads} total threads
         </div>
       </div>
+  )
 
-      {/* Detail Panel */}
+  const detailPane = (
       <div className="flex-1 bg-slate-50/50 h-full overflow-hidden flex flex-col">
         {!selectedThread ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-slate-400 p-8">
-            <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6">
-              <FileText className="w-10 h-10 opacity-20" />
-            </div>
-            <p className="text-sm font-medium">Select a thread to view details</p>
-            <p className="text-xs mt-1">Review the action history and make decisions</p>
-          </div>
+          <EmptyState
+            icon={<FileText className="w-6 h-6 text-slate-400" />}
+            title="Select a thread"
+            description="Review the history, triage signals, and then hand off to Decisions for accountable sign-off."
+            actions={[{ label: 'Open Decisions', href: '/decisions', variant: 'outline' }]}
+            className="h-full"
+          />
         ) : (
           <div className="flex flex-col h-full bg-white md:bg-transparent">
             {/* Header */}
@@ -765,18 +767,13 @@ const InboxViewInner = memo(({ enterpriseId }: InboxViewProps) => {
                   >
                     <AlertTriangle className="w-4 h-4 mr-1.5" /> Escalate to Decision
                   </button>
-                  {/* Link to Decisions view for final actions */}
-                  <div className="relative group">
-                    <button
-                      disabled
-                      className="flex items-center px-4 py-2 text-sm font-medium text-slate-400 bg-slate-100 rounded-lg cursor-not-allowed"
-                    >
-                      <ArrowRight className="w-4 h-4 mr-1.5" /> Make Decision
-                    </button>
-                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                      Use the Decisions view for final decisions
-                    </div>
-                  </div>
+                  {/* Link to Decisions view for final actions - SURFACE HANDOFF */}
+                  <Link
+                    to={buildSurfaceLink('decisions', selectedThread.id)}
+                    className="flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow-sm transition-all"
+                  >
+                    <ArrowRight className="w-4 h-4 mr-1.5" /> Make Decision
+                  </Link>
                 </div>
               )}
             </div>
@@ -856,6 +853,16 @@ const InboxViewInner = memo(({ enterpriseId }: InboxViewProps) => {
           </div>
         )}
       </div>
+  )
+
+  return (
+    <div className="h-full">
+      <SplitView
+        className="bg-slate-50 overflow-hidden"
+        left={listPane}
+        main={detailPane}
+        leftClassName="md:w-[420px]"
+      />
 
       {/* Triage Dialog */}
       <TriageDialog

@@ -3,6 +3,9 @@ import { useDemoStore } from '../demo/demo-store';
 import { createDemoData } from '../demo/demo-data-generator';
 import './SmartOnboarding.css';
 
+// Import FrameworkSelector - adjust path as needed
+// import FrameworkSelector from '../apps/platform/src/components/workspace/FrameworkSelector';
+
 // User Type Selection Component
 const UserTypeSelection = ({ onSelect, demoData }) => {
   const [selectedType, setSelectedType] = useState(null);
@@ -768,6 +771,13 @@ export const SmartOnboarding = () => {
       title: 'Quick Company Setup',
       component: <CompanyProfileStep />,
       valueDemo: 'Auto-configure based on your industry',
+      estimatedTime: '3 min'
+    },
+    {
+      id: 'regulatory-frameworks',
+      title: 'Configure Regulatory Frameworks',
+      component: <RegulatoryFrameworkStep workspaceId="current-workspace" />,
+      valueDemo: 'Select frameworks that apply to your operations',
       estimatedTime: '3 min'
     },
     {

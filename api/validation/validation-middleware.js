@@ -1,7 +1,7 @@
 // File: api/validation/validation-middleware.js
 
-const inputValidator = require('./input-validator');
-const rateLimit = require('express-rate-limit');
+import inputValidator from './input-validator.js';
+import rateLimit from 'express-rate-limit';
 
 class ValidationMiddleware {
     constructor() {
@@ -332,4 +332,4 @@ class ValidationMiddleware {
     }
 }
 
-module.exports = new ValidationMiddleware(); 
+export default new ValidationMiddleware(); 

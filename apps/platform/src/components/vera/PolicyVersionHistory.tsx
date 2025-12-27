@@ -18,7 +18,6 @@ import {
   Plus,
   Minus,
   RefreshCw,
-  User,
   Calendar
 } from 'lucide-react'
 import { 

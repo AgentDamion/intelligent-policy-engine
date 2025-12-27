@@ -2,25 +2,25 @@ import React, { useState } from 'react'
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useEnterprise } from '../contexts/EnterpriseContext'
-import { 
-  Home, 
-  FileText, 
-  Users, 
-  Settings, 
-  Menu, 
-  X, 
+import {
+  Home,
+  Users,
+  Shield,
+  Zap,
+  FileText,
+  Settings,
+  FlaskConical,
+  X,
   ChevronDown,
   LogOut,
-  Building2,
-  Briefcase,
-  Activity,
-  Zap,
+  Menu,
+  Search,
   Sparkles,
-  Shield
 } from 'lucide-react'
 import LoadingSpinner from './ui/LoadingSpinner'
-import { SpineLayout } from './agentic/spine/SpineLayout'
-import { FloatingVERAOrb } from './vera/FloatingVERAOrb'
+import VeraDrawer from './vera/VeraDrawer'
+import { Input } from './ui/Input'
+import { Button } from './ui/button'
 
 const Layout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -29,19 +29,17 @@ const Layout: React.FC = () => {
   const { currentEnterprise, workspaces } = useEnterprise()
   const location = useLocation()
   const navigate = useNavigate()
+  const [veraOpen, setVeraOpen] = useState(false)
 
   const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: Home },
-    { name: 'Agentic', href: '/agentic', icon: Sparkles },
-    { name: 'Enterprise', href: '/enterprise', icon: Activity },
-    { name: 'Enterprise AI', href: '/enterprise-ai', icon: Zap },
-    { name: 'Policies', href: '/policies', icon: FileText },
-    { name: 'Workspaces', href: '/workspaces', icon: Users },
+    { name: 'Mission Control', href: '/mission', icon: Home },
+    { name: 'Triage', href: '/inbox', icon: Users },
+    { name: 'Decisions', href: '/decisions', icon: Shield },
+    { name: 'The Forge', href: '/forge', icon: Zap },
+    { name: 'Evidence Vault', href: '/proof', icon: FileText },
+    { name: 'Simulation Lab', href: '/lab', icon: FlaskConical },
     { name: 'Settings', href: '/settings', icon: Settings },
   ]
-
-  // VERA+ is a special flagship feature with its own full-page experience
-  const veraPlus = { name: 'VERA+', href: '/vera-plus', icon: Shield }
 
   const handleSignOut = async () => {
     await signOut()
@@ -50,8 +48,8 @@ const Layout: React.FC = () => {
 
   const isActive = (path: string) => location.pathname === path
 
-  // Hide floating orb on VERA+ pages where VERA is already prominent
-  const showFloatingOrb = !location.pathname.startsWith('/vera')
+  const openVera = () => setVeraOpen(true)
+  const closeVera = () => setVeraOpen(false)
 
   if (!currentEnterprise) {
     return (
@@ -62,8 +60,7 @@ const Layout: React.FC = () => {
   }
 
   return (
-    <SpineLayout>
-      <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
         {/* Mobile sidebar overlay */}
         {sidebarOpen && (
           <div 
@@ -76,157 +73,159 @@ const Layout: React.FC = () => {
 
         {/* Sidebar */}
         <div className={`
-          fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0
+          fixed inset-y-0 left-0 z-50 w-64 bg-slate-50 border-r border-slate-200 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         `}>
-          <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
-            <div className="flex items-center">
-              <Building2 className="h-8 w-8 text-primary-600" />
-              <span className="ml-2 text-xl font-bold text-gray-900">Policy Studio</span>
-            </div>
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-600"
-            >
-              <X className="h-6 w-6" />
-            </button>
-          </div>
-
-          {/* Enterprise Selector */}
-          <div className="px-6 py-4 border-b border-gray-200">
-            <div className="relative">
-              <button
-                onClick={() => setEnterpriseDropdownOpen(!enterpriseDropdownOpen)}
-                className="w-full flex items-center justify-between p-3 text-left bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <div className="flex items-center">
-                  <Building2 className="h-5 w-5 text-gray-500 mr-2" />
-                  <span className="font-medium text-gray-900 truncate">
-                    {currentEnterprise.name}
+          <div className="flex flex-col h-full">
+            {/* Tenant dropdown (must live in sidebar) */}
+            <div className="px-4 pt-4">
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setEnterpriseDropdownOpen(!enterpriseDropdownOpen)}
+                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg bg-white border border-slate-200 hover:border-slate-300 transition-colors"
+                >
+                  <span className="text-sm font-semibold text-slate-900 truncate">
+                    {currentEnterprise.name || 'Acme Pharmaceuticals'}
                   </span>
-                </div>
-                <ChevronDown className={`h-4 w-4 text-gray-500 transition-transform ${enterpriseDropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
-              
-              {enterpriseDropdownOpen && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
-                  <div className="p-2">
-                    <div className="px-3 py-2 text-sm font-medium text-gray-500 border-b border-gray-100">
-                      Workspaces
+                  <ChevronDown
+                    className={`h-4 w-4 text-slate-400 transition-transform ${enterpriseDropdownOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+
+                {enterpriseDropdownOpen && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-lg shadow-xl z-10 overflow-hidden">
+                    <div className="p-2">
+                      <div className="px-2 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                        Workspaces
+                      </div>
+                      {workspaces.map((workspace) => (
+                        <button
+                          key={workspace.id}
+                          type="button"
+                          className="w-full flex items-center px-2 py-2 text-xs text-slate-700 hover:bg-slate-50 rounded-md transition-colors"
+                        >
+                          {workspace.name}
+                        </button>
+                      ))}
                     </div>
-                    {workspaces.map((workspace) => (
-                      <button
-                        key={workspace.id}
-                        className="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Sidebar brand */}
+            <div className="px-6 pt-6 pb-4">
+              <div className="text-lg font-bold text-slate-900">GovOps Platform</div>
+              <div className="text-[11px] text-slate-500">Operational Governance</div>
+            </div>
+
+            {/* Navigation */}
+            <nav className="flex-1 px-3 pb-6 overflow-y-auto">
+              <ul className="space-y-1">
+                {navigation.map((item) => {
+                  const Icon = item.icon
+                  const active = isActive(item.href)
+                  return (
+                    <li key={item.name}>
+                      <Link
+                        to={item.href}
+                        className={`
+                          flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors
+                          ${active ? 'bg-slate-900 text-white' : 'text-slate-700 hover:bg-slate-100'}
+                        `}
+                        onClick={() => setSidebarOpen(false)}
                       >
-                        <Briefcase className="h-4 w-4 text-gray-400 mr-2" />
-                        {workspace.name}
-                      </button>
-                    ))}
+                        <Icon className={`h-4 w-4 ${active ? 'text-white' : 'text-slate-400'}`} />
+                        <span className="font-medium">{item.name}</span>
+                      </Link>
+                    </li>
+                  )
+                })}
+              </ul>
+            </nav>
+
+            {/* Sidebar footer: version + user profile */}
+            <div className="px-6 py-6 border-t border-slate-200">
+              <div className="text-[10px] text-slate-400">v1.0.0-alpha</div>
+              <div className="text-[10px] text-slate-400 mb-4">Enterprise Edition</div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0">
+                    <span className="text-xs font-bold text-slate-700">
+                      {(user?.email?.charAt(0) || 'D').toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold text-slate-900 truncate">
+                      {user?.email?.split('@')[0] || 'damiont'}
+                    </div>
                   </div>
                 </div>
-              )}
-            </div>
-          </div>
 
-          {/* VERA+ Launch Button */}
-          <div className="px-6 py-4 border-b border-gray-200">
-            <Link
-              to={veraPlus.href}
-              className="flex items-center justify-between w-full px-4 py-3 text-sm font-semibold rounded-xl transition-all bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 shadow-md hover:shadow-lg"
-              onClick={() => setSidebarOpen(false)}
-            >
-              <div className="flex items-center">
-                <Shield className="h-5 w-5 mr-3" />
-                <span>VERA+</span>
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  className="p-2 text-slate-400 hover:text-slate-600"
+                  title="Sign out"
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
               </div>
-              <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">AI Governance</span>
-            </Link>
-          </div>
-
-          {/* Navigation */}
-          <nav className="px-6 py-4">
-            <ul className="space-y-2">
-              {navigation.map((item) => {
-                const Icon = item.icon
-                return (
-                  <li key={item.name}>
-                    <Link
-                      to={item.href}
-                      className={`
-                        flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors
-                        ${isActive(item.href)
-                          ? 'bg-primary-50 text-primary-700 border-r-2 border-primary-700'
-                          : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                        }
-                      `}
-                      onClick={() => setSidebarOpen(false)}
-                    >
-                      <Icon className={`h-5 w-5 mr-3 ${isActive(item.href) ? 'text-primary-700' : 'text-gray-400'}`} />
-                      {item.name}
-                    </Link>
-                  </li>
-                )
-              })}
-            </ul>
-          </nav>
-
-          {/* User Section */}
-          <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <div className="h-8 w-8 bg-primary-100 rounded-full flex items-center justify-center">
-                  <span className="text-sm font-medium text-primary-700">
-                    {user?.email?.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {user?.email}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={handleSignOut}
-                className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                title="Sign out"
-              >
-                <LogOut className="h-5 w-5" />
-              </button>
             </div>
           </div>
         </div>
 
         {/* Main Content */}
-        <div className="lg:pl-64">
-          {/* Top bar */}
-          <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
-            <div className="flex items-center justify-between h-16 px-6">
+        <div
+          className={`lg:pl-64 flex flex-col min-h-screen transition-[padding] duration-200 ease-out ${
+            veraOpen ? 'lg:pr-[380px]' : ''
+          }`}
+        >
+          {/* Main header row: search on left, VERA on right */}
+          <header className="sticky top-0 z-30 bg-white border-b border-slate-200">
+            <div className="mx-auto max-w-7xl h-14 px-4 sm:px-6 flex items-center gap-3">
               <button
+                type="button"
                 onClick={() => setSidebarOpen(true)}
-                className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-600"
+                className="lg:hidden p-2 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+                aria-label="Open navigation"
               >
-                <Menu className="h-6 w-6" />
+                <Menu className="h-5 w-5" />
               </button>
-              
-              <div className="flex items-center space-x-4">
-                <h1 className="text-lg font-semibold text-gray-900">
-                  {navigation.find(item => isActive(item.href))?.name || 'Dashboard'}
-                </h1>
+
+              <div className="flex-1 max-w-2xl">
+                <Input
+                  placeholder="Search threads, decisions, policies..."
+                  leadingIcon={<Search className="h-4 w-4 text-slate-400" />}
+                  className="bg-white border-slate-200 focus:border-slate-300 focus:ring-slate-200"
+                />
+              </div>
+
+              <div className="ml-auto">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={openVera}
+                  className="h-9 px-3 border-slate-200 text-slate-900 hover:bg-slate-50 gap-2"
+                >
+                  <Sparkles className="h-4 w-4 text-slate-900" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-900">VERA</span>
+                </Button>
               </div>
             </div>
-          </div>
+          </header>
 
-          {/* Page Content */}
-          <main className="p-6">
+          {/* Page Content (single scroll parent) */}
+          <div className="flex-1 overflow-y-auto bg-white">
             <Outlet />
-          </main>
+          </div>
         </div>
 
-        {/* Floating VERA Orb - Global Access */}
-        {showFloatingOrb && <FloatingVERAOrb />}
+        {/* VERA Drawer (anchored to shell) */}
+        <VeraDrawer open={veraOpen} onClose={closeVera} />
       </div>
-    </SpineLayout>
   )
 }
 

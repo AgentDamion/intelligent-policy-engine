@@ -1,7 +1,7 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const pool = require('../database/connection');
-const { checkJwt, requireOrganizationAccess, requirePermission } = require('./auth/auth0-middleware');
+import pool from '../database/connection.js';
+import { checkJwt, requireOrganizationAccess, requirePermission } from './auth/auth0-middleware.js';
 const FRONTEND_BASE_URL = (process.env.FRONTEND_BASE_URL || process.env.PUBLIC_BASE_URL || 'http://localhost:3000').replace(/\/$/, '');
 
 async function ensureInviteContextColumn() {
@@ -186,6 +186,6 @@ router.post('/', checkJwt, requireOrganizationAccess, requirePermission('agency:
   }
 });
 
-module.exports = router;
+export default router;
 
 

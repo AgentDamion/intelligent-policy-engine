@@ -18,7 +18,11 @@ export function RiskHeatMap({
   }
 
   const key = (p: string, c: string) => `${p}__${c}`
-  const cellMap = new Map(data.matrix.map(m => [key(m.partner, m.category), m]))
+  const matrix = data.matrix || []
+  const cellMap = new Map(matrix.map(m => [key(m.partner, m.category), m]))
+
+  const categories = data.categories || []
+  const partners = data.partners || []
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -36,23 +40,23 @@ export function RiskHeatMap({
           <thead>
             <tr>
               <th className="sticky left-0 z-10 bg-white p-2 text-left text-xs font-medium text-slate-500" />
-              {data.categories.map(c => (
+              {categories.map(c => (
                 <th key={c} className="p-2 text-left text-xs font-medium text-slate-500">{c}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {data.partners.map(p => (
+            {partners.map(p => (
               <tr key={p}>
                 <th className="sticky left-0 z-10 bg-white py-1.5 pr-4 text-left text-xs font-medium text-slate-600">{p}</th>
-                {data.categories.map(c => {
+                {categories.map(c => {
                   const cell = cellMap.get(key(p, c))
                   const risk = cell?.risk ?? 'low'
                   return (
                     <td key={c} className="p-1">
                       <button
                         type="button"
-                        onClick={() => onSelect(p, c)}
+                        onClick={() => onSelect?.(p, c)}
                         className={`h-7 w-20 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 ${riskToClass[risk]}`}
                         aria-label={`${p} / ${c} risk ${risk}`}
                         title={`${p} / ${c} — ${risk.toUpperCase()}`}
@@ -64,6 +68,11 @@ export function RiskHeatMap({
             ))}
           </tbody>
         </table>
+        {partners.length === 0 && (
+          <div className="py-12 text-center text-sm text-slate-400">
+            No risk data available for the current selection.
+          </div>
+        )}
       </div>
     </div>
   )

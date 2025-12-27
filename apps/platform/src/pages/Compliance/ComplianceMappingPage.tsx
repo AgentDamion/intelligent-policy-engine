@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useEnterprise } from '../../contexts/EnterpriseContext'
 import {
   getOrganizationComplianceStatus,

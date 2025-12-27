@@ -2,10 +2,10 @@
 // File: api/services/cache-service.js
 // Supports both in-memory (Map) and Redis providers
 
-const MemoryProvider = require('./cache-providers/memory-provider');
-const RedisProvider = require('./cache-providers/redis-provider');
+import MemoryProvider from './cache-providers/memory-provider.js';
+import RedisProvider from './cache-providers/redis-provider.js';
 
-class CacheService {
+export class CacheService {
     constructor(provider = null) {
         const providerType = provider || process.env.CACHE_PROVIDER || 'memory';
         
@@ -94,15 +94,9 @@ class CacheService {
 // Singleton instance
 let cacheServiceInstance = null;
 
-function getCacheService() {
+export function getCacheService() {
     if (!cacheServiceInstance) {
         cacheServiceInstance = new CacheService();
     }
     return cacheServiceInstance;
 }
-
-module.exports = {
-    CacheService,
-    getCacheService
-};
-

@@ -4,7 +4,7 @@
 let Redis;
 let redisClient = null;
 
-class RedisProvider {
+export default class RedisProvider {
     constructor() {
         this.client = null;
         this.connected = false;
@@ -20,7 +20,8 @@ class RedisProvider {
         try {
             // Lazy load ioredis to avoid requiring it if not using Redis
             if (!Redis) {
-                Redis = require('ioredis');
+                const mod = await import('ioredis');
+                Redis = mod.default || mod;
             }
 
             const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
@@ -162,6 +163,3 @@ class RedisProvider {
         }
     }
 }
-
-module.exports = RedisProvider;
-

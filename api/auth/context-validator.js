@@ -1,7 +1,7 @@
 // Context Validation Utilities
 // File: api/auth/context-validator.js
 
-const db = require('../../database/connection');
+import db from '../../database/connection.js';
 
 class ContextValidator {
     /**
@@ -112,5 +112,5 @@ class ContextValidator {
     }
 }
 
-module.exports = new ContextValidator();
+export default new ContextValidator();
 

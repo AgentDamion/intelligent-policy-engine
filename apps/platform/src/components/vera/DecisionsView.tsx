@@ -30,6 +30,7 @@ import {
   User,
   X,
   XCircle,
+  PenTool,
 } from 'lucide-react'
 import { Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from '@headlessui/react'
 import toast from 'react-hot-toast'
@@ -44,12 +45,19 @@ import {
   requestChanges,
   escalateThread,
   addComment,
+  signDecision,
   type GovernanceThread,
   type GovernanceAction,
   type ActionType,
   type ThreadStatus,
 } from '@/services/vera/governanceThreadService'
 import { SurfaceProvider, useSurface } from '@/contexts/SurfaceContext'
+import { useSurfaceGuard } from '@/surfaces/useSurfaceGuard'
+import { useAuth } from '@/contexts/AuthContext'
+import { DecisionBadge } from './DecisionBadge'
+import type { RationaleStructured } from '@/types/rationale'
+import SplitView from '@/components/layout/SplitView'
+import EmptyState from '@/components/ui/EmptyState'
 
 // ============================================
 // Types
@@ -232,7 +240,14 @@ const DecisionDialog = memo(({ isOpen, onClose, actionType, thread, onConfirm }:
   const [rationale, setRationale] = useState('')
   const [conditions, setConditions] = useState<string[]>([''])
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const { canMakeFinalDecision, surface } = useSurface()
+  const [showSignature, setShowSignature] = useState(false)
+  const [signatureToken, setSignatureToken] = useState('')
+  const { canMakeFinalDecision } = useSurface()
+  const { canPerformAction, currentSurfaceId } = useSurfaceGuard()
+  const { user } = useAuth()
+
+  const { allowed: isActionAllowed, reason: violationReason, requiresStepUp } = 
+    actionType ? canPerformAction(actionType) : { allowed: true, requiresStepUp: false }
 
   const actionConfigs: Record<DecisionAction, { 
     title: string
@@ -297,20 +312,65 @@ const DecisionDialog = memo(({ isOpen, onClose, actionType, thread, onConfirm }:
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (!isActionAllowed) {
+      toast.error(violationReason || 'Action not permitted on this surface')
+      return
+    }
+
     if (!rationale.trim()) {
       toast.error('Rationale is required')
       return
     }
+
     if (showConditions && conditions.filter(c => c.trim()).length === 0) {
       toast.error('At least one condition is required')
       return
     }
+
+    // Step-up Auth / Signature Flow
+    if (requiresStepUp && !showSignature) {
+      setShowSignature(true)
+      return
+    }
+
+    if (requiresStepUp && !signatureToken.trim()) {
+      toast.error('Identity verification / signature token is required')
+      return
+    }
+
     setIsSubmitting(true)
     try {
+      // 1. If regulated action, capture the signature FIRST
+      if (requiresStepUp && thread && user) {
+        const sigResult = await signDecision({
+          threadId: thread.id,
+          decision: actionType || 'unknown',
+          rationale,
+          signatureToken,
+          actor: { user_id: user.id, role: 'admin' }, // TODO: Map actual role
+          surfaceContext: 'Decisions' // Hardcoded context for compliance
+        })
+
+        if (!sigResult.success) {
+          toast.error(`Signature Failed: ${sigResult.error}`)
+          setIsSubmitting(false)
+          return
+        }
+        
+        toast.success('GxP Signature Captured')
+      }
+
+      // 2. Proceed with the decision state change
       await onConfirm(rationale, showConditions ? conditions.filter(c => c.trim()) : undefined)
+      
       setRationale('')
       setConditions([''])
+      setShowSignature(false)
+      setSignatureToken('')
       onClose()
+    } catch (err: any) {
+      toast.error(err.message || 'Action failed')
     } finally {
       setIsSubmitting(false)
     }
@@ -321,6 +381,8 @@ const DecisionDialog = memo(({ isOpen, onClose, actionType, thread, onConfirm }:
     if (!isOpen) {
       setRationale('')
       setConditions([''])
+      setShowSignature(false)
+      setSignatureToken('')
     }
   }, [isOpen])
 
@@ -350,102 +412,137 @@ const DecisionDialog = memo(({ isOpen, onClose, actionType, thread, onConfirm }:
             <DialogPanel className="w-full max-w-lg bg-white rounded-xl shadow-xl">
               <form onSubmit={handleSubmit}>
                 <div className="p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0 w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center">
-                      {config?.icon || <Gavel className="w-6 h-6 text-slate-400" />}
-                    </div>
-                    <div className="flex-1">
-                      <DialogTitle className="text-lg font-bold text-slate-900">
-                        {config?.title || 'Confirm Decision'}
-                      </DialogTitle>
-                      <p className="mt-1 text-sm text-slate-600">
-                        {config?.description}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Surface Indicator */}
-                  <div className="mt-4 flex items-center gap-2 text-xs">
-                    <span className={`px-2 py-1 rounded-full font-medium ${
-                      canMakeFinalDecision 
-                        ? 'bg-emerald-100 text-emerald-700' 
-                        : 'bg-red-100 text-red-700'
-                    }`}>
-                      Surface: {surface}
-                    </span>
-                    {canMakeFinalDecision ? (
-                      <span className="text-emerald-600 flex items-center gap-1">
-                        <Check className="w-3 h-3" /> Final decisions allowed
-                      </span>
-                    ) : (
-                      <span className="text-red-600 flex items-center gap-1">
-                        <X className="w-3 h-3" /> Final decisions not allowed from this surface
-                      </span>
-                    )}
-                  </div>
-
-                  {thread && (
-                    <div className="mt-4 p-3 bg-slate-50 rounded-lg border border-slate-100">
-                      <p className="text-sm font-medium text-slate-800">{thread.title || 'Untitled Thread'}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <StatusBadge status={thread.status} />
-                        <span className="text-xs text-slate-500">ID: {thread.id.slice(0, 8)}...</span>
+                  {!showSignature ? (
+                    <>
+                      <div className="flex items-start gap-4">
+                        <div className="flex-shrink-0 w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center">
+                          {config?.icon || <Gavel className="w-6 h-6 text-slate-400" />}
+                        </div>
+                        <div className="flex-1">
+                          <DialogTitle className="text-lg font-bold text-slate-900">
+                            {config?.title || 'Confirm Decision'}
+                          </DialogTitle>
+                          <p className="mt-1 text-sm text-slate-600">
+                            {config?.description}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  )}
 
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Rationale <span className="text-red-500">*</span>
-                    </label>
-                    <textarea
-                      value={rationale}
-                      onChange={(e) => setRationale(e.target.value)}
-                      placeholder="Explain your decision (required for accountability)..."
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-                      rows={3}
-                      required
-                    />
-                    <p className="mt-1 text-xs text-slate-400">
-                      This rationale will be permanently recorded in the audit trail.
-                    </p>
-                  </div>
+                      {/* Compliance Guardrail Indicator */}
+                      <div className="mt-4 flex items-center gap-2 text-xs">
+                        <span className={`px-2 py-1 rounded-full font-medium ${
+                          isActionAllowed 
+                            ? 'bg-emerald-100 text-emerald-700' 
+                            : 'bg-red-100 text-red-700'
+                        }`}>
+                          Surface: {currentSurfaceId?.toUpperCase()}
+                        </span>
+                        {isActionAllowed ? (
+                          <span className="text-emerald-600 flex items-center gap-1">
+                            <Check className="w-3 h-3" /> Surface authorized for this action
+                          </span>
+                        ) : (
+                          <span className="text-red-600 flex items-center gap-1">
+                            <X className="w-3 h-3" /> {violationReason}
+                          </span>
+                        )}
+                      </div>
 
-                  {/* Conditions (for approve with conditions) */}
-                  {showConditions && (
-                    <div className="mt-4">
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
-                        Conditions <span className="text-red-500">*</span>
-                      </label>
-                      <div className="space-y-2">
-                        {conditions.map((condition, idx) => (
-                          <div key={idx} className="flex gap-2">
-                            <input
-                              type="text"
-                              value={condition}
-                              onChange={(e) => handleConditionChange(idx, e.target.value)}
-                              placeholder={`Condition ${idx + 1}`}
-                              className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-                            />
-                            {conditions.length > 1 && (
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveCondition(idx)}
-                                className="p-2 text-slate-400 hover:text-red-500"
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
-                            )}
+                      {thread && (
+                        <div className="mt-4 p-3 bg-slate-50 rounded-lg border border-slate-100">
+                          <p className="text-sm font-medium text-slate-800">{thread.title || 'Untitled Thread'}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <StatusBadge status={thread.status} />
+                            <span className="text-xs text-slate-500">ID: {thread.id.slice(0, 8)}...</span>
                           </div>
-                        ))}
+                        </div>
+                      )}
+
+                      <div className="mt-4">
+                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                          Rationale <span className="text-red-500">*</span>
+                        </label>
+                        <textarea
+                          value={rationale}
+                          onChange={(e) => setRationale(e.target.value)}
+                          placeholder="Explain your decision (required for accountability)..."
+                          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                          rows={3}
+                          required
+                        />
+                        <p className="mt-1 text-xs text-slate-400">
+                          This rationale will be permanently recorded in the audit trail.
+                        </p>
                       </div>
-                      <button
-                        type="button"
-                        onClick={handleAddCondition}
-                        className="mt-2 text-sm text-indigo-600 hover:text-indigo-700 font-medium"
-                      >
-                        + Add condition
-                      </button>
+
+                      {/* Conditions (for approve with conditions) */}
+                      {showConditions && (
+                        <div className="mt-4">
+                          <label className="block text-sm font-medium text-slate-700 mb-2">
+                            Conditions <span className="text-red-500">*</span>
+                          </label>
+                          <div className="space-y-2">
+                            {conditions.map((condition, idx) => (
+                              <div key={idx} className="flex gap-2">
+                                <input
+                                  type="text"
+                                  value={condition}
+                                  onChange={(e) => handleConditionChange(idx, e.target.value)}
+                                  placeholder={`Condition ${idx + 1}`}
+                                  className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                                />
+                                {conditions.length > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveCondition(idx)}
+                                    className="p-2 text-slate-400 hover:text-red-500"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleAddCondition}
+                            className="mt-2 text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+                          >
+                            + Add condition
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="space-y-6">
+                      <div className="flex items-center gap-3 text-indigo-600">
+                        <PenTool className="w-8 h-8" />
+                        <h2 className="text-xl font-bold">Regulatory Signature Required</h2>
+                      </div>
+                      
+                      <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg">
+                        <p className="text-sm text-amber-800">
+                          <strong>GxP Compliance:</strong> You are about to sign a final decision for thread <strong>#{thread?.id.slice(0, 8)}</strong>. 
+                          This action will be recorded in an immutable ledger with your identity and timestamp.
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-slate-700">
+                          Confirm Identity / Signature Token
+                        </label>
+                        <input
+                          type="password"
+                          value={signatureToken}
+                          onChange={(e) => setSignatureToken(e.target.value)}
+                          placeholder="Enter your verification code or password"
+                          className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          autoFocus
+                        />
+                        <p className="text-xs text-slate-400 italic">
+                          "I acknowledge that my electronic signature is the legally binding equivalent of my handwritten signature."
+                        </p>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -453,21 +550,21 @@ const DecisionDialog = memo(({ isOpen, onClose, actionType, thread, onConfirm }:
                 <div className="px-6 py-4 bg-slate-50 rounded-b-xl flex justify-end gap-3">
                   <button
                     type="button"
-                    onClick={onClose}
+                    onClick={showSignature ? () => setShowSignature(false) : onClose}
                     className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200 rounded-lg transition-colors"
                     disabled={isSubmitting}
                   >
-                    Cancel
+                    {showSignature ? 'Back' : 'Cancel'}
                   </button>
                   <button
                     type="submit"
-                    disabled={isSubmitting || !rationale.trim() || !canMakeFinalDecision}
+                    disabled={isSubmitting || !rationale.trim() || !isActionAllowed}
                     className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50 ${config?.buttonClass || 'bg-indigo-600 hover:bg-indigo-700'}`}
                   >
                     {isSubmitting ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
-                      config?.buttonText || 'Confirm'
+                      showSignature ? 'Sign and Finalize' : (requiresStepUp ? 'Continue to Sign' : (config?.buttonText || 'Confirm'))
                     )}
                   </button>
                 </div>
@@ -622,10 +719,8 @@ const DecisionsViewInner = memo(({ enterpriseId }: DecisionsViewProps) => {
     ['in_review', 'pending_human', 'proposed_resolution', 'escalated'].includes(t.status)
   ).length
 
-  return (
-    <div className="flex h-full bg-slate-50 overflow-hidden">
-      {/* Thread List */}
-      <div className="flex flex-col border-r border-slate-200 bg-white h-full w-full md:w-[420px]">
+  const listPane = (
+      <div className="flex flex-col border-r border-slate-200 bg-white h-full">
         <div className="p-5 border-b border-slate-100 bg-white z-10">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
@@ -646,14 +741,6 @@ const DecisionsViewInner = memo(({ enterpriseId }: DecisionsViewProps) => {
                 <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
               </button>
             </div>
-          </div>
-
-          {/* Surface Indicator */}
-          <div className="mb-3 p-2 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-emerald-600" />
-            <span className="text-xs font-medium text-emerald-700">
-              Decisions Surface - Final decisions enabled
-            </span>
           </div>
 
           {/* Tabs */}
@@ -688,17 +775,17 @@ const DecisionsViewInner = memo(({ enterpriseId }: DecisionsViewProps) => {
               <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
             </div>
           ) : threads.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-slate-400">
-              <Gavel className="w-12 h-12 opacity-20 mb-4" />
-              <p className="text-sm font-medium">
-                {activeTab === 'pending' ? 'No pending decisions' : 'No decisions yet'}
-              </p>
-              <p className="text-xs mt-1">
-                {activeTab === 'pending' 
-                  ? 'Threads awaiting decision will appear here.' 
-                  : 'Completed decisions will appear here.'}
-              </p>
-            </div>
+            <EmptyState
+              icon={<Gavel className="w-6 h-6 text-slate-400" />}
+              title={activeTab === 'pending' ? 'No pending decisions' : 'No completed decisions yet'}
+              description={
+                activeTab === 'pending'
+                  ? 'Threads routed from Triage will appear here when they require accountable sign-off.'
+                  : 'Signed decisions will appear here with links to their proof bundles.'
+              }
+              actions={[{ label: 'Open Triage', href: '/inbox', variant: 'outline' }]}
+              className="py-12"
+            />
           ) : (
             threads.map((thread) => (
               <div
@@ -743,17 +830,18 @@ const DecisionsViewInner = memo(({ enterpriseId }: DecisionsViewProps) => {
           {totalThreads} total threads
         </div>
       </div>
+  )
 
-      {/* Detail Panel */}
+  const detailPane = (
       <div className="flex-1 bg-slate-50/50 h-full overflow-hidden flex flex-col">
         {!selectedThread ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-slate-400 p-8">
-            <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6">
-              <Gavel className="w-10 h-10 opacity-20" />
-            </div>
-            <p className="text-sm font-medium">Select a thread to make a decision</p>
-            <p className="text-xs mt-1">Review the history and render your judgment</p>
-          </div>
+          <EmptyState
+            icon={<Gavel className="w-6 h-6 text-slate-400" />}
+            title="Select a thread"
+            description="Decisions are finalized here. Review evidence, provide rationale, and sign with step-up authentication."
+            actions={[{ label: 'Open Proof Vault', href: '/proof', variant: 'outline' }]}
+            className="h-full"
+          />
         ) : (
           <div className="flex flex-col h-full bg-white md:bg-transparent">
             {/* Header */}
@@ -861,6 +949,44 @@ const DecisionsViewInner = memo(({ enterpriseId }: DecisionsViewProps) => {
                 </div>
               </div>
 
+              {/* Decision Rationale Section - Show for resolved threads */}
+              {['resolved', 'approved', 'blocked', 'approved_with_conditions'].includes(selectedThread.status) && (
+                <div className="bg-slate-900 rounded-xl shadow-sm overflow-hidden text-white">
+                  <div className="px-6 py-3 border-b border-slate-800 flex items-center gap-2">
+                    <PenTool className="w-4 h-4 text-indigo-400" />
+                    <span className="text-sm font-bold text-indigo-400 uppercase tracking-wider">
+                      Decision Justification
+                    </span>
+                  </div>
+                  <div className="p-6 space-y-4">
+                    {/* DecisionBadge with rationale */}
+                    <DecisionBadge
+                      decision={selectedThread.status}
+                      rationaleHuman={
+                        (selectedThread as any).rationaleHuman || 
+                        (selectedThread as any).rationale_human ||
+                        `${selectedThread.status.charAt(0).toUpperCase() + selectedThread.status.slice(1).replace('_', ' ')} per governance policy`
+                      }
+                      rationaleStructured={
+                        (selectedThread as any).rationaleStructured || 
+                        (selectedThread as any).rationale_structured as RationaleStructured | null
+                      }
+                      size="lg"
+                      className="text-white"
+                    />
+                    
+                    {/* Summary for auditors */}
+                    <div className="text-xs text-slate-400 pt-2 border-t border-slate-800">
+                      <p>
+                        This decision was recorded on the Decisions surface and is part of the 
+                        immutable governance audit trail. All signatures and rationales are 
+                        cryptographically anchored for GxP compliance.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Action History */}
               <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                 <div className="px-6 py-3 border-b border-slate-100 flex items-center justify-between">
@@ -891,6 +1017,16 @@ const DecisionsViewInner = memo(({ enterpriseId }: DecisionsViewProps) => {
           </div>
         )}
       </div>
+  )
+
+  return (
+    <div className="h-full">
+      <SplitView
+        className="bg-slate-50 overflow-hidden"
+        left={listPane}
+        main={detailPane}
+        leftClassName="md:w-[420px]"
+      />
 
       {/* Decision Dialog */}
       <DecisionDialog

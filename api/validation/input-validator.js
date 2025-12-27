@@ -1,7 +1,7 @@
 // File: api/validation/input-validator.js
 
-const Joi = require('joi');
-const sanitizeHtml = require('sanitize-html');
+import Joi from 'joi';
+import sanitizeHtml from 'sanitize-html';
 
 class InputValidator {
     constructor() {
@@ -393,4 +393,4 @@ class InputValidator {
     }
 }
 
-module.exports = new InputValidator(); 
+export default new InputValidator(); 

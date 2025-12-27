@@ -1,10 +1,10 @@
 // api/middleware/security-headers.js
 // Security Headers Middleware for B2B Protection
 
-const helmet = require('helmet');
+import helmet from 'helmet';
 
 // Parse security headers configuration from environment
-const getSecurityHeadersConfig = () => {
+export const getSecurityHeadersConfig = () => {
   const enabled = process.env.SECURITY_HEADERS_ENABLED === 'true';
   const hstsMaxAge = parseInt(process.env.SECURITY_HEADERS_HSTS_MAX_AGE) || 31536000; // 1 year
   const csp = process.env.SECURITY_HEADERS_CONTENT_SECURITY_POLICY || 
@@ -18,7 +18,7 @@ const getSecurityHeadersConfig = () => {
 };
 
 // B2B-appropriate security headers configuration
-const securityHeadersMiddleware = (req, res, next) => {
+export const securityHeadersMiddleware = (req, res, next) => {
   const config = getSecurityHeadersConfig();
   
   if (!config.enabled) {
@@ -82,7 +82,7 @@ const securityHeadersMiddleware = (req, res, next) => {
 };
 
 // Alternative: Use Helmet for comprehensive security headers
-const helmetMiddleware = helmet({
+export const helmetMiddleware = helmet({
   // HSTS configuration
   hsts: {
     maxAge: getSecurityHeadersConfig().hstsMaxAge,
@@ -134,7 +134,7 @@ const helmetMiddleware = helmet({
 });
 
 // Function to explain what each header does
-const explainSecurityHeaders = () => {
+export const explainSecurityHeaders = () => {
   console.log('🔒 Security Headers Explanation:');
   console.log('');
   console.log('1. Strict-Transport-Security (HSTS):');
@@ -179,10 +179,3 @@ const explainSecurityHeaders = () => {
   console.log('    - Controls DNS prefetching');
   console.log('    - B2B Setting: Off (for privacy)');
 };
-
-module.exports = {
-  securityHeadersMiddleware,
-  helmetMiddleware,
-  explainSecurityHeaders,
-  getSecurityHeadersConfig
-}; 

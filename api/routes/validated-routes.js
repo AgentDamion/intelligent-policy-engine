@@ -1,12 +1,12 @@
 // File: api/routes/validated-routes.js
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const validationMiddleware = require('../validation/validation-middleware');
-const validationSchemas = require('../validation/validation-schemas');
-const inputValidator = require('../validation/input-validator');
-const hierarchicalAuth = require('../auth/hierarchical-auth');
-const db = require('../../database/connection');
+import validationMiddleware from '../validation/validation-middleware.js';
+import validationSchemas from '../validation/validation-schemas.js';
+import inputValidator from '../validation/input-validator.js';
+import hierarchicalAuth from '../auth/hierarchical-auth.js';
+import db from '../../database/connection.js';
 
 // ===== AUTHENTICATION ROUTES WITH VALIDATION =====
 
@@ -631,4 +631,4 @@ router.get('/search',
     }
 );
 
-module.exports = router; 
+export default router; 

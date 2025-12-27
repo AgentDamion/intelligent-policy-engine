@@ -1,12 +1,12 @@
 // File: api/auth/hierarchical-auth.js
 
-const jwt = require('jsonwebtoken');
+import jwt from 'jsonwebtoken';
 // Use pure-JS bcrypt implementation to avoid native build issues in dev environments.
-const bcrypt = require('bcryptjs');
-const { Pool } = require('pg');
-const db = require('../../database/connection');
-const { getCacheService } = require('../services/cache-service');
-const contextValidator = require('./context-validator');
+import bcrypt from 'bcryptjs';
+import { Pool } from 'pg';
+import db from '../../database/connection.js';
+import { getCacheService } from '../services/cache-service.js';
+import contextValidator from './context-validator.js';
 
 class HierarchicalAuthSystem {
     constructor() {
@@ -652,4 +652,4 @@ class HierarchicalAuthSystem {
     }
 }
 
-module.exports = new HierarchicalAuthSystem(); 
+export default new HierarchicalAuthSystem(); 

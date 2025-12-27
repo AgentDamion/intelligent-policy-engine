@@ -1,21 +1,32 @@
-require('dotenv').config();
-const express = require('express');
-const http = require('http');
-const session = require('express-session');
-const cors = require('cors');
-const path = require('path');
-const WebSocket = require('ws');
-const apiRoutes = require('./api/routes');
-const { authRouter } = require('./api/auth');
-const modernAuthBridge = require('./api/auth/mock-auth-bridge');
-const policyTemplatesRouter = require('./api/policy-templates');
-const dashboardRouter = require('./api/dashboard');
-const hierarchicalRoutes = require('./api/routes/hierarchical-routes');
-const enhancedOrchestrationRouter = require('./api/enhanced-orchestration');
-const inviteRoutes = require('./api/invite');
-const toolSubmissionRoutes = require('./api/tool-submission');
-require('./core/feedback-loop');
-const EventBus = require('./core/event-bus');
+import 'dotenv/config';
+import express from 'express';
+import http from 'http';
+import session from 'express-session';
+import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import fs from 'fs';
+import { WebSocketServer } from 'ws';
+import apiRoutes from './api/routes.js';
+import { authRouter } from './api/auth.js';
+import modernAuthBridge from './api/auth/mock-auth-bridge.js';
+import policyTemplatesRouter from './api/policy-templates.js';
+import dashboardRouter from './api/dashboard.js';
+import hierarchicalRoutes from './api/routes/hierarchical-routes.js';
+import enhancedOrchestrationRouter from './api/enhanced-orchestration.js';
+import inviteRoutes from './api/invite.js';
+import toolSubmissionRoutes from './api/tool-submission.js';
+import aiGatewayRoutes from './api/routes/ai-gateway.js';
+import './core/feedback-loop.js';
+import EventBus from './core/event-bus.js';
+
+// Security middleware imports
+import { securityHeadersMiddleware } from './api/middleware/security-headers.js';
+import rateLimiter from './api/middleware/rate-limiter.js';
+
+// ES module equivalent of __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -48,6 +59,16 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+
+// ===== SECURITY MIDDLEWARE (CRITICAL) =====
+// Apply security headers (XSS, clickjacking, HTTPS enforcement)
+app.use(securityHeadersMiddleware);
+
+// Apply rate limiting (brute force protection)
+// Uses tiered limits: standard (1000/hr), premium (5000/hr), enterprise (10000/hr)
+app.use(rateLimiter.middleware());
+// ===== END SECURITY MIDDLEWARE =====
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -59,7 +80,7 @@ if (process.env.NODE_ENV === 'production') {
   const buildPath = path.join(__dirname, 'ui', 'build');
   const publicPath = path.join(__dirname, 'ui', 'public');
   
-  if (require('fs').existsSync(buildPath)) {
+  if (fs.existsSync(buildPath)) {
     app.use(express.static(buildPath));
   } else {
     app.use(express.static(publicPath));
@@ -72,8 +93,20 @@ app.get('/test-websocket.html', (req, res) => {
 });
 
 // Session middleware with production security
+// SECURITY: Session secret is REQUIRED in production to prevent session hijacking
+const getSessionSecret = () => {
+  if (process.env.SESSION_SECRET) {
+    return process.env.SESSION_SECRET;
+  }
+  if (isProduction) {
+    throw new Error('CRITICAL: SESSION_SECRET environment variable is required in production');
+  }
+  console.warn('⚠️  Using development session secret - DO NOT use in production');
+  return 'dev-only-session-secret-not-for-production';
+};
+
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'dev-secret-key-change-in-production',
+  secret: getSessionSecret(),
   resave: false,
   saveUninitialized: false,
   cookie: { 
@@ -85,7 +118,7 @@ app.use(session({
 }));
 
 // Create WebSocket server on the same HTTP server
-const wss = new WebSocket.Server({ 
+const wss = new WebSocketServer({ 
   server,
   path: '/ws',
   clientTracking: true
@@ -160,7 +193,7 @@ wss.on('connection', (ws, req) => {
 const broadcast = (message) => {
   const messageStr = JSON.stringify(message);
   clients.forEach(client => {
-    if (client.readyState === WebSocket.OPEN) {
+    if (client.readyState === 1) { // WebSocket.OPEN = 1
       client.send(messageStr);
     }
   });
@@ -177,7 +210,7 @@ const broadcastToSubscribers = (message, subscriptionType) => {
   
   clients.forEach(client => {
     console.log(`🔍 Client state: ${client.readyState}, ${subscriptionType}: ${client[subscriptionType]}`);
-    if (client.readyState === WebSocket.OPEN && client[subscriptionType]) {
+    if (client.readyState === 1 && client[subscriptionType]) { // WebSocket.OPEN = 1
       console.log(`🔍 Sending message to client: ${messageStr}`);
       client.send(messageStr);
       subscriberCount++;
@@ -363,6 +396,8 @@ app.use('/api/policy-templates', policyTemplatesRouter);
 app.use('/api/invite', inviteRoutes);
 // Partner tool submission
 app.use('/api/tool-submission', toolSubmissionRoutes);
+// AI Gateway (budget + PII guardrails)
+app.use('/api', aiGatewayRoutes);
 // Hierarchical Multi-Tenant API (disabled for testing)
 // app.use('/api', hierarchicalRoutes);
 // Enhanced Orchestration
@@ -445,7 +480,7 @@ if (process.env.NODE_ENV === 'production') {
     const buildPath = path.join(__dirname, 'ui', 'build', 'index.html');
     const publicPath = path.join(__dirname, 'ui', 'public', 'index.html');
     
-    if (require('fs').existsSync(buildPath)) {
+    if (fs.existsSync(buildPath)) {
       res.sendFile(buildPath);
     } else {
       res.sendFile(publicPath);
@@ -480,4 +515,4 @@ process.on('SIGINT', () => {
   });
 });
 
-module.exports = { app, server, wss, broadcast, broadcastToSubscribers };
+export { app, server, wss, broadcast, broadcastToSubscribers };

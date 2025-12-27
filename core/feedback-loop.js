@@ -1,5 +1,5 @@
-const eventBus = require('./event-bus');
-const agentRegistry = require('../agents/agent-registry');
+import eventBus from './event-bus.js';
+import agentRegistry from '../agents/agent-registry.js';
 
 eventBus.on('policy:checked', async ({ input, result }) => {
   if (result && result.feedback) {

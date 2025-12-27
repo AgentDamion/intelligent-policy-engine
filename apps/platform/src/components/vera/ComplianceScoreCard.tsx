@@ -9,7 +9,7 @@
  * - 7-day and 30-day trends
  */
 
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   Shield,
   TrendingUp,

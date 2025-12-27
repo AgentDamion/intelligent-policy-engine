@@ -1,7 +1,7 @@
 // Rate Limit Configuration
 // File: api/config/rate-limits.js
 
-const RATE_LIMITS = {
+export const RATE_LIMITS = {
     enterprise: {
         standard: {
             requests: parseInt(process.env.RATE_LIMIT_STANDARD) || 1000,
@@ -41,7 +41,7 @@ const RATE_LIMITS = {
 /**
  * Get rate limit configuration for a context
  */
-function getRateLimitConfig(contextType, subscriptionTier = 'standard') {
+export function getRateLimitConfig(contextType, subscriptionTier = 'standard') {
     const tierConfig = RATE_LIMITS[contextType];
     if (!tierConfig) {
         return RATE_LIMITS.default;
@@ -53,7 +53,7 @@ function getRateLimitConfig(contextType, subscriptionTier = 'standard') {
 /**
  * Get rate limit key for a context
  */
-function getRateLimitKey(context) {
+export function getRateLimitKey(context) {
     const enterpriseId = context.enterpriseId || context.partnerEnterpriseId || 'unknown';
     const contextId = context.id || context.contextId || 'unknown';
     return `ratelimit:${enterpriseId}:${contextId}`;
@@ -62,14 +62,6 @@ function getRateLimitKey(context) {
 /**
  * Get rate limit key for user
  */
-function getUserRateLimitKey(userId) {
+export function getUserRateLimitKey(userId) {
     return `ratelimit:user:${userId}`;
 }
-
-module.exports = {
-    RATE_LIMITS,
-    getRateLimitConfig,
-    getRateLimitKey,
-    getUserRateLimitKey
-};
-

@@ -1,10 +1,10 @@
 // Partner-Enterprise Relationship Routes
 // File: api/routes/partner-relationships.js
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const relationshipService = require('../services/relationship-service');
-const hierarchicalAuth = require('../auth/hierarchical-auth');
+import relationshipService from '../services/relationship-service.js';
+import hierarchicalAuth from '../auth/hierarchical-auth.js';
 
 // All routes require authentication
 router.use(hierarchicalAuth.requireAuth());
@@ -228,5 +228,5 @@ router.get('/enterprise/:enterpriseId/partners', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
 

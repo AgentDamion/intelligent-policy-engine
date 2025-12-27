@@ -1,8 +1,8 @@
 // api/policy-templates.js
 // API endpoints for policy template management
 
-const express = require('express');
-const { Pool } = require('pg');
+import express from 'express';
+import { Pool } from 'pg';
 const router = express.Router();
 
 const pool = new Pool({ 
@@ -160,4 +160,4 @@ router.get('/:orgId/policies', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

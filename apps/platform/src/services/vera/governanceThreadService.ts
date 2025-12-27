@@ -257,6 +257,12 @@ export async function getThreads(
   enterpriseId: string,
   filters: ThreadFilters = {}
 ): Promise<{ data: GovernanceThread[]; total: number }> {
+  // Guard against missing or "undefined" enterpriseId
+  if (!enterpriseId || enterpriseId === 'undefined') {
+    console.warn('[governanceThreadService] getThreads called without valid enterpriseId');
+    return { data: [], total: 0 };
+  }
+
   const { status, threadType, priority, severity, search, limit = 50, offset = 0 } = filters
 
   let query = supabase
@@ -646,6 +652,40 @@ export async function requestInfo(
 }
 
 /**
+ * Capture a regulatory-compliant signature (intent to sign).
+ * Required for GxP/21 CFR Part 11.
+ * MUST originate from the 'Decisions' surface context.
+ */
+export async function signDecision(input: {
+  threadId: string;
+  decision: string;
+  rationale: string;
+  signatureToken: string;
+  actor: { user_id: string; role: Role };
+  surfaceContext: Surface;
+}): Promise<{ success: boolean; signatureId?: string; timestamp?: string; error?: string; code?: string }> {
+  try {
+    const { data, error } = await supabase.functions.invoke('governance-action', {
+      body: {
+        action: 'sign_signature', // Map to internal action type
+        ...input
+      }
+    });
+
+    if (error) {
+      console.error('[governanceThreadService] Error signing decision:', error);
+      return { success: false, error: error.message };
+    }
+
+    const result = typeof data === 'string' ? JSON.parse(data) : data;
+    return result;
+  } catch (err) {
+    console.error('[governanceThreadService] Exception signing decision:', err);
+    return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+  }
+}
+
+/**
  * Provide requested information
  */
 export async function provideInfo(
@@ -773,6 +813,27 @@ export async function getThreadStats(enterpriseId: string): Promise<{
   byPriority: Record<ThreadPriority, number>
   bySeverity: Record<ThreadSeverity | 'unset', number>
 }> {
+  // Guard against missing or "undefined" enterpriseId
+  if (!enterpriseId || enterpriseId === 'undefined') {
+    return {
+      total: 0,
+      open: 0,
+      inReview: 0,
+      pendingHuman: 0,
+      needsInfo: 0,
+      proposedResolution: 0,
+      escalated: 0,
+      approved: 0,
+      blocked: 0,
+      resolved: 0,
+      cancelled: 0,
+      archived: 0,
+      byType: { tool_request: 0, policy_change: 0, incident: 0, audit: 0 },
+      byPriority: { low: 0, normal: 0, high: 0, urgent: 0 },
+      bySeverity: { low: 0, medium: 0, high: 0, critical: 0, unset: 0 }
+    };
+  }
+
   // Get all threads for aggregation
   const { data: threads, error: threadsError } = await supabase
     .from('governance_threads')

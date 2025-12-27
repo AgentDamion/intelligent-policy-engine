@@ -1,7 +1,7 @@
 // api/auth/auth0-middleware.js
-const { expressjwt: jwt } = require('express-jwt');
-const jwksRsa = require('jwks-rsa');
-const { config } = require('../../auth0-config.cjs');
+import { expressjwt as jwt } from 'express-jwt';
+import jwksRsa from 'jwks-rsa';
+import { config } from '../../auth0-config.cjs';
 
 // JWT validation middleware
 const checkJwt = jwt({
@@ -65,9 +65,4 @@ const requireOrganizationAccess = (req, res, next) => {
   next();
 };
 
-module.exports = {
-  checkJwt,
-  requireRole,
-  requirePermission,
-  requireOrganizationAccess
-};
+export { checkJwt, requireRole, requirePermission, requireOrganizationAccess };

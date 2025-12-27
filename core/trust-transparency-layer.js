@@ -5,8 +5,8 @@
  * for all agent decisions and workflow executions
  */
 
-const pool = require('../database/connection');
-const EventBus = require('./event-bus');
+import pool from '../database/connection.js';
+import EventBus from './event-bus.js';
 
 class TrustTransparencyLayer {
   constructor() {
@@ -605,4 +605,4 @@ class TrustTransparencyLayer {
   }
 }
 
-module.exports = TrustTransparencyLayer; 
+export default TrustTransparencyLayer; 

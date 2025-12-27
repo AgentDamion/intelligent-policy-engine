@@ -1,4 +1,4 @@
-﻿import React, { createContext, useContext, useEffect, useState } from 'react'
+﻿import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { useAuth } from './AuthContext'
 import { supabase } from '@/lib/supabase'
 import { Database } from '@/lib/supabase'
@@ -43,6 +43,7 @@ export const EnterpriseProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [enterpriseFetchComplete, setEnterpriseFetchComplete] = useState(false)
   const [fetchInProgress, setFetchInProgress] = useState(false)
   const [hasNoEnterprise, setHasNoEnterprise] = useState(false)
+  const fetchSeqRef = useRef(0)
 
   const fetchUserEnterprises = async () => {
     if (!user) {
@@ -53,8 +54,10 @@ export const EnterpriseProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
 
     try {
+      const seq = ++fetchSeqRef.current
       setFetchInProgress(true)
       setHasNoEnterprise(false)
+
       // Get enterprises where user is a member
       const { data: memberships, error: membershipError } = await supabase
         .from('enterprise_members')
@@ -62,6 +65,11 @@ export const EnterpriseProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         .eq('user_id', user.id)
 
       if (membershipError) throw membershipError
+
+      // Ignore stale results if a newer fetch started
+      if (seq !== fetchSeqRef.current) {
+        return
+      }
 
       if (memberships && memberships.length > 0) {
         // Get enterprise details
@@ -72,6 +80,11 @@ export const EnterpriseProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           .in('id', enterpriseIds)
 
         if (enterpriseError) throw enterpriseError
+
+        // Ignore stale results if a newer fetch started
+        if (seq !== fetchSeqRef.current) {
+          return
+        }
 
         // Set first enterprise as current if none selected
         if (enterprises && enterprises.length > 0) {

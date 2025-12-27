@@ -395,6 +395,15 @@ serve(async (req) => {
       .map(b => b.toString(16).padStart(2, '0'))
       .join('')
 
+    // 9.5. Generate canonical JSON and hash for artifacts
+    const canonicalJson = JSON.stringify(bundleContent, Object.keys(bundleContent).sort())
+    const encoder = new TextEncoder()
+    const bundleBytes = encoder.encode(canonicalJson)
+    const hashBuffer = await crypto.subtle.digest('SHA-256', bundleBytes)
+    const bundleHash = Array.from(new Uint8Array(hashBuffer))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('')
+
     // 10. Store the proof bundle
     const { data: proofBundle, error: bundleError } = await supabase
       .from('proof_bundles')
@@ -413,6 +422,7 @@ serve(async (req) => {
         atom_states_snapshot: bundleContent,
         decision: null, // Set based on content analysis if needed
         regulatory_compliance: regulatoryCompliance,
+        bundle_hash: bundleHash, // Store hash in bundle
         created_by: requestedBy,
         created_at: new Date().toISOString()
       })
@@ -428,6 +438,48 @@ serve(async (req) => {
         status: 500,
         headers: corsHeaders
       })
+    }
+
+    // 10.5. Store proof bundle artifacts (cryptographic fields)
+    await supabase
+      .from('proof_bundle_artifacts')
+      .insert({
+        proof_bundle_id: proofBundle.id,
+        bundle_hash: bundleHash,
+        canonical_json: bundleContent,
+        signature: null, // Would be generated with signing key
+        signature_algorithm: null
+      })
+      .catch(err => console.error('Error storing proof bundle artifacts:', err))
+
+    // 10.6. Generate disclosures
+    try {
+      await supabase.functions.invoke('generate-disclosure', {
+        body: {
+          proof_bundle_id: proofBundle.id,
+          disclosure_formats: ['ai_origin_label', 'c2pa_manifest', 'attestation']
+        }
+      })
+    } catch (err) {
+      console.error('Error generating disclosures:', err)
+      // Don't fail bundle generation if disclosure generation fails
+    }
+
+    // 10.7. Trigger compliance assessment
+    try {
+      await supabase.functions.invoke('assess-compliance', {
+        body: {
+          target_type: 'proof_bundle',
+          target_id: proofBundle.id,
+          options: {
+            include_evidence_details: true,
+            calculate_gaps: true
+          }
+        }
+      })
+    } catch (err) {
+      console.error('Error assessing compliance:', err)
+      // Don't fail bundle generation if compliance assessment fails
     }
 
     // 10. Try to store bundle file in storage (optional)

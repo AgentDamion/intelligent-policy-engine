@@ -1,8 +1,8 @@
 // api/dashboard.js
 // API endpoints for dashboard data - real metrics from database
 
-const express = require('express');
-const { Pool } = require('pg');
+import express from 'express';
+import { Pool } from 'pg';
 const router = express.Router();
 
 const pool = new Pool({ 
@@ -307,4 +307,4 @@ router.get('/metrics/workflows', async (req, res) => {
   }
 });
 
-module.exports = router; 
+export default router; 

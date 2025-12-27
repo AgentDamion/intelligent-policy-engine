@@ -72,14 +72,14 @@ export interface VERADashboardData {
 export async function getVelocityMetrics(enterpriseId: string): Promise<VelocityMetrics> {
   try {
     // Get vera_preferences for calculation coefficients
-    const { data: preferences, error: prefError } = await supabase
+    const { data: preferences } = await supabase
       .from('vera_preferences')
       .select('avg_campaign_value_usd, avg_manual_review_days, auto_clear_threshold')
       .eq('enterprise_id', enterpriseId)
       .single()
 
     // Get vera_state for live counters
-    const { data: state, error: stateError } = await supabase
+    const { data: state } = await supabase
       .from('vera_state')
       .select('decisions_count, auto_cleared_count, escalated_count, blocked_count, stats_period_start')
       .eq('enterprise_id', enterpriseId)
