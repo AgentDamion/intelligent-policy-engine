@@ -12,6 +12,8 @@ export default function ComplianceMappingPage() {
   const [complianceStatus, setComplianceStatus] = useState<OrganizationComplianceStatus | null>(null)
   const [selectedPolicy, setSelectedPolicy] = useState<string | null>(null)
   const [policyMapping, setPolicyMapping] = useState<PolicyFrameworkMapping | null>(null)
+  const [gaps, setGaps] = useState<ComplianceGap[]>([])
+  const [loadingGaps, setLoadingGaps] = useState(false)
 
   useEffect(() => {
     setLoading(false) // Stub for now
@@ -186,37 +188,9 @@ export default function ComplianceMappingPage() {
       {selectedPolicy && (
         <div className="bg-white rounded-lg border border-slate-200 p-6">
           <h2 className="text-lg font-semibold text-slate-900 mb-4">Compliance Gaps</h2>
-          
-          {loadingGaps ? (
-            <div className="flex items-center justify-center py-8">
-              <LoadingSpinner />
-            </div>
-          ) : gaps.length === 0 ? (
-            <div className="text-center py-8 text-slate-500">
-              <CheckCircle className="h-12 w-12 mx-auto mb-4 text-green-500" />
-              <p>No compliance gaps identified for this policy.</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {gaps.map((gap, index) => (
-                <div key={index} className="border border-red-200 rounded-lg p-4 bg-red-50">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <h3 className="font-medium text-slate-900">{gap.framework_name}</h3>
-                      {gap.requirement_code && (
-                        <p className="text-sm text-slate-600">{gap.requirement_code}</p>
-                      )}
-                    </div>
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${getPriorityColor(gap.priority)}`}>
-                      {gap.priority}
-                    </span>
-                  </div>
-                  <p className="text-sm text-slate-700 mb-2">{gap.description}</p>
-                  <p className="text-xs text-red-700 font-medium">{gap.gap_reason}</p>
-                </div>
-              ))}
-            </div>
-          )}
+          <div className="text-center py-8 text-slate-500">
+            <p>Compliance gap analysis coming soon...</p>
+          </div>
         </div>
       )}
     </div>
