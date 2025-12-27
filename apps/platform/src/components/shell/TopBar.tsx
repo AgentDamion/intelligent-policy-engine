@@ -1,17 +1,15 @@
-import React from 'react'
 import { Menu, Search, Sparkles } from 'lucide-react'
 import { Input } from '../ui/Input'
 import { Button } from '../ui/button'
 
 export interface TopBarProps {
-  enterpriseName?: string
   onOpenSidebar?: () => void
   onOpenVera?: () => void
 }
 
 export const TOPBAR_HEIGHT_CLASS = 'h-14' // 56px
 
-export default function TopBar({ enterpriseName, onOpenSidebar, onOpenVera }: TopBarProps) {
+export default function TopBar({ onOpenSidebar, onOpenVera }: TopBarProps) {
   return (
     <div className={`sticky top-0 z-30 bg-white border-b border-gray-200 ${TOPBAR_HEIGHT_CLASS}`}>
       <div className="h-full px-4 sm:px-6 flex items-center gap-3">

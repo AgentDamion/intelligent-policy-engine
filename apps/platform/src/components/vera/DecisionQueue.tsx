@@ -8,7 +8,7 @@
  * - Real-time updates via subscription
  */
 
-import React, { useState } from 'react'
+import { useState } from 'react'
 import {
   Clock,
   AlertTriangle,

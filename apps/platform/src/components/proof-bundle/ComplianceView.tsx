@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { CheckCircle, AlertCircle, XCircle, RefreshCw, Download, Shield, ShieldCheck, ShieldX, FileText } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { CheckCircle, AlertCircle, XCircle, RefreshCw, Download, ShieldCheck, ShieldX } from 'lucide-react'
 import LoadingSpinner from '../ui/LoadingSpinner'
 import { Button } from '../ui/button'
 import { supabase } from '@/lib/supabase'

@@ -55,7 +55,6 @@ import {
   type ThreadSeverity,
 } from '@/services/vera/governanceThreadService'
 import { SurfaceProvider, useSurface } from '@/contexts/SurfaceContext'
-import { useSurfaceGuard } from '@/surfaces/useSurfaceGuard'
 import { buildSurfaceLink } from '@/surfaces/registry'
 
 // ============================================

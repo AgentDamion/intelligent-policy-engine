@@ -10,7 +10,6 @@ import {
   FileText,
   Settings,
   FlaskConical,
-  X,
   ChevronDown,
   LogOut,
   Menu,
