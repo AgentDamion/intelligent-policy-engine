@@ -186,7 +186,6 @@ const OnboardingPage: React.FC = () => {
             )}
 
             <RegulatoryFrameworkSelector
-              organizationId={createdEnterpriseId}
               selectedFrameworkIds={selectedFrameworkIds}
               onSelectionChange={setSelectedFrameworkIds}
               onContinue={handleFrameworkSelection}

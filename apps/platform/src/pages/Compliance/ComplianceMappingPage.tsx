@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react'
-import { useEnterprise } from '../../contexts/EnterpriseContext'
 import {
   getOrganizationComplianceStatus,
-  getPolicyFrameworkMapping,
   identifyComplianceGaps,
   type OrganizationComplianceStatus,
   type PolicyFrameworkMapping,
@@ -12,7 +10,6 @@ import { AlertCircle, CheckCircle, XCircle, TrendingUp, Shield, FileText } from 
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
 
 export default function ComplianceMappingPage() {
-  const { currentEnterprise } = useEnterprise()
   const [complianceStatus, setComplianceStatus] = useState<OrganizationComplianceStatus | null>(null)
   const [selectedPolicy, setSelectedPolicy] = useState<string | null>(null)
   const [policyMapping, setPolicyMapping] = useState<PolicyFrameworkMapping | null>(null)

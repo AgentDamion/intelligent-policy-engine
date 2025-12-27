@@ -27,7 +27,11 @@ export default function TheForge() {
       }
     >
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-6">
-        <PolicyList enterpriseId={currentEnterprise?.id || ''} />
+        <PolicyList
+          enterpriseId={currentEnterprise?.id || ''}
+          onSelectPolicy={(policyId) => console.log('Selected policy:', policyId)}
+          onCreatePolicy={() => console.log('Create policy')}
+        />
       </div>
     </SurfaceLayout>
   );

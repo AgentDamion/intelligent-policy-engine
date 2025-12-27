@@ -384,7 +384,6 @@ const PolicyStudioView = memo(({ enterpriseId }: { enterpriseId: string }) => {
           {editorMode === 'history' && selectedPolicyId ? (
             <PolicyVersionHistory
               policyId={selectedPolicyId}
-              onClose={() => setEditorMode('edit')}
             />
           ) : (
             <div className="h-full flex flex-col">
