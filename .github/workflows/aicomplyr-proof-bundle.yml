@@ -39,6 +39,9 @@ jobs:
         env:
           AICOMPLYR_API_KEY: ${{ secrets.AICOMPLYR_API_KEY }}
           AICOMPLYR_API_URL: ${{ secrets.AICOMPLYR_API_URL }}
+          # Default to non-blocking uploads while ngrok / local dev is in flux.
+          # Set this to "true" if you want CI to fail when the upload fails.
+          AICOMPLYR_STRICT_UPLOAD: "false"
           TASK_ID: ${{ github.event.pull_request.number || github.sha }}
           APPROVER: ${{ github.actor }}@example.com
           COMPLIANCE_TAGS: eu-ai-act/low-risk,nist-rmf/measured

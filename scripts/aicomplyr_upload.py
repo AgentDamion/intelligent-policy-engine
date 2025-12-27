@@ -30,6 +30,9 @@ def fail(msg):
     print(f"ERROR: {msg}", file=sys.stderr)
     sys.exit(1)
 
+def warn(msg: str) -> None:
+    print(f"WARNING: {msg}", file=sys.stderr)
+
 
 def parse_cursor_output(text: str) -> dict:
     """Extract structured fields from Cursor execution log."""
@@ -66,6 +69,7 @@ def build_proof_bundle(log_text: str) -> dict:
 
 
 def main():
+    strict_upload = os.getenv("AICOMPLYR_STRICT_UPLOAD", "false").lower() == "true"
     api_key = os.getenv("AICOMPLYR_API_KEY")
     if not api_key:
         fail("AICOMPLYR_API_KEY env var is required")
@@ -88,9 +92,17 @@ def main():
         if resp.status_code == 201:
             print("SUCCESS:", json.dumps(resp.json(), indent=2))
         else:
-            fail(f"API error {resp.status_code}: {resp.text}")
+            msg = f"API error {resp.status_code}: {resp.text}"
+            if strict_upload:
+                fail(msg)
+            warn(msg)
+            sys.exit(0)
     except requests.exceptions.ConnectionError:
-        fail("Connection failed. Is the local server running? Start with: uvicorn aicomplyr_server:app --reload")
+        msg = "Connection failed. Is the local server running? Start with: uvicorn aicomplyr_server:app --reload"
+        if strict_upload:
+            fail(msg)
+        warn(msg)
+        sys.exit(0)
 
 
 if __name__ == "__main__":
