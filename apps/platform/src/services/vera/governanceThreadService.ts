@@ -116,6 +116,42 @@ export interface GovernanceThread {
   resolvedBy: string | null
 }
 
+// Context snapshot for FDA 21 CFR Part 11 compliance
+export interface ContextSnapshot {
+  policy_state: {
+    eps_id: string
+    version: string
+    sha256_hash: string
+    policy_json: Record<string, unknown> | null
+  }
+  partner_state: {
+    partner_id: string | null
+    compliance_score: number
+    active_attestations: number
+    risk_level: 'low' | 'medium' | 'high'
+  }
+  tool_state: {
+    tools_evaluated: Array<{
+      tool_id: string
+      vendor: string
+      risk_profile: string
+    }>
+    last_audit_date: string | null
+  }
+  enterprise_state: {
+    enterprise_id: string
+    vera_mode: 'disabled' | 'shadow' | 'enforcement'
+    regulatory_environment: string[]
+    compliance_posture: 'standard' | 'high_rigor' | 'maximum'
+  }
+  submission_details: Record<string, unknown> | null
+  external_context: {
+    regulatory_guidance_version: string
+    decision_timestamp: string
+    agent_version: string
+  }
+}
+
 export interface GovernanceAction {
   id: string
   threadId: string
@@ -127,6 +163,7 @@ export interface GovernanceAction {
   rationale: string | null
   beforeState: Record<string, unknown> | null
   afterState: Record<string, unknown> | null
+  contextSnapshot: ContextSnapshot | null  // FDA compliance: full decision context
   metadata: Record<string, unknown>
   surface: Surface | null
   mode: string | null
@@ -237,6 +274,7 @@ function mapAction(data: Record<string, unknown>): GovernanceAction {
     rationale: data.rationale as string | null,
     beforeState: data.before_state as Record<string, unknown> | null,
     afterState: data.after_state as Record<string, unknown> | null,
+    contextSnapshot: data.context_snapshot as ContextSnapshot | null,  // FDA compliance
     metadata: (data.metadata as Record<string, unknown>) || {},
     surface: data.surface as Surface | null,
     mode: data.mode as string | null,

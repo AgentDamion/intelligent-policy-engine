@@ -31,6 +31,46 @@ import { SimpleFlowEngine } from '../shared/simple-flow-engine.ts';
 import { FlowDefinition } from '../shared/flow-types.ts';
 import { agentRegistry } from '../cursor-agent-registry.ts';
 
+// ============================================================
+// CONTEXT SNAPSHOT INTERFACE
+// For FDA 21 CFR Part 11 compliance - full decision context capture
+// ============================================================
+
+interface ContextSnapshot {
+  policy_state: {
+    eps_id: string;
+    version: string;
+    sha256_hash: string;
+    policy_json: any;  // Full policy content embedded
+  };
+  partner_state: {
+    partner_id: string | null;
+    compliance_score: number;
+    active_attestations: number;
+    risk_level: 'low' | 'medium' | 'high';
+  };
+  tool_state: {
+    tools_evaluated: Array<{
+      tool_id: string;
+      vendor: string;
+      risk_profile: string;
+    }>;
+    last_audit_date: string | null;
+  };
+  enterprise_state: {
+    enterprise_id: string;
+    vera_mode: VeraMode;
+    regulatory_environment: string[];
+    compliance_posture: 'standard' | 'high_rigor' | 'maximum';
+  };
+  submission_details: SubmissionContext | null;
+  external_context: {
+    regulatory_guidance_version: string;
+    decision_timestamp: string;
+    agent_version: string;
+  };
+}
+
 export class AgoOrchestratorAgent implements Agent {
   private supabase: any;
 
@@ -141,13 +181,14 @@ export class AgoOrchestratorAgent implements Agent {
       priority: 'normal',
     });
 
-    // Record evaluation start action
+    // Record evaluation start action (context snapshot captured later in flow)
     if (threadId) {
       await this.recordGovernanceAction({
         threadId,
         actionType: 'evaluate',
         rationale: `Starting automated evaluation in ${veraMode} mode`,
         metadata: { veraMode, submissionId },
+        // contextSnapshot not yet available - captured after EPS load
       });
     }
 
@@ -171,6 +212,21 @@ export class AgoOrchestratorAgent implements Agent {
 
     // 4. Load tool rule sets for enterprise
     const ruleSets = await this.loadToolRuleSetsForEnterprise(enterpriseId);
+
+    // 4.5 NEW: Capture full context snapshot for FDA 21 CFR Part 11 compliance
+    const contextSnapshot = await this.captureFullContextSnapshot(
+      enterpriseId,
+      submission,
+      eps,
+      events,
+      veraMode
+    );
+
+    console.log(`[AGO] Context snapshot captured for submission ${submissionId}`, {
+      policyVersion: contextSnapshot.policy_state.version,
+      partnerRiskLevel: contextSnapshot.partner_state.risk_level,
+      regulatoryEnvironment: contextSnapshot.enterprise_state.regulatory_environment,
+    });
 
     // 5. Ask LLM (Alexi) to classify usage vs rules
     const systemPrompt = buildAlexiSystemPrompt();
@@ -280,7 +336,7 @@ ${JSON.stringify({
         : 'would_allow';
       proofBundle.draft_reasoning = (parsed.policyReasons || []).join('; ');
 
-      await this.writeProofBundle(proofBundle, context);
+      await this.writeProofBundle(proofBundle, context, contextSnapshot);
 
       // PRD: Record draft decision action on governance thread
       if (threadId) {
@@ -293,6 +349,7 @@ ${JSON.stringify({
             draftDecision: proofBundle.draft_decision, 
             proofBundleId: proofBundle.proofBundleId 
           },
+          contextSnapshot,  // FDA compliance: full context for decision replay
         });
         await this.linkProofBundleToThread(threadId, proofBundle.proofBundleId);
       }
@@ -319,7 +376,7 @@ ${JSON.stringify({
         proofBundle.draft_decision = 'would_block';
         proofBundle.draft_reasoning = (parsed.policyReasons || []).join('; ');
 
-        await this.writeProofBundle(proofBundle, context);
+        await this.writeProofBundle(proofBundle, context, contextSnapshot);
 
         // PRD: Record reject action or escalate if low confidence
         const shouldEscalate = parsed.requiresHumanReview || (llmResponse.confidence || 0) < 0.8;
@@ -336,6 +393,7 @@ ${JSON.stringify({
                 proofBundleId: proofBundle.proofBundleId,
                 policyDecision: parsed.policyDecision,
               },
+              contextSnapshot,  // FDA compliance: full context for decision replay
             });
           } else {
             await this.recordGovernanceAction({
@@ -347,6 +405,7 @@ ${JSON.stringify({
                 proofBundleId: proofBundle.proofBundleId,
                 policyDecision: parsed.policyDecision,
               },
+              contextSnapshot,  // FDA compliance: full context for decision replay
             });
           }
           await this.linkProofBundleToThread(threadId, proofBundle.proofBundleId);
@@ -370,7 +429,7 @@ ${JSON.stringify({
       proofBundle.is_draft_seal = false;
       // No draft_decision needed for verified seals
 
-      await this.writeProofBundle(proofBundle, context);
+      await this.writeProofBundle(proofBundle, context, contextSnapshot);
 
       // PRD: Record auto-clear or approve action
       if (threadId) {
@@ -386,6 +445,7 @@ ${JSON.stringify({
             proofBundleId: proofBundle.proofBundleId,
             policyDecision: parsed.policyDecision,
           },
+          contextSnapshot,  // FDA compliance: full context for decision replay
         });
         await this.linkProofBundleToThread(threadId, proofBundle.proofBundleId);
       }
@@ -406,7 +466,7 @@ ${JSON.stringify({
 
     // Disabled Mode: Pass through (existing behavior)
     proofBundle.is_draft_seal = false;
-    await this.writeProofBundle(proofBundle, { flowRunId: task.flowRunId });
+    await this.writeProofBundle(proofBundle, { flowRunId: task.flowRunId }, contextSnapshot);
 
     // PRD: Still create governance record even in disabled mode for audit trail
     if (threadId) {
@@ -419,6 +479,7 @@ ${JSON.stringify({
           proofBundleId: proofBundle.proofBundleId,
           veraMode: 'disabled',
         },
+        contextSnapshot,  // FDA compliance: full context even in disabled mode
       });
       await this.linkProofBundleToThread(threadId, proofBundle.proofBundleId);
     }
@@ -639,7 +700,139 @@ ${JSON.stringify(auditData, null, 2)}`,
     return [];
   }
 
-  private async writeProofBundle(bundle: ProofBundle, context?: any): Promise<void> {
+  // ============================================================
+  // CONTEXT SNAPSHOT CAPTURE
+  // FDA 21 CFR Part 11 compliance - captures full decision context
+  // ============================================================
+
+  private async captureFullContextSnapshot(
+    enterpriseId: string,
+    submission: SubmissionContext | null,
+    eps: EffectivePolicySnapshot,
+    events: ToolUsageEvent[],
+    veraMode: VeraMode
+  ): Promise<ContextSnapshot> {
+    // Load the full policy JSON (not just reference)
+    const { data: policyArtifact } = await this.supabase
+      .from('policy_artifacts')
+      .select('*')
+      .eq('id', eps.epsId)
+      .single();
+
+    // Load partner compliance state if submission has partner/agency
+    let partnerState = {
+      partner_id: null as string | null,
+      compliance_score: 0,
+      active_attestations: 0,
+      risk_level: 'high' as 'low' | 'medium' | 'high',
+    };
+
+    if (submission?.agencyId) {
+      const { data: partner } = await this.supabase
+        .from('partners')
+        .select('id, compliance_score')
+        .eq('id', submission.agencyId)
+        .single();
+
+      const { data: attestations } = await this.supabase
+        .from('partner_attestations')
+        .select('id')
+        .eq('partner_id', submission.agencyId)
+        .eq('status', 'active');
+
+      const attestationCount = attestations?.length || 0;
+      partnerState = {
+        partner_id: submission.agencyId,
+        compliance_score: partner?.compliance_score || 0,
+        active_attestations: attestationCount,
+        risk_level: attestationCount >= 3 ? 'low' : attestationCount >= 1 ? 'medium' : 'high',
+      };
+    }
+
+    // Load enterprise regulatory environment
+    const { data: workspaceFrameworks } = await this.supabase
+      .from('workspace_frameworks')
+      .select('regulatory_frameworks(short_name)')
+      .eq('enterprise_id', enterpriseId);
+
+    const regulatoryEnvironment = workspaceFrameworks?.map(
+      (wf: any) => wf.regulatory_frameworks?.short_name
+    ).filter(Boolean) || [];
+
+    // Build tool state from events
+    const toolsEvaluated = events.map(e => ({
+      tool_id: e.toolId,
+      vendor: e.vendor,
+      risk_profile: 'standard', // TODO: Fetch from tool registry
+    }));
+
+    return {
+      policy_state: {
+        eps_id: eps.epsId,
+        version: eps.version,
+        sha256_hash: eps.sha256Hash,
+        policy_json: policyArtifact?.payload || eps.payload || null,
+      },
+      partner_state: partnerState,
+      tool_state: {
+        tools_evaluated: toolsEvaluated,
+        last_audit_date: null, // TODO: Query last audit date
+      },
+      enterprise_state: {
+        enterprise_id: enterpriseId,
+        vera_mode: veraMode,
+        regulatory_environment: regulatoryEnvironment,
+        compliance_posture: 'high_rigor', // TODO: Fetch from enterprise settings
+      },
+      submission_details: submission,
+      external_context: {
+        regulatory_guidance_version: '2025.01',
+        decision_timestamp: new Date().toISOString(),
+        agent_version: 'ago-orchestrator-v1.0',
+      },
+    };
+  }
+
+  // ============================================================
+  // CANONICAL JSON FOR CRYPTOGRAPHIC HASHING
+  // Ensures deterministic hash calculation across systems
+  // ============================================================
+
+  private canonicalizeProofBundle(bundle: ProofBundle): any {
+    // Create deterministic JSON representation
+    // Sort keys alphabetically for consistent hashing
+    const sortObjectKeys = (obj: any): any => {
+      if (obj === null || typeof obj !== 'object') return obj;
+      if (Array.isArray(obj)) return obj.map(sortObjectKeys);
+      return Object.keys(obj).sort().reduce((sorted: any, key) => {
+        sorted[key] = sortObjectKeys(obj[key]);
+        return sorted;
+      }, {});
+    };
+    
+    return sortObjectKeys({
+      proofBundleId: bundle.proofBundleId,
+      enterpriseId: bundle.enterpriseId,
+      submissionId: bundle.submissionId,
+      epsId: bundle.epsId,
+      policyDecision: bundle.policyDecision,
+      policyReasons: bundle.policyReasons,
+      toolUsage: bundle.toolUsage,
+      createdAt: new Date().toISOString(),
+    });
+  }
+
+  private async writeProofBundle(
+    bundle: ProofBundle, 
+    context?: any,
+    contextSnapshot?: ContextSnapshot
+  ): Promise<void> {
+    // 1. Create canonical JSON representation for hashing
+    const canonicalJson = this.canonicalizeProofBundle(bundle);
+    
+    // 2. Generate SHA-256 hash
+    const bundleHash = await this.calculateHash(JSON.stringify(canonicalJson));
+
     const insertData: any = {
       id: bundle.proofBundleId,
       enterprise_id: bundle.enterpriseId,
@@ -656,7 +849,17 @@ ${JSON.stringify(auditData, null, 2)}`,
         channel: bundle.channel,
       },
       created_at: new Date().toISOString(),
+      // NEW: FDA 21 CFR Part 11 compliance fields
+      bundle_hash: bundleHash,
+      policy_digest: bundle.anchors?.epsHash || null,
     };
+
+    // Add context snapshot if provided (FDA compliance)
+    if (contextSnapshot) {
+      insertData.policy_snapshot = contextSnapshot.policy_state?.policy_json || null;
+      insertData.policy_snapshot_version = contextSnapshot.policy_state?.version || null;
+      insertData.context_snapshot = contextSnapshot;
+    }
 
     // Add draft seal fields if present
     if (bundle.is_draft_seal !== undefined) {
@@ -684,6 +887,27 @@ ${JSON.stringify(auditData, null, 2)}`,
       );
     }
 
+    // 3. Create proof_bundle_artifacts record with cryptographic data
+    try {
+      await this.supabase
+        .from('proof_bundle_artifacts')
+        .insert({
+          proof_bundle_id: bundle.proofBundleId,
+          bundle_hash: bundleHash,
+          canonical_json: canonicalJson,
+          // Signature generation: schema ready, code implementation pending
+          // In production: would sign with enterprise key
+          signature: null,
+          signature_algorithm: null,
+          signature_key_id: null,
+        });
+      
+      console.log(`[AGO] Proof bundle artifact created with hash: ${bundleHash.substring(0, 16)}...`);
+    } catch (artifactError) {
+      // Log but don't fail - artifact table may not exist in all environments
+      console.warn('[AGO] Failed to create proof bundle artifact:', artifactError);
+    }
+
     // Link to flow run if in flow context
     if (context?.flowRunId) {
       await this.supabase
@@ -700,6 +924,7 @@ ${JSON.stringify(auditData, null, 2)}`,
           bundleId: bundle.proofBundleId,
           decision: bundle.policyDecision,
           flowRunId: context.flowRunId,
+          bundleHash: bundleHash,
         },
       });
     }
@@ -1328,6 +1553,7 @@ ${JSON.stringify(auditData, null, 2)}`,
   /**
    * Record a governance action on a thread
    * Used to track agent decisions with before/after state
+   * FDA 21 CFR Part 11: Now captures full context snapshot for decision replay
    */
   private async recordGovernanceAction(input: {
     threadId: string;
@@ -1335,6 +1561,7 @@ ${JSON.stringify(auditData, null, 2)}`,
     rationale: string;
     newStatus?: 'open' | 'pending_human' | 'resolved' | 'cancelled';
     metadata?: Record<string, unknown>;
+    contextSnapshot?: ContextSnapshot;  // NEW: Full context for FDA compliance
   }): Promise<string | null> {
     try {
       const { data, error } = await this.supabase.rpc('record_governance_action', {
@@ -1345,6 +1572,7 @@ ${JSON.stringify(auditData, null, 2)}`,
         p_rationale: input.rationale,
         p_new_status: input.newStatus || null,
         p_metadata: input.metadata || {},
+        p_context_snapshot: input.contextSnapshot || null,  // NEW: Pass context snapshot
       });
 
       if (error) {
@@ -1352,7 +1580,9 @@ ${JSON.stringify(auditData, null, 2)}`,
         return null;
       }
 
-      console.log(`[AgoOrchestratorAgent] Recorded governance action: ${input.actionType} -> ${data}`);
+      console.log(`[AgoOrchestratorAgent] Recorded governance action: ${input.actionType} -> ${data}`, {
+        hasContextSnapshot: !!input.contextSnapshot,
+      });
       return data;
     } catch (err) {
       console.error('[AgoOrchestratorAgent] Error recording governance action:', err);

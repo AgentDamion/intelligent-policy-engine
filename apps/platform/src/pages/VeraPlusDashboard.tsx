@@ -20,7 +20,7 @@ import toast from 'react-hot-toast'
 
 import { supabase } from '@/lib/supabase'
 import { useEnterprise } from '@/contexts/EnterpriseContext'
-import { VelocityMetrics, DecisionQueue, ComplianceScoreCard, ProofBundleList, ProofBundleViewer, InboxView, DecisionsView, PolicyList, PolicyEditor, PolicyVersionHistory, PolicyBadge } from '@/components/vera'
+import { VelocityMetrics, DecisionQueue, ComplianceScoreCard, ProofBundleList, ProofBundleViewer, InboxView, DecisionsView, PolicyList, PolicyEditor, PolicyVersionHistory, PolicyBadge, ContextSwitcher } from '@/components/vera'
 import { useVERADashboard } from '@/hooks/useVERADashboard'
 import { getDeniedActionsCount, getThreadStats } from '@/services/vera/governanceThreadService'
 
@@ -584,6 +584,11 @@ export default function VeraPlusDashboard() {
           </nav>
 
           <div className="px-4 lg:px-6 space-y-3">
+            {/* Context Switcher - Week 4 Auth Dashboard Integration */}
+            <div className="hidden lg:block">
+              <ContextSwitcher compact />
+            </div>
+            
             {/* Active Policy Badge */}
             {enterpriseId && (
               <div className="hidden lg:block">
@@ -594,7 +599,7 @@ export default function VeraPlusDashboard() {
                 />
               </div>
             )}
-            <div className="text-xs text-slate-400 truncate">
+            <div className="text-xs text-slate-400 truncate lg:hidden">
               {enterpriseId ? `Enterprise: ${enterpriseId.slice(0, 8)}...` : 'No enterprise context'}
             </div>
           </div>

@@ -1,40 +1,7 @@
 // Enhanced Policy Agent with Better Risk Calculation
 // Integrated with Risk Profile Taxonomy Framework
-// Includes Rationale Generation for Audit Compliance
 
 const RiskProfileTaxonomyAgent = require('./risk-profile-taxonomy-agent');
-
-// Rationale generator will be loaded dynamically (ESM module)
-let rationaleGenerator = null;
-
-/**
- * Load the rationale generator module (ESM)
- * @returns {Promise<Object>} Rationale generator module
- */
-async function loadRationaleGenerator() {
-  if (!rationaleGenerator) {
-    try {
-      rationaleGenerator = await import('../core/rationale-generator.js');
-    } catch (err) {
-      console.warn('⚠️ Failed to load rationale generator, using fallback:', err.message);
-      // Fallback implementation
-      rationaleGenerator = {
-        generateRationale: (input) => ({
-          human: `${input.decision || 'Processed'} under ${input.policyId || 'policy'}: tool=${input.tool?.name || 'unknown'}`,
-          structured: {
-            policy_id: input.policyId || 'unknown',
-            policy_version: input.policyVersion || 'v1.0',
-            rule_matched: input.ruleMatched || 'default',
-            inputs: { tool: input.tool?.name || 'unknown', dataset_class: input.dataClass || 'unknown', request_type: 'generation' },
-            actor: input.actor || { type: 'automated' },
-            timestamp: new Date().toISOString()
-          }
-        })
-      };
-    }
-  }
-  return rationaleGenerator;
-}
 
 class PolicyAgent {
     constructor() {
@@ -86,28 +53,6 @@ class PolicyAgent {
         const riskLevel = this.getRiskLevel(riskScore);
         const riskFactors = this.getRiskFactors(data);
         const reasoning = this.getDecisionReasoning(riskScore, decision);
-        
-        // Generate structured rationale for audit compliance
-        const generator = await loadRationaleGenerator();
-        const decisionNormalized = decision === 'approved' ? 'allow' : 
-                                    decision === 'rejected' ? 'deny' : 
-                                    decision === 'conditional' ? 'conditional' : 'escalate';
-        
-        const rationaleResult = generator.generateRationale({
-          decision: decisionNormalized,
-          policyId: taxonomyAssessment.riskProfile ? 
-            `tier-${taxonomyAssessment.riskProfile}` : 'risk-assessment',
-          policyVersion: 'v1.0',
-          ruleMatched: `risk_score_${riskLevel}`,
-          tool: {
-            name: data.tool || 'unknown',
-            version: data.toolVersion
-          },
-          dataClass: this.inferDataClass(data.dataHandling),
-          actor: data.actor || { type: 'automated' },
-          confidenceScore: 1 - riskScore, // Higher risk = lower confidence
-          secondaryRules: this.getGuardrails(riskScore, data, taxonomyAssessment)
-        });
         
         // Return the complex structure your system expects (enhanced with taxonomy data)
         return {
@@ -164,10 +109,7 @@ class PolicyAgent {
             riskProfile: taxonomyAssessment.riskProfile,
             rationale: taxonomyAssessment.rationale,
             assessedAt: taxonomyAssessment.assessedAt
-          },
-          // NEW: Structured rationale fields for database storage (audit compliance)
-          rationale_human: rationaleResult.human,
-          rationale_structured: rationaleResult.structured
+          }
         };
         
       } catch (error) {
@@ -370,36 +312,6 @@ class PolicyAgent {
       if (usage?.toLowerCase().includes("generation")) return "content_generation";
       return "general_purpose";
     }
-    
-    /**
-     * Infer data classification from dataHandling description
-     * @param {string} dataHandling - Data handling description
-     * @returns {string} Standardized data class
-     */
-    inferDataClass(dataHandling) {
-      const dataLower = dataHandling?.toLowerCase() || "";
-      
-      if (dataLower.includes("phi") || dataLower.includes("medical") || dataLower.includes("health")) {
-        return "phi";
-      }
-      if (dataLower.includes("ssn") || dataLower.includes("social security")) {
-        return "restricted";
-      }
-      if (dataLower.includes("pii") || dataLower.includes("personal")) {
-        return "pii";
-      }
-      if (dataLower.includes("internal") || dataLower.includes("confidential")) {
-        return "internal_restricted";
-      }
-      if (dataLower.includes("no") && (dataLower.includes("data") || dataLower.includes("pii"))) {
-        return "no_pii";
-      }
-      if (dataLower.includes("public")) {
-        return "public";
-      }
-      
-      return "unclassified";
-    }
 
     /**
      * Enhanced policy evaluation with tier-specific thresholds
@@ -429,33 +341,10 @@ class PolicyAgent {
         decision = 'HUMAN_IN_LOOP';
       }
 
-      // Generate structured rationale for audit compliance
-      const generator = await loadRationaleGenerator();
-      const decisionNormalized = decision === 'APPROVED' ? 'allow' : 
-                                  decision === 'REJECTED' ? 'deny' : 'escalate';
-      
-      const rationaleResult = generator.generateRationale({
-        decision: decisionNormalized,
-        policyId: `tier-${riskProfile.tier}`,
-        policyVersion: 'v1.0',
-        ruleMatched: `compliance_threshold_${threshold}`,
-        tool: {
-          name: context.tool?.name || context.toolName || 'unknown',
-          version: context.tool?.version
-        },
-        dataClass: context.dataClass || context.dataHandling || 'unclassified',
-        actor: context.actor || { type: 'automated' },
-        confidenceScore: this.calculateConfidence(complianceResult, riskProfile),
-        secondaryRules: this.mapTierToControls(riskProfile.tier)
-      });
-
       return {
         decision,
         confidence: this.calculateConfidence(complianceResult, riskProfile),
         rationale: this.generateRationale(decision, riskProfile, complianceResult),
-        // NEW: Structured rationale fields for database storage
-        rationale_human: rationaleResult.human,
-        rationale_structured: rationaleResult.structured,
         requiredControls: this.mapTierToControls(riskProfile.tier),
         riskProfile: riskProfile,  // Pass through for database storage
         approvalThreshold: threshold,

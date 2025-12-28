@@ -33,3 +33,13 @@ export { ComplianceCertificate } from './ComplianceCertificate'
 
 // Policy Digest Components
 export { PolicyBadge, PolicyDigestDisplay } from './PolicyBadge'
+
+// FDA Compliance Components
+export { ContextSnapshotViewer } from './ContextSnapshotViewer'
+export { SignatureModal } from './SignatureModal'
+
+// Context Switching Components
+export { ContextSwitcher } from './ContextSwitcher'
+
+// Precedent & Decision Intelligence Components
+export { SimilarDecisionsPanel } from './SimilarDecisionsPanel'

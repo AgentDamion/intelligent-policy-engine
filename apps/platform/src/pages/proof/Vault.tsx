@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { SurfaceLayout } from '../../components/SurfaceLayout';
 import { ProofBundleList } from '../../components/vera';
 import { ProofBundleViewer } from '../../components/vera/ProofBundleViewer';

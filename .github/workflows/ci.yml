@@ -22,6 +22,8 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
+        cache: 'pnpm'
+        cache-dependency-path: pnpm-lock.yaml
 
     - name: Enable pnpm via Corepack
       run: |
@@ -44,7 +46,7 @@ jobs:
       run: pnpm run coverage
       
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v5
       with:
         file: ./coverage/lcov.info
         flags: unittests
@@ -88,6 +90,8 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '20.x'
+        cache: 'pnpm'
+        cache-dependency-path: pnpm-lock.yaml
 
     - name: Enable pnpm via Corepack
       run: |
@@ -135,6 +139,8 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '20.x'
+        cache: 'pnpm'
+        cache-dependency-path: pnpm-lock.yaml
 
     - name: Enable pnpm via Corepack
       run: |
@@ -169,6 +175,8 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '20.x'
+        cache: 'pnpm'
+        cache-dependency-path: pnpm-lock.yaml
 
     - name: Enable pnpm via Corepack
       run: |
@@ -244,6 +252,8 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '20.x'
+        cache: 'pnpm'
+        cache-dependency-path: pnpm-lock.yaml
 
     - name: Enable pnpm via Corepack
       run: |
@@ -308,7 +318,7 @@ jobs:
         
     - name: Run Lighthouse CI (if URLs configured)
       if: ${{ env.VERCEL_PRODUCTION_URL != '' }}
-      uses: treosh/lighthouse-ci-action@v9
+      uses: treosh/lighthouse-ci-action@v12
       continue-on-error: true
       env:
         VERCEL_PRODUCTION_URL: ${{ secrets.VERCEL_PRODUCTION_URL }}

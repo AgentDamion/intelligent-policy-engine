@@ -5,7 +5,6 @@ import { SurfaceLayout } from '@/components/SurfaceLayout'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabase'
-import { useEnterprise } from '@/contexts/EnterpriseContext'
 
 interface ComplianceSummary {
   overall_coverage: number
