@@ -750,14 +750,26 @@ ${JSON.stringify(auditData, null, 2)}`,
     }
 
     // Load enterprise regulatory environment
-    const { data: workspaceFrameworks } = await this.supabase
-      .from('workspace_frameworks')
-      .select('regulatory_frameworks(short_name)')
+    // Bug Fix: workspace_frameworks has workspace_id, not enterprise_id
+    // First get workspace IDs for this enterprise, then query workspace_frameworks
+    const { data: enterpriseWorkspaces } = await this.supabase
+      .from('workspaces')
+      .select('id')
       .eq('enterprise_id', enterpriseId);
 
-    const regulatoryEnvironment = workspaceFrameworks?.map(
-      (wf: any) => wf.regulatory_frameworks?.short_name
-    ).filter(Boolean) || [];
+    const workspaceIds = enterpriseWorkspaces?.map((w: any) => w.id) || [];
+    
+    let regulatoryEnvironment: string[] = [];
+    if (workspaceIds.length > 0) {
+      const { data: workspaceFrameworks } = await this.supabase
+        .from('workspace_frameworks')
+        .select('regulatory_frameworks(short_name)')
+        .in('workspace_id', workspaceIds);
+
+      regulatoryEnvironment = workspaceFrameworks?.map(
+        (wf: any) => wf.regulatory_frameworks?.short_name
+      ).filter(Boolean) || [];
+    }
 
     // Build tool state from events
     const toolsEvaluated = events.map(e => ({
@@ -1783,4 +1795,3 @@ ${JSON.stringify(auditData, null, 2)}`,
     return await flowEngine.executeFlow(flowDef, input, context);
   }
 }
-

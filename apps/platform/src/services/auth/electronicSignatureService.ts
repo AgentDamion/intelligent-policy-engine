@@ -85,14 +85,33 @@ class ElectronicSignatureService {
         return { success: false, error: 'Not authenticated' }
       }
       
-      // Verify password via Supabase
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: user.email!,
-        password,
+      // Bug Fix: signInWithPassword() creates a new session, breaking the current one.
+      // Instead, call a dedicated verify-password Edge Function that validates
+      // credentials without creating a session.
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+      if (!supabaseUrl) {
+        return { success: false, error: 'Configuration error: Supabase URL not configured' }
+      }
+
+      const { data: sessionData } = await supabase.auth.getSession()
+      const accessToken = sessionData?.session?.access_token
+
+      if (!accessToken) {
+        return { success: false, error: 'No active session' }
+      }
+      
+      const verifyResponse = await fetch(`${supabaseUrl}/functions/v1/verify-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ password }),
       })
       
-      if (signInError) {
-        return { success: false, error: 'Password verification failed' }
+      if (!verifyResponse.ok) {
+        const errorData = await verifyResponse.json().catch(() => ({}))
+        return { success: false, error: errorData.error || 'Password verification failed' }
       }
       
       // 2. Get the action to sign
@@ -339,4 +358,3 @@ class ElectronicSignatureService {
 
 export const electronicSignatureService = new ElectronicSignatureService()
 export default electronicSignatureService
-

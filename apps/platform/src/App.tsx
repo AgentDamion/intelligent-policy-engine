@@ -22,6 +22,10 @@ const DecisionSurface = React.lazy(() => import('./pages/decisions/Queue'))
 const TheForge = React.lazy(() => import('./pages/forge/PolicyStudio'))
 const EvidenceVault = React.lazy(() => import('./pages/proof/Vault'))
 const SimulationLab = React.lazy(() => import('./pages/lab/Replay'))
+const WorkflowBuilderPage = React.lazy(() => import('./pages/workflow/WorkflowBuilderPage'))
+const PartnerWorkspacePage = React.lazy(() => import('./pages/partner/PartnerWorkspace'))
+const NewRequestPage = React.lazy(() => import('./pages/partner/NewRequestPage'))
+const VisibilityControlsPage = React.lazy(() => import('./pages/msa/VisibilityControlsPage'))
 
 function getSafeRedirectTo(search: string): string | null {
   const raw = new URLSearchParams(search).get('redirectTo')
@@ -218,6 +222,18 @@ function App() {
         
         <Route path="lab" element={<Suspense fallback={<LoadingSpinner />}><SimulationLab /></Suspense>} />
         <Route path="lab/replays/:id" element={<Suspense fallback={<LoadingSpinner />}><SimulationLab /></Suspense>} />
+        
+        <Route path="workflows" element={<Suspense fallback={<LoadingSpinner />}><WorkflowBuilderPage /></Suspense>} />
+        <Route path="workflows/:agencyId/:clientId" element={<Suspense fallback={<LoadingSpinner />}><WorkflowBuilderPage /></Suspense>} />
+        <Route path="workflows/:agencyId/:clientId/:brandId" element={<Suspense fallback={<LoadingSpinner />}><WorkflowBuilderPage /></Suspense>} />
+        <Route path="workflows/:agencyId/:clientId/:brandId/:workflowId" element={<Suspense fallback={<LoadingSpinner />}><WorkflowBuilderPage /></Suspense>} />
+        
+        <Route path="partner" element={<Suspense fallback={<LoadingSpinner />}><PartnerWorkspacePage /></Suspense>} />
+        <Route path="partner/requests/new" element={<Suspense fallback={<LoadingSpinner />}><NewRequestPage /></Suspense>} />
+        <Route path="workspace" element={<Suspense fallback={<LoadingSpinner />}><PartnerWorkspacePage /></Suspense>} />
+        
+        <Route path="msa/visibility" element={<Suspense fallback={<LoadingSpinner />}><VisibilityControlsPage /></Suspense>} />
+        <Route path="msa/visibility/:agencyId/:clientId" element={<Suspense fallback={<LoadingSpinner />}><VisibilityControlsPage /></Suspense>} />
         
         {/* Compatibility Redirects */}
         <Route path="dashboard" element={<Navigate to="/mission" replace />} />

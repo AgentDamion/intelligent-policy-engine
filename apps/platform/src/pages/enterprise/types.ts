@@ -40,6 +40,16 @@ export type Approval = {
   risk: 'low' | 'medium' | 'high'
   status: 'needs_human' | 'approved' | 'rejected' | 'pending'
   age: string
+  // Workflow visualization fields
+  workflowId?: string
+  workflowStep?: string
+  workflowProgress?: {
+    currentStep: number
+    totalSteps: number
+    stepName: string
+    estimatedTimeRemaining?: number
+  }
+  governanceThreadId?: string
 }
 
 export type TimelineItem = {

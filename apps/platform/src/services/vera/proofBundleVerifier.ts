@@ -347,11 +347,19 @@ class ProofBundleVerifier {
     errors: string[],
     details: Partial<VerificationResult['details']>
   ): VerificationResult {
+    // Bug Fix: The original logic allowed unfinalized bundles (no ledgerEntryId) to be
+    // marked as valid even when errors existed. For FDA 21 CFR Part 11 compliance,
+    // a bundle is only valid if ALL checks pass AND there are no errors.
+    // The ledger and chain checks are only required when the corresponding IDs exist.
+    const ledgerCheckPasses = details.ledgerEntryId ? checks.ledgerValid : true
+    const chainCheckPasses = details.previousEntryHash ? checks.chainIntact : true
+    
     const isValid = 
+      errors.length === 0 &&
       checks.hashValid && 
       checks.signatureValid && 
-      (checks.ledgerValid || !details.ledgerEntryId) && // Ledger not required if not finalized
-      (checks.chainIntact || !details.previousEntryHash) // Chain not required for first entry
+      ledgerCheckPasses &&
+      chainCheckPasses
     
     return {
       bundleId,
@@ -373,4 +381,3 @@ class ProofBundleVerifier {
 
 export const proofBundleVerifier = new ProofBundleVerifier()
 export default proofBundleVerifier
-

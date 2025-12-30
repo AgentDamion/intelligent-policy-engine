@@ -57,19 +57,53 @@ Created for FDA 21 CFR Part 11 compliance:
 
 ---
 
-## ✅ VERIFIED: Governance Tables Status
+## ✅ HARDENED: Governance Tables - NIST SP 800-53 / OWASP Top 10 Compliant
 
-All governance tables are properly protected:
+All governance tables now have comprehensive, security-hardened RLS policies:
 
-| Table | RLS Status | Policy Count | Operations Covered |
+| Table | RLS Status | Policy Count | Security Controls |
 |-------|------------|--------------|-------------------|
-| `governance_threads` | ✅ Enabled | 2 | ALL |
-| `governance_actions` | ✅ Enabled | 2 | ALL |
-| `governance_audit_events` | ✅ Enabled | 2 | ALL |
+| `governance_threads` | ✅ FORCED | **5** | AC-3, AC-2, AU-9, SC-8 |
+| `governance_actions` | ✅ FORCED | **3** | AC-3, AU-9 (Immutable) |
+| `governance_audit_events` | ✅ FORCED | **2** | AC-3, AU-9 (Read-Only) |
 
-**Policies:**
-- `enterprise_member_access` - Enterprise-scoped access
-- `service_role_full_access` - Backend operations
+### governance_threads Policies (NIST/OWASP Compliant)
+
+| Policy | Operation | Security Control |
+|--------|-----------|------------------|
+| `gt_enterprise_member_select` | SELECT | NIST AC-3: Enterprise isolation |
+| `gt_enterprise_member_insert` | INSERT | NIST AC-3: Timestamp validation |
+| `gt_enterprise_member_update` | UPDATE | NIST AC-2, AU-9: No resolved edits |
+| `gt_enterprise_admin_delete` | DELETE | NIST AU-9: Owners only, time-bounded |
+| `gt_service_role_all` | ALL | Backend operations |
+
+### governance_actions Policies (Immutable Audit Trail)
+
+| Policy | Operation | Security Control |
+|--------|-----------|------------------|
+| `ga_enterprise_member_select` | SELECT | NIST AC-3: Via thread enterprise |
+| `ga_enterprise_member_insert` | INSERT | NIST AC-3, AU-9: Append-only |
+| `ga_service_role_all` | ALL | Backend operations |
+
+**⚠️ NO UPDATE/DELETE** - Actions are immutable for audit integrity
+
+### governance_audit_events Policies (System-Only Write)
+
+| Policy | Operation | Security Control |
+|--------|-----------|------------------|
+| `gae_enterprise_member_select` | SELECT | NIST AC-3: Read-only access |
+| `gae_service_role_all` | ALL | Backend audit logging |
+
+**⚠️ NO INSERT/UPDATE/DELETE for users** - Only service_role can write
+
+### Cryptographic Verification Function
+
+```sql
+-- NIST SC-8: Verify thread integrity with SHA-256 hash
+SELECT * FROM verify_governance_thread_integrity('thread-uuid');
+-- Returns: thread_id, is_valid, action_count, has_proof_bundle, 
+--          proof_bundle_verified, integrity_hash, verification_timestamp
+```
 
 ---
 
@@ -218,16 +252,31 @@ These helper functions exist for RLS policies:
 
 ---
 
-## 📝 Migration Applied
+## 📝 Migrations Applied
 
 **Files:**
 1. `supabase/migrations/20251228000001_rls_hardening_pharma_production.sql`
 2. `supabase/migrations/20251228000002_policy_snapshot_embedding.sql`
+3. `supabase/migrations/20251228000008_governance_threads_rls_hardening.sql` ⭐ NEW
+4. `supabase/migrations/20251228000009_governance_actions_audit_rls_hardening.sql` ⭐ NEW
 
 **Database Applied:**
 - `rls_hardening_pharma_production_v3` - RLS hardening
 - `policy_snapshot_embedding` - FDA compliance schema
+- `governance_threads_rls_hardening` - NIST/OWASP compliant policies
+- `governance_actions_rls_hardening` - Immutable audit trail
+- `governance_audit_events_rls_hardening` - System-only write
 
 ---
 
-*Report updated after successful migration on December 28, 2025*
+## 🔐 Security Compliance Summary
+
+| Standard | Controls Implemented |
+|----------|---------------------|
+| **NIST SP 800-53** | AC-2, AC-3, AC-4, AU-9, SC-8 |
+| **OWASP Top 10** | A01:2021 Broken Access Control |
+| **FDA 21 CFR Part 11** | Electronic records, audit trails |
+
+---
+
+*Report updated after governance RLS hardening on December 28, 2025*
