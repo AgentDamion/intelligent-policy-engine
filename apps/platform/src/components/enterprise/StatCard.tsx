@@ -1,3 +1,6 @@
+import React from 'react'
+import { StatusBadge } from '@/components/ui/status-badge'
+import { cn } from '@/lib/utils'
 
 type Tone = 'default' | 'positive' | 'warning' | 'danger'
 
@@ -6,52 +9,47 @@ export function StatCard({
   value,
   delta,
   tone = 'default',
+  highlight = false,
+  subtext,
   className,
 }: {
   title: string
   value: string
   delta?: { dir: 'up' | 'down'; value: string }
   tone?: Tone
+  highlight?: boolean
+  subtext?: React.ReactNode
   className?: string
 }) {
-  const toneClasses: Record<Tone, string> = {
-    default: 'border-slate-200',
-    positive: 'border-emerald-200',
-    warning: 'border-amber-200',
-    danger: 'border-rose-200',
-  }
-
-  const chipTone: Record<Tone, string> = {
-    default: 'bg-slate-100 text-slate-700',
-    positive: 'bg-emerald-50 text-emerald-700',
-    warning: 'bg-amber-50 text-amber-700',
-    danger: 'bg-rose-50 text-rose-700',
-  }
+  const edgeColor = highlight ? 'border-l-aicomplyr-yellow' : 'border-l-aicomplyr-black'
+  const bgColor = highlight ? 'bg-yellow-50' : 'bg-white'
 
   return (
     <div
-      className={`rounded-2xl border p-4 bg-white shadow-sm ${toneClasses[tone]} ${className ?? ''}`}
+      className={cn(
+        'border-l-4 border border-neutral-200 p-4',
+        edgeColor,
+        bgColor,
+        className
+      )}
       role="region"
       aria-label={title}
     >
-      <div className="text-sm text-slate-500">{title}</div>
+      <div className="text-xs font-semibold uppercase tracking-wider text-neutral-500 mb-2">{title}</div>
       <div className="mt-2 flex items-baseline gap-2">
-        <div className="text-3xl font-semibold text-slate-900">{value}</div>
+        <div className="text-3xl font-display text-aicomplyr-black">{value}</div>
         {delta && (
-          <span
-            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs ${chipTone[tone]}`}
+          <StatusBadge
+            variant={delta.dir === 'up' ? 'approved' : 'denied'}
+            className="text-xs"
           >
-            <svg
-              viewBox="0 0 12 12"
-              className={`h-3 w-3 ${delta.dir === 'up' ? 'rotate-0' : 'rotate-180'}`}
-              aria-hidden
-            >
-              <path d="M6 2l4 6H2l4-6z" fill="currentColor" />
-            </svg>
-            {delta.value}
-          </span>
+            {delta.dir === 'up' ? '↑' : '↓'} {delta.value}
+          </StatusBadge>
         )}
       </div>
+      {subtext && (
+        <div className="text-xs text-neutral-600 mt-1">{subtext}</div>
+      )}
     </div>
   )
 }

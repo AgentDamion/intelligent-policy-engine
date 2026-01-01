@@ -49,65 +49,65 @@ const DECISION_CONFIG: Record<string, {
     label: 'Allowed',
     variant: 'success',
     icon: Check,
-    textColor: 'text-emerald-700',
-    bgColor: 'bg-emerald-100',
-    borderColor: 'border-emerald-200'
+    textColor: 'text-white',
+    bgColor: 'bg-status-approved',
+    borderColor: 'border-transparent'
   },
   approved: {
     label: 'Approved',
     variant: 'success',
     icon: Check,
-    textColor: 'text-emerald-700',
-    bgColor: 'bg-emerald-100',
-    borderColor: 'border-emerald-200'
+    textColor: 'text-white',
+    bgColor: 'bg-status-approved',
+    borderColor: 'border-transparent'
   },
   deny: {
     label: 'Denied',
     variant: 'destructive',
     icon: X,
-    textColor: 'text-red-700',
-    bgColor: 'bg-red-100',
-    borderColor: 'border-red-200'
+    textColor: 'text-white',
+    bgColor: 'bg-status-denied',
+    borderColor: 'border-transparent'
   },
   rejected: {
     label: 'Rejected',
     variant: 'destructive',
     icon: X,
-    textColor: 'text-red-700',
-    bgColor: 'bg-red-100',
-    borderColor: 'border-red-200'
+    textColor: 'text-white',
+    bgColor: 'bg-status-denied',
+    borderColor: 'border-transparent'
   },
   escalate: {
     label: 'Escalated',
     variant: 'warning',
     icon: AlertTriangle,
-    textColor: 'text-amber-700',
-    bgColor: 'bg-amber-100',
-    borderColor: 'border-amber-200'
+    textColor: 'text-white',
+    bgColor: 'bg-status-escalated',
+    borderColor: 'border-transparent'
   },
   flagged: {
     label: 'Flagged',
     variant: 'warning',
     icon: AlertTriangle,
-    textColor: 'text-amber-700',
-    bgColor: 'bg-amber-100',
-    borderColor: 'border-amber-200'
+    textColor: 'text-white',
+    bgColor: 'bg-status-escalated',
+    borderColor: 'border-transparent'
   },
   conditional: {
     label: 'Conditional',
     variant: 'info',
     icon: Info,
-    textColor: 'text-blue-700',
-    bgColor: 'bg-blue-100',
-    borderColor: 'border-blue-200'
+    textColor: 'text-aicomplyr-black',
+    bgColor: 'bg-aicomplyr-yellow',
+    borderColor: 'border-transparent'
   },
   pending: {
     label: 'Pending',
     variant: 'secondary',
     icon: Clock,
-    textColor: 'text-slate-600',
-    bgColor: 'bg-slate-100',
-    borderColor: 'border-slate-200'
+    textColor: 'text-white',
+    bgColor: 'bg-status-pending',
+    borderColor: 'border-transparent'
   }
 };
 
@@ -160,7 +160,7 @@ export const DecisionBadge = memo(function DecisionBadge({
         ${config.bgColor} ${config.textColor} ${config.borderColor}
         ${sizeConfig.badge}
         font-bold uppercase tracking-wide border
-        inline-flex items-center gap-1
+        inline-flex items-center gap-1 rounded-none
       `}
     >
       <IconComponent className={sizeConfig.icon} />
@@ -272,6 +272,7 @@ export const DecisionBadge = memo(function DecisionBadge({
 DecisionBadge.displayName = 'DecisionBadge';
 
 export default DecisionBadge;
+
 
 
 

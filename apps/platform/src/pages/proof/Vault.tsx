@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { SurfaceLayout } from '../../components/SurfaceLayout';
 import { ProofBundleList } from '../../components/vera';
-import { ProofBundleViewer } from '../../components/vera/ProofBundleViewer';
+import { ProofBundleDetailViewer } from '../../components/proof-bundle/ProofBundleDetailViewer';
 import { Share2, FileDown } from 'lucide-react';
-import { Button } from '../../components/ui/button';
+import { AICOMPLYRButton as Button } from '../../components/ui/aicomplyr-button';
 import { useEnterprise } from '../../contexts/EnterpriseContext';
 import SplitView from '../../components/layout/SplitView';
 import EmptyState from '../../components/ui/EmptyState';
+import ProofBundleCard from '@/components/proof-bundle/ProofBundleCard';
 
 export default function EvidenceVault() {
   const { currentEnterprise } = useEnterprise();
@@ -19,19 +20,19 @@ export default function EvidenceVault() {
       subtitle="Immutable audit trails and cryptographic proof bundles"
       actions={
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
-            <FileDown className="h-4 w-4 mr-2" />
+          <Button variant="secondary-light">
+            <FileDown className="w-4 h-4" />
             Bulk Export
           </Button>
-          <Button size="sm" className="bg-teal-600 hover:bg-teal-700">
-            <Share2 className="h-4 w-4 mr-2" />
+          <Button variant="secondary">
+            <Share2 className="w-4 h-4" />
             Share Trust Center
           </Button>
         </div>
       }
     >
       <SplitView
-        className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden"
+        className="bg-white border border-neutral-200 overflow-hidden"
         leftClassName="md:w-[420px]"
         left={
           <ProofBundleList
@@ -41,18 +42,32 @@ export default function EvidenceVault() {
           />
         }
         main={
-          <div className="h-full bg-slate-50/50">
+          <div className="h-full bg-neutral-100">
             {!selectedBundleId ? (
-              <EmptyState
-                title="Select a proof bundle"
-                description="Proof bundles are automatically generated from signed decisions. Select a bundle to inspect its contents, verify hashes, and export regulator packages."
-                actions={[
-                  { label: 'Go to Decisions', href: '/decisions', variant: 'outline' },
-                ]}
-                className="h-full"
-              />
+              <div className="p-6 space-y-4">
+                <EmptyState
+                  title="Select a proof bundle"
+                  description="Proof bundles are automatically generated from signed decisions. Select a bundle to inspect its contents, verify hashes, and export regulator packages."
+                  actions={[
+                    { label: 'Go to Decisions', href: '/decisions', variant: 'outline' },
+                  ]}
+                  className="bg-white border border-neutral-200"
+                />
+                <ProofBundleCard
+                  boundary="AstraZeneca → Horizon Creative"
+                  tool="Midjourney v6.1"
+                  useCase="HCP campaign imagery"
+                  riskLevel="high"
+                  policyId="AIG-Pharma-2024.03.2"
+                  conditions="Human review required"
+                  approver="Sarah Chen"
+                  authority="VP Compliance, MLR Final"
+                  timestamp="2024-12-28T14:32:07Z"
+                  decisionId="DEC-2024-0847-EC-AP"
+                />
+              </div>
             ) : (
-              <ProofBundleViewer proofBundleId={selectedBundleId} className="h-full" />
+              <ProofBundleDetailViewer proofBundleId={selectedBundleId} className="h-full" />
             )}
           </div>
         }

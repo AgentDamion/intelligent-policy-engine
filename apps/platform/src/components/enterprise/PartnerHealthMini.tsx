@@ -1,44 +1,47 @@
 import type { PartnerHealth } from '../../pages/enterprise/types'
+import { EdgeCard } from '../ui/edge-card'
 
 export function PartnerHealthMini({ items }: { items: PartnerHealth[] | null }) {
   if (!items) {
-    return <div className="h-64 rounded-2xl bg-slate-100 animate-pulse" />
+    return <div className="h-64 bg-neutral-200 border-l-4 border-l-aicomplyr-black animate-pulse" />
   }
 
   return (
-    <aside className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-medium text-slate-700">Partner Health</h3>
-        <div className="text-xs text-slate-500">Last 7 days</div>
-      </div>
-
-      {items.length === 0 ? (
-        <div className="flex h-40 items-center justify-center rounded-md border border-dashed border-slate-200">
-          <div className="text-sm text-slate-500">No partner data available</div>
+    <EdgeCard>
+      <div className="p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-500">Partner Health</h3>
+          <div className="text-xs text-neutral-500">Last 7 days</div>
         </div>
-      ) : (
-        <ul className="space-y-3">
-          {items.map(p => (
-            <li key={p.partner} className="rounded-xl border border-slate-200 p-3 hover:bg-slate-50 transition-colors">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-sm font-medium text-slate-800">{p.partner}</div>
-                  <div className="mt-1 flex items-center gap-3 text-xs">
-                    <span className="text-slate-600">
-                      Compliance <b className="text-slate-800">{Math.round(p.compliancePct * 100)}%</b>
-                    </span>
-                    <span className="text-slate-600">
-                      Open Items <b className="text-slate-800">{p.openItems}</b>
-                    </span>
+
+        {items.length === 0 ? (
+          <div className="flex h-40 items-center justify-center border border-dashed border-neutral-200 bg-neutral-50">
+            <div className="text-sm text-neutral-500">No partner data available</div>
+          </div>
+        ) : (
+          <ul className="space-y-3">
+            {items.map(p => (
+              <li key={p.partner} className="border-l-4 border-l-aicomplyr-black border border-neutral-200 p-3 hover:bg-neutral-50 transition-colors bg-white">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-semibold text-aicomplyr-black">{p.partner}</div>
+                    <div className="mt-1 flex items-center gap-3 text-xs">
+                      <span className="text-neutral-600">
+                        Compliance <span className="font-semibold text-aicomplyr-black">{Math.round(p.compliancePct * 100)}%</span>
+                      </span>
+                      <span className="text-neutral-600">
+                        Open Items <span className="font-semibold text-aicomplyr-black">{p.openItems}</span>
+                      </span>
+                    </div>
                   </div>
+                  <Sparkline series={p.series} />
                 </div>
-                <Sparkline series={p.series} />
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </aside>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </EdgeCard>
   )
 }
 
@@ -57,7 +60,7 @@ function Sparkline({ series }: { series: number[] }) {
   const d = series.map(norm).join(' ')
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} width={w} height={h} className="text-teal-600">
+    <svg viewBox={`0 0 ${w} ${h}`} width={w} height={h} className="text-aicomplyr-black">
       <polyline fill="none" stroke="currentColor" strokeWidth="2" points={d} />
     </svg>
   )

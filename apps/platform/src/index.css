@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,37 +10,37 @@
   }
   
   body {
-    @apply bg-gray-50 text-gray-900;
+    @apply bg-neutral-100 text-aicomplyr-black;
   }
 }
 
 @layer components {
-  .btn-primary {
-    @apply bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+  /* Edge-defined containers */
+  .edge-defined {
+    @apply border-l-4 border-l-aicomplyr-black bg-white transition-colors;
   }
-  
-  .btn-secondary {
-    @apply bg-white hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 rounded-lg border border-gray-300 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+
+  .edge-defined.selected {
+    @apply border-l-aicomplyr-yellow;
   }
-  
-  .btn-success {
-    @apply bg-success-600 hover:bg-success-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-success-500 focus:ring-offset-2;
+
+  .edge-defined.attention {
+    @apply border-l-status-escalated;
   }
-  
-  .btn-danger {
-    @apply bg-danger-600 hover:bg-danger-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-danger-500 focus:ring-offset-2;
+
+  /* Navigation active state */
+  .nav-active {
+    @apply bg-neutral-100 font-semibold border-l-[3px] border-l-aicomplyr-yellow;
   }
-  
-  .input-field {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors duration-200;
+
+  /* Section label helper */
+  .section-label {
+    @apply text-[10px] font-semibold uppercase tracking-[1.5px] text-neutral-400;
   }
-  
-  .card {
-    @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6;
-  }
-  
-  .card-hover {
-    @apply card hover:shadow-md transition-shadow duration-200;
+
+  /* Monospace IDs */
+  .mono-id {
+    @apply font-mono text-xs text-neutral-500;
   }
 }
 
@@ -46,48 +48,8 @@
   .text-balance {
     text-wrap: balance;
   }
-  
-  /* VERA Orb 3D Styles */
-  .perspective-1000 {
-    perspective: 1000px;
-  }
-  
-  .transform-gpu {
-    transform: translateZ(0);
-    will-change: transform;
-  }
-}
 
-/* VERA Orb Animations */
-@keyframes orb-float {
-  0%, 100% {
-    transform: translateY(0px) rotate(0deg);
+  .text-display {
+    @apply font-display tracking-tight;
   }
-  50% {
-    transform: translateY(-10px) rotate(5deg);
-  }
-}
-
-@keyframes glow-pulse {
-  0%, 100% {
-    opacity: 0.6;
-    filter: blur(12px);
-  }
-  50% {
-    opacity: 0.9;
-    filter: blur(16px);
-  }
-}
-
-@keyframes fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.animate-fade-in {
-  animation: fade-in 0.3s ease-in-out;
 }

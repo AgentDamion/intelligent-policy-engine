@@ -1,4 +1,5 @@
 import type { HeatMap } from '../../pages/enterprise/types'
+import { EdgeCard } from '../ui/edge-card'
 
 export function RiskHeatMap({
   data,
@@ -8,13 +9,13 @@ export function RiskHeatMap({
   onSelect: (partner: string, category: string) => void
 }) {
   if (!data) {
-    return <div className="h-64 rounded-2xl bg-slate-100 animate-pulse" />
+    return <div className="h-64 bg-neutral-200 border-l-4 border-l-aicomplyr-black animate-pulse" />
   }
 
   const riskToClass: Record<'low' | 'medium' | 'high', string> = {
-    low: 'bg-emerald-500/85 hover:bg-emerald-600',
-    medium: 'bg-amber-500/85 hover:bg-amber-600',
-    high: 'bg-rose-500/85 hover:bg-rose-600',
+    low: 'bg-status-approved/85 hover:bg-status-approved',
+    medium: 'bg-status-escalated/85 hover:bg-status-escalated',
+    high: 'bg-status-denied/85 hover:bg-status-denied',
   }
 
   const key = (p: string, c: string) => `${p}__${c}`
@@ -25,30 +26,31 @@ export function RiskHeatMap({
   const partners = data.partners || []
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-medium text-slate-700">Risk Heat Map</h3>
-        <div className="flex items-center gap-3 text-xs text-slate-500">
-          <Legend color="bg-emerald-500" label="Low Risk" />
-          <Legend color="bg-amber-500" label="Medium Risk" />
-          <Legend color="bg-rose-500" label="High Risk" />
+    <EdgeCard>
+      <div className="p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-500">Risk Heat Map</h3>
+          <div className="flex items-center gap-3 text-xs text-neutral-500">
+            <Legend color="bg-status-approved" label="Low Risk" />
+            <Legend color="bg-status-escalated" label="Medium Risk" />
+            <Legend color="bg-status-denied" label="High Risk" />
+          </div>
         </div>
-      </div>
 
       <div className="overflow-x-auto">
         <table className="w-full border-separate border-spacing-0">
           <thead>
             <tr>
-              <th className="sticky left-0 z-10 bg-white p-2 text-left text-xs font-medium text-slate-500" />
+              <th className="sticky left-0 z-10 bg-white p-2 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500" />
               {categories.map(c => (
-                <th key={c} className="p-2 text-left text-xs font-medium text-slate-500">{c}</th>
+                <th key={c} className="p-2 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500">{c}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {partners.map(p => (
               <tr key={p}>
-                <th className="sticky left-0 z-10 bg-white py-1.5 pr-4 text-left text-xs font-medium text-slate-600">{p}</th>
+                <th className="sticky left-0 z-10 bg-white py-1.5 pr-4 text-left text-xs font-semibold text-neutral-700">{p}</th>
                 {categories.map(c => {
                   const cell = cellMap.get(key(p, c))
                   const risk = cell?.risk ?? 'low'
@@ -57,7 +59,7 @@ export function RiskHeatMap({
                       <button
                         type="button"
                         onClick={() => onSelect?.(p, c)}
-                        className={`h-7 w-20 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 ${riskToClass[risk]}`}
+                        className={`h-7 w-20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aicomplyr-black ${riskToClass[risk]}`}
                         aria-label={`${p} / ${c} risk ${risk}`}
                         title={`${p} / ${c} — ${risk.toUpperCase()}`}
                       />
@@ -69,19 +71,20 @@ export function RiskHeatMap({
           </tbody>
         </table>
         {partners.length === 0 && (
-          <div className="py-12 text-center text-sm text-slate-400">
+          <div className="py-12 text-center text-sm text-neutral-400">
             No risk data available for the current selection.
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </EdgeCard>
   )
 }
 
 function Legend({ color, label }: { color: string; label: string }) {
   return (
     <span className="inline-flex items-center gap-2">
-      <span className={`h-2.5 w-2.5 rounded-full ${color}`} />
+      <span className={`h-2.5 w-2.5 ${color}`} />
       {label}
     </span>
   )

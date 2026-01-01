@@ -28,25 +28,25 @@ interface ContextSwitcherProps {
 const ContextIcon = memo(({ type }: { type: 'enterprise' | 'partner' | 'workspace' }) => {
   switch (type) {
     case 'enterprise':
-      return <Building2 className="w-4 h-4 text-indigo-500" />
+      return <Building2 className="w-4 h-4 text-aicomplyr-black" />
     case 'partner':
-      return <Users className="w-4 h-4 text-blue-500" />
+      return <Users className="w-4 h-4 text-neutral-600" />
     case 'workspace':
-      return <Briefcase className="w-4 h-4 text-amber-500" />
+      return <Briefcase className="w-4 h-4 text-aicomplyr-yellow" />
     default:
-      return <Building2 className="w-4 h-4 text-slate-500" />
+      return <Building2 className="w-4 h-4 text-neutral-500" />
   }
 })
 ContextIcon.displayName = 'ContextIcon'
 
 const ContextTypeBadge = memo(({ type }: { type: 'enterprise' | 'partner' | 'workspace' }) => {
   const styles = {
-    enterprise: 'bg-indigo-100 text-indigo-700',
-    partner: 'bg-blue-100 text-blue-700',
-    workspace: 'bg-amber-100 text-amber-700',
+    enterprise: 'bg-neutral-100 text-aicomplyr-black',
+    partner: 'bg-neutral-100 text-neutral-700',
+    workspace: 'bg-yellow-50 text-aicomplyr-black',
   }
   return (
-    <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium uppercase ${styles[type]}`}>
+    <span className={`px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${styles[type]}`}>
       {type}
     </span>
   )
@@ -98,18 +98,18 @@ export const ContextSwitcher = memo(({ compact = false, onContextChange }: Conte
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2 px-3 py-2 bg-slate-100 rounded-lg">
-        <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
-        <span className="text-sm text-slate-500">Loading contexts...</span>
+      <div className="flex items-center gap-2 px-3 py-2 bg-neutral-100 border-l-4 border-l-aicomplyr-black">
+        <Loader2 className="w-4 h-4 animate-spin text-neutral-400" />
+        <span className="text-sm text-neutral-500">Loading contexts...</span>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="flex items-center gap-2 px-3 py-2 bg-red-50 rounded-lg border border-red-100">
-        <AlertCircle className="w-4 h-4 text-red-500" />
-        <span className="text-sm text-red-600">Error loading contexts</span>
+      <div className="flex items-center gap-2 px-3 py-2 bg-red-50 border-l-4 border-l-status-denied">
+        <AlertCircle className="w-4 h-4 text-status-denied" />
+        <span className="text-sm text-status-denied">Error loading contexts</span>
       </div>
     )
   }
@@ -117,9 +117,9 @@ export const ContextSwitcher = memo(({ compact = false, onContextChange }: Conte
   if (availableContexts.length <= 1) {
     // Only one context available, no need for switcher
     return (
-      <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-lg">
+      <div className="flex items-center gap-2 px-3 py-2 bg-neutral-100 border-l-4 border-l-aicomplyr-black">
         <ContextIcon type={currentContextInfo?.type || 'enterprise'} />
-        <span className="text-sm font-medium text-slate-700">
+        <span className="text-sm font-display text-aicomplyr-black">
           {currentContextInfo?.name || 'Default Context'}
         </span>
       </div>
@@ -130,25 +130,25 @@ export const ContextSwitcher = memo(({ compact = false, onContextChange }: Conte
     <Menu as="div" className="relative">
       <Menu.Button
         className={`
-          flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 
-          rounded-lg hover:bg-slate-50 hover:border-slate-300 
-          transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1
+          flex items-center gap-2 px-3 py-2 bg-white border border-neutral-200 
+          hover:bg-neutral-100 hover:border-neutral-300 
+          transition-colors focus:outline-none focus:ring-2 focus:ring-aicomplyr-black focus:ring-offset-1
           ${compact ? 'text-sm' : ''}
         `}
         disabled={isSwitching}
       >
         {isSwitching ? (
-          <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />
+          <Loader2 className="w-4 h-4 animate-spin text-aicomplyr-black" />
         ) : (
           <ContextIcon type={currentContextInfo?.type || 'enterprise'} />
         )}
-        <span className="font-medium text-slate-700 max-w-[150px] truncate">
+        <span className="font-display text-sm text-aicomplyr-black max-w-[150px] truncate">
           {currentContextInfo?.name || 'Select Context'}
         </span>
         {!compact && currentContextInfo && (
           <ContextTypeBadge type={currentContextInfo.type} />
         )}
-        <ChevronDown className="w-4 h-4 text-slate-400" />
+        <ChevronDown className="w-4 h-4 text-neutral-400" />
       </Menu.Button>
 
       <Transition
@@ -160,15 +160,15 @@ export const ContextSwitcher = memo(({ compact = false, onContextChange }: Conte
         leaveFrom="transform opacity-100 scale-100"
         leaveTo="transform opacity-0 scale-95"
       >
-        <Menu.Items className="absolute left-0 mt-2 w-72 origin-top-left rounded-xl bg-white shadow-lg ring-1 ring-black/5 focus:outline-none z-50">
+        <Menu.Items className="absolute left-0 mt-2 w-72 origin-top-left bg-white border-l-4 border-l-aicomplyr-black border border-neutral-200 focus:outline-none z-50">
           <div className="p-2">
-            <div className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+            <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-neutral-400">
               Switch Context
             </div>
 
             {switchError && (
-              <div className="mx-2 mb-2 p-2 bg-red-50 rounded-lg border border-red-100">
-                <div className="flex items-center gap-2 text-sm text-red-600">
+              <div className="mx-2 mb-2 p-2 bg-red-50 border-l-4 border-l-status-denied">
+                <div className="flex items-center gap-2 text-sm text-status-denied">
                   <AlertCircle className="w-4 h-4" />
                   {switchError}
                 </div>
@@ -187,26 +187,26 @@ export const ContextSwitcher = memo(({ compact = false, onContextChange }: Conte
                       <button
                         onClick={() => handleSwitchContext(context)}
                         className={`
-                          w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
+                          w-full flex items-center gap-3 px-3 py-2.5
                           transition-colors text-left
-                          ${active ? 'bg-slate-100' : ''}
-                          ${isSelected ? 'bg-indigo-50' : ''}
+                          ${active ? 'bg-neutral-100' : ''}
+                          ${isSelected ? 'bg-neutral-100 border-l-4 border-l-aicomplyr-yellow' : ''}
                         `}
                       >
                         <ContextIcon type={context.type} />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className={`font-medium truncate ${isSelected ? 'text-indigo-700' : 'text-slate-700'}`}>
+                            <span className={`font-display text-sm truncate ${isSelected ? 'text-aicomplyr-black' : 'text-neutral-700'}`}>
                               {context.name}
                             </span>
                             <ContextTypeBadge type={context.type} />
                           </div>
-                          <div className="text-xs text-slate-500 mt-0.5">
+                          <div className="text-xs text-neutral-500 mt-0.5">
                             {context.role}
                           </div>
                         </div>
                         {isSelected && (
-                          <Check className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+                          <Check className="w-4 h-4 text-aicomplyr-yellow flex-shrink-0" />
                         )}
                       </button>
                     )}
