@@ -48,7 +48,7 @@ const Verdict = z.object({
 
 const ApiSchema = z.object({
   event: ToolUsageEvent,
-  rules: z.array(PolicyRule),
+  rules: z.array(PolicyRule).optional(), // client-supplied rules are ignored; server fetches
 });
 
 // Helper to get nested field values
@@ -126,7 +126,29 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { event, rules } = ApiSchema.parse(body);
+    const { event } = ApiSchema.parse(body);
+
+    // Server-side rule retrieval (ignore client-supplied rules)
+    let rules: z.infer<typeof PolicyRule>[] = [];
+    try {
+      const { data: snapshot } = await supabase
+        .from('effective_policy_snapshots')
+        .select('rules')
+        .eq('id', event.context.policySnapshotId)
+        .maybeSingle();
+      if (snapshot?.rules && Array.isArray(snapshot.rules)) {
+        rules = snapshot.rules as z.infer<typeof PolicyRule>[];
+      }
+    } catch (fetchRulesError) {
+      console.error('Failed to fetch rules from EPS:', fetchRulesError);
+    }
+
+    if (!rules || rules.length === 0) {
+      return respond({
+        error: 'No policy rules available for this snapshot',
+        code: 'POLICY_RULES_MISSING',
+      }, 400);
+    }
 
     // Evaluate policy
     const verdict = evaluate(event, rules);

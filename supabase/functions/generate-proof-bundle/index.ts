@@ -147,11 +147,15 @@ interface ProofBundleRequest {
   agentActivityIds?: string[]
   traceIds?: string[]
   requestedBy: string
-  bundleType?: 'submission' | 'trace' | 'time_range'
+  bundleType?: 'submission' | 'trace' | 'time_range' | 'boundary'
   timeRange?: {
     start: string
     end: string
   }
+  // Boundary Governance artifacts (optional)
+  dt_id?: string  // Decision Token ID
+  pc_id?: string  // Partner Confirmation ID
+  er_id?: string  // Execution Receipt ID
 }
 
 interface ProofBundleOutput {
@@ -170,6 +174,40 @@ interface ProofBundleOutput {
     agentActivityCount: number
     decisionsIncluded: number
     auditEventsIncluded: number
+  }
+  // Boundary Governance proof (optional)
+  boundaryProof?: {
+    decisionToken: {
+      dt_id: string
+      enterprise_id: string
+      partner_id: string | null
+      tool_name: string
+      tool_version: string
+      vendor_name: string
+      eps_id: string
+      eps_digest: string
+      signature: string
+      issued_at: string
+      expires_at: string
+    } | null
+    partnerConfirmation: {
+      pc_id: string
+      partner_id: string
+      confirmer_user_id: string
+      confirmed_at: string
+      signature: string
+    } | null
+    executionReceipt: {
+      er_id: string
+      executor_type: string
+      executor_id: string
+      execution_started_at: string
+      execution_completed_at: string
+      outcome: any
+      attestation: string
+    } | null
+    chainStatus: 'complete' | 'awaiting_execution' | 'awaiting_confirmation' | 'enterprise_run' | 'no_boundary'
+    chainValid: boolean
   }
   generatedAt: string
   downloadUrl?: string
@@ -201,7 +239,11 @@ serve(async (req) => {
       traceIds,
       requestedBy,
       bundleType = 'trace',
-      timeRange
+      timeRange,
+      // Boundary Governance artifacts
+      dt_id,
+      pc_id,
+      er_id
     } = body
 
     if (!enterpriseId || !requestedBy) {
@@ -342,6 +384,248 @@ serve(async (req) => {
       decisions = decs || []
     }
 
+    // 6.5. Fetch Boundary Governance artifacts if provided
+    let boundaryProof: any = null
+    if (dt_id || pc_id || er_id || bundleType === 'boundary') {
+      console.log(`🔐 Fetching boundary governance artifacts...`)
+      
+      let decisionToken = null
+      let partnerConfirmation = null
+      let executionReceipt = null
+      let chainStatus: string = 'no_boundary'
+      
+      // Fetch Decision Token
+      const dtIdToFetch = dt_id || (er_id ? null : null) // Will get from ER if needed
+      if (dtIdToFetch) {
+        const { data: dt } = await supabase
+          .from('boundary_decision_tokens')
+          .select('*')
+          .eq('dt_id', dtIdToFetch)
+          .single()
+        
+        if (dt) {
+          decisionToken = {
+            dt_id: dt.dt_id,
+            enterprise_id: dt.enterprise_id,
+            partner_id: dt.partner_id,
+            tool_name: dt.tool_name,
+            tool_version: dt.tool_version,
+            vendor_name: dt.vendor_name,
+            eps_id: dt.eps_id,
+            eps_digest: dt.eps_digest,
+            usage_grant: dt.usage_grant,
+            decision: dt.decision,
+            signature: dt.signature,
+            signing_method: dt.signing_method,
+            status: dt.status,
+            issued_at: dt.issued_at,
+            expires_at: dt.expires_at
+          }
+        }
+      }
+      
+      // Fetch Partner Confirmation
+      const pcIdToFetch = pc_id || (dt_id ? null : null)
+      if (pcIdToFetch) {
+        const { data: pc } = await supabase
+          .from('boundary_partner_confirmations')
+          .select('*')
+          .eq('pc_id', pcIdToFetch)
+          .single()
+        
+        if (pc) {
+          partnerConfirmation = {
+            pc_id: pc.pc_id,
+            dt_id: pc.dt_id,
+            partner_id: pc.partner_id,
+            confirmer_user_id: pc.confirmer_user_id,
+            confirmer_role: pc.confirmer_role,
+            confirmation_statement: pc.confirmation_statement,
+            accepted_controls: pc.accepted_controls,
+            confirmed_at: pc.confirmed_at,
+            signature: pc.signature,
+            signing_method: pc.signing_method
+          }
+          
+          // If we didn't have DT, fetch it via PC
+          if (!decisionToken && pc.dt_id) {
+            const { data: dt } = await supabase
+              .from('boundary_decision_tokens')
+              .select('*')
+              .eq('dt_id', pc.dt_id)
+              .single()
+            
+            if (dt) {
+              decisionToken = {
+                dt_id: dt.dt_id,
+                enterprise_id: dt.enterprise_id,
+                partner_id: dt.partner_id,
+                tool_name: dt.tool_name,
+                tool_version: dt.tool_version,
+                vendor_name: dt.vendor_name,
+                eps_id: dt.eps_id,
+                eps_digest: dt.eps_digest,
+                usage_grant: dt.usage_grant,
+                decision: dt.decision,
+                signature: dt.signature,
+                signing_method: dt.signing_method,
+                status: dt.status,
+                issued_at: dt.issued_at,
+                expires_at: dt.expires_at
+              }
+            }
+          }
+        }
+      } else if (dt_id) {
+        // Look for PC by DT ID
+        const { data: pc } = await supabase
+          .from('boundary_partner_confirmations')
+          .select('*')
+          .eq('dt_id', dt_id)
+          .single()
+        
+        if (pc) {
+          partnerConfirmation = {
+            pc_id: pc.pc_id,
+            dt_id: pc.dt_id,
+            partner_id: pc.partner_id,
+            confirmer_user_id: pc.confirmer_user_id,
+            confirmer_role: pc.confirmer_role,
+            confirmation_statement: pc.confirmation_statement,
+            accepted_controls: pc.accepted_controls,
+            confirmed_at: pc.confirmed_at,
+            signature: pc.signature,
+            signing_method: pc.signing_method
+          }
+        }
+      }
+      
+      // Fetch Execution Receipt
+      if (er_id) {
+        const { data: er } = await supabase
+          .from('boundary_execution_receipts')
+          .select('*')
+          .eq('er_id', er_id)
+          .single()
+        
+        if (er) {
+          executionReceipt = {
+            er_id: er.er_id,
+            dt_id: er.dt_id,
+            pc_id: er.pc_id,
+            executor_type: er.executor_type,
+            executor_id: er.executor_id,
+            executor_user_id: er.executor_user_id,
+            execution_started_at: er.execution_started_at,
+            execution_completed_at: er.execution_completed_at,
+            execution_duration_ms: er.execution_duration_ms,
+            outcome: er.outcome,
+            attestation: er.attestation,
+            signing_method: er.signing_method
+          }
+          
+          // Fetch related DT/PC if not already fetched
+          if (!decisionToken && er.dt_id) {
+            const { data: dt } = await supabase
+              .from('boundary_decision_tokens')
+              .select('*')
+              .eq('dt_id', er.dt_id)
+              .single()
+            
+            if (dt) {
+              decisionToken = {
+                dt_id: dt.dt_id,
+                enterprise_id: dt.enterprise_id,
+                partner_id: dt.partner_id,
+                tool_name: dt.tool_name,
+                tool_version: dt.tool_version,
+                vendor_name: dt.vendor_name,
+                eps_id: dt.eps_id,
+                eps_digest: dt.eps_digest,
+                usage_grant: dt.usage_grant,
+                decision: dt.decision,
+                signature: dt.signature,
+                signing_method: dt.signing_method,
+                status: dt.status,
+                issued_at: dt.issued_at,
+                expires_at: dt.expires_at
+              }
+            }
+          }
+          
+          if (!partnerConfirmation && er.pc_id) {
+            const { data: pc } = await supabase
+              .from('boundary_partner_confirmations')
+              .select('*')
+              .eq('pc_id', er.pc_id)
+              .single()
+            
+            if (pc) {
+              partnerConfirmation = {
+                pc_id: pc.pc_id,
+                dt_id: pc.dt_id,
+                partner_id: pc.partner_id,
+                confirmer_user_id: pc.confirmer_user_id,
+                confirmer_role: pc.confirmer_role,
+                confirmation_statement: pc.confirmation_statement,
+                accepted_controls: pc.accepted_controls,
+                confirmed_at: pc.confirmed_at,
+                signature: pc.signature,
+                signing_method: pc.signing_method
+              }
+            }
+          }
+        }
+      } else if (dt_id) {
+        // Look for ER by DT ID
+        const { data: er } = await supabase
+          .from('boundary_execution_receipts')
+          .select('*')
+          .eq('dt_id', dt_id)
+          .single()
+        
+        if (er) {
+          executionReceipt = {
+            er_id: er.er_id,
+            dt_id: er.dt_id,
+            pc_id: er.pc_id,
+            executor_type: er.executor_type,
+            executor_id: er.executor_id,
+            executor_user_id: er.executor_user_id,
+            execution_started_at: er.execution_started_at,
+            execution_completed_at: er.execution_completed_at,
+            execution_duration_ms: er.execution_duration_ms,
+            outcome: er.outcome,
+            attestation: er.attestation,
+            signing_method: er.signing_method
+          }
+        }
+      }
+      
+      // Determine chain status
+      if (executionReceipt) {
+        chainStatus = 'complete'
+      } else if (partnerConfirmation) {
+        chainStatus = 'awaiting_execution'
+      } else if (decisionToken && decisionToken.partner_id) {
+        chainStatus = 'awaiting_confirmation'
+      } else if (decisionToken) {
+        chainStatus = 'enterprise_run'
+      }
+      
+      // Build boundary proof object
+      if (decisionToken || partnerConfirmation || executionReceipt) {
+        boundaryProof = {
+          decisionToken,
+          partnerConfirmation,
+          executionReceipt,
+          chainStatus,
+          chainValid: chainStatus === 'complete' || chainStatus === 'enterprise_run'
+        }
+        console.log(`✅ Boundary proof assembled: ${chainStatus}`)
+      }
+    }
+
     // 7. Generate bundle content
     const bundleContent = {
       metadata: {
@@ -351,7 +635,8 @@ serve(async (req) => {
         enterpriseName: enterprise.name,
         workspaceId: workspaceId || null,
         submissionId: submissionId || null,
-        bundleType
+        bundleType,
+        hasBoundaryProof: boundaryProof !== null
       },
       policyReference: policyContext ? {
         digest: policyContext.digest,
@@ -370,13 +655,17 @@ serve(async (req) => {
       agentActivities: activities || [],
       decisions: decisions,
       auditTrail: auditEvents,
+      // Boundary Governance proof chain
+      boundaryProof: boundaryProof,
       integrityChecks: {
         activityCount: activities?.length || 0,
         decisionCount: decisions.length,
         auditEventCount: auditEvents.length,
         uniquePolicyDigests: uniqueDigests.length,
         policyDigestsConsistent: uniqueDigests.length <= 1,
-        allDigests: uniqueDigests
+        allDigests: uniqueDigests,
+        boundaryChainStatus: boundaryProof?.chainStatus || 'no_boundary',
+        boundaryChainValid: boundaryProof?.chainValid || false
       }
     }
 
@@ -387,15 +676,7 @@ serve(async (req) => {
       bundleContent
     )
 
-    // 9. Generate content hash
-    const encoder = new TextEncoder()
-    const bundleBytes = encoder.encode(JSON.stringify(bundleContent))
-    const hashBuffer = await crypto.subtle.digest('SHA-256', bundleBytes)
-    const bundleHash = Array.from(new Uint8Array(hashBuffer))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('')
-
-    // 9.5. Generate canonical JSON and hash for artifacts
+    // 9. Generate canonical JSON and content hash for artifacts
     const canonicalJson = JSON.stringify(bundleContent, Object.keys(bundleContent).sort())
     const encoder = new TextEncoder()
     const bundleBytes = encoder.encode(canonicalJson)
@@ -546,6 +827,8 @@ serve(async (req) => {
         decisionsIncluded: decisions.length,
         auditEventsIncluded: auditEvents.length
       },
+      // Boundary Governance proof (if available)
+      boundaryProof: boundaryProof || undefined,
       generatedAt: new Date().toISOString(),
       downloadUrl
     }

@@ -3,7 +3,10 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { z } from "https://deno.land/x/zod@v3.20.2/mod.ts"
 
 // Cursor Agent Adapter Configuration
-const CURSOR_AGENT_ADAPTER_URL = Deno.env.get('CURSOR_AGENT_ADAPTER_URL') || 'http://localhost:54321/functions/v1/cursor-agent-adapter'
+const CURSOR_AGENT_ADAPTER_URL = Deno.env.get('CURSOR_AGENT_ADAPTER_URL')
+if (!CURSOR_AGENT_ADAPTER_URL) {
+  throw new Error('CURSOR_AGENT_ADAPTER_URL environment variable is required')
+}
 
 // Helper function to call Cursor agents
 async function callCursorAgent(agentName: string, input: any, context: any = {}) {
