@@ -43,7 +43,7 @@ ON public.tool_category_keywords(keyword);
 CREATE OR REPLACE FUNCTION infer_tool_category(tool_name TEXT)
 RETURNS TABLE(category TEXT, confidence NUMERIC)
 LANGUAGE sql
-IMMUTABLE
+STABLE
 AS $$
   SELECT
     tck.category,
