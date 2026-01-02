@@ -106,3 +106,12 @@ coverage/
 # Misc
 *.tgz
 *.tar.gz
+
+# Debug and local test scripts
+debug-*.js
+debug-*.cjs
+test-*.js
+check-db-schema.cjs
+live-governance-test.js
+setup-tool-lookup.sql
+validate-core-functionality.js
