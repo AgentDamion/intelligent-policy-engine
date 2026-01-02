@@ -104,7 +104,7 @@ Deno.serve(async (req) => {
     console.log('[seed-globalmed] Phase 5: Simulation - starting');
     console.time('[seed-globalmed] Phase 5 duration');
     try {
-      await seedSimulation(supabaseAdmin, enterpriseId, workspaceIds.oncavex, user_id);
+      await seedSimulation(supabaseAdmin, workspaceIds.oncavex, user_id);
       console.timeEnd('[seed-globalmed] Phase 5 duration');
       console.log('[seed-globalmed] Phase 5: Simulation - completed');
     } catch (phaseError) {
@@ -322,6 +322,9 @@ function getPartnerIds() {
 // ============================================================================
 
 async function seedAITools(supabase: any) {
+  // NOTE: Using 'draft' for deployment_status because the table has conflicting
+  // constraints. To use 'approved', run this SQL first:
+  // ALTER TABLE ai_tool_registry DROP CONSTRAINT ai_tool_registry_deployment_status_check;
   const tools = [
     {
       id: '88888888-8888-8888-8888-888888888888',
@@ -329,7 +332,7 @@ async function seedAITools(supabase: any) {
       provider: 'Persado',
       category: 'text_gen',
       risk_tier: 'MEDIUM',
-      deployment_status: 'approved',
+      deployment_status: 'draft',
       jurisdictions: ['GDPR', 'HIPAA'],
       data_sensitivity_used: ['PII'],
       description: 'AI language optimization for patient/caregiver communications',
@@ -340,7 +343,7 @@ async function seedAITools(supabase: any) {
       provider: 'AuroraHealth',
       category: 'analytics',
       risk_tier: 'LOW',
-      deployment_status: 'approved',
+      deployment_status: 'draft',
       jurisdictions: ['HIPAA'],
       data_sensitivity_used: ['PHI'],
       description: 'Patient data analytics engine',
@@ -351,7 +354,7 @@ async function seedAITools(supabase: any) {
       provider: 'MedViz',
       category: 'data_viz',
       risk_tier: 'LOW',
-      deployment_status: 'approved',
+      deployment_status: 'draft',
       jurisdictions: [],
       data_sensitivity_used: [],
       description: 'Medical publication figure generation',
@@ -362,7 +365,7 @@ async function seedAITools(supabase: any) {
       provider: 'Viseven',
       category: 'creative',
       risk_tier: 'LOW',
-      deployment_status: 'approved',
+      deployment_status: 'draft',
       jurisdictions: [],
       data_sensitivity_used: [],
       description: 'Interactive pharma content creation',
@@ -373,7 +376,7 @@ async function seedAITools(supabase: any) {
       provider: 'Bastion',
       category: 'llm',
       risk_tier: 'MEDIUM',
-      deployment_status: 'approved',
+      deployment_status: 'draft',
       jurisdictions: ['HIPAA', 'GDPR'],
       data_sensitivity_used: ['PHI', 'PII'],
       description: 'HIPAA-compliant medical writing assistant',
@@ -381,9 +384,10 @@ async function seedAITools(supabase: any) {
   ];
 
   for (const tool of tools) {
-    await supabase
+    const { error } = await supabase
       .from('ai_tool_registry')
       .upsert(tool, { onConflict: 'id' });
+    if (error) throw error;
   }
 
   console.log('[seed-globalmed] AI tools seeded:', tools.length);
@@ -525,8 +529,8 @@ async function seedInboxTask(
   const { error } = await supabase.from('agent_activities').insert({
     agent: 'PolicyAgent',
     action: 'policy_violation_detected',
-    status: 'pending_review',
-    severity: 'high',
+    status: 'warning',
+    severity: 'critical',
     enterprise_id: enterpriseId,
     workspace_id: workspaceId,
     details: {
@@ -559,14 +563,21 @@ async function seedInboxTask(
 
 async function seedSimulation(
   supabase: any,
-  enterpriseId: string,
   workspaceId: string,
   userId?: string
 ) {
+  // sandbox_runs schema:
+  // - workspace_id, created_by, scenario_name, inputs_json, outputs_json
+  // - run_status: 'pending' | 'running' | 'completed' | 'failed'
+  // - grade: 'A' | 'B' | 'C' | 'D' | 'E' | 'F'
+  // - risk_score: 0-100
+  // - control_coverage: 0-100
+  // - created_at
+  // NOTE: Does NOT have: status, validation_result, compliance_score, metadata, enterprise_id
+  
   const { error } = await supabase.from('sandbox_runs').insert({
     workspace_id: workspaceId,
-    enterprise_id: enterpriseId,
-    run_by: userId,
+    created_by: userId,
     scenario_name: 'ONCAVEX + Persado Historical Replay (90 days)',
     inputs_json: {
       policy_profile: 'GlobalMed – AI Tool Usage v1',
@@ -606,14 +617,13 @@ async function seedSimulation(
         decision_flips: 17,
         agencies_involved: ['IPG Health', 'Omnicom Health'],
       },
-    },
-    status: 'completed',
-    validation_result: 'blocked',
-    compliance_score: 0,
-    metadata: {
       is_sample: true,
       scenario_type: 'globalmed_oncavex_persado',
     },
+    run_status: 'completed',
+    grade: 'F',
+    risk_score: 85,
+    control_coverage: 15,
     created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
   });
 
@@ -626,6 +636,10 @@ async function seedSimulation(
 // ============================================================================
 
 async function seedDecision(supabase: any, enterpriseId: string) {
+  // ai_agent_decisions schema constraints:
+  // - risk: 'low' | 'medium' | 'high'
+  // - risk_profile_tier: 'minimal' | 'low' | 'medium' | 'high' | 'critical'
+  
   const { error } = await supabase.from('ai_agent_decisions').insert({
     agent: 'PolicyAgent',
     action: 'evaluate_tool_usage',
@@ -633,7 +647,7 @@ async function seedDecision(supabase: any, enterpriseId: string) {
     risk: 'high',
     enterprise_id: enterpriseId,
     agency: 'IPG Health',
-    risk_profile_tier: 'tier_1',
+    risk_profile_tier: 'critical',
     dimension_scores: {
       policy_compliance: 0,
       brand_alignment: 0,
@@ -654,10 +668,8 @@ async function seedDecision(supabase: any, enterpriseId: string) {
       brand: 'ONCAVEX™',
       audience: 'HCP',
       violations: 17,
-      metadata: {
-        is_sample: true,
-        scenario: 'globalmed_oncavex_persado',
-      },
+      is_sample: true,
+      scenario: 'globalmed_oncavex_persado',
     },
     created_at: new Date(Date.now() - 1.5 * 60 * 60 * 1000).toISOString(),
   });
