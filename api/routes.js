@@ -1,15 +1,19 @@
 import express from 'express';
 const router = express.Router();
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 
 // Import all your agents
-import { ConflictDetectionAgent } from '../agents/conflict-detection-agent.js';
-import AuditAgent from '../agents/audit-agent.js';
-import PolicyAgent from '../agents/policy-agent.js';
-import NegotiationAgent from '../agents/negotiation-agent.js';
-import ContextAgent from '../agents/context-agent.js';
-import workflowEngine from '../core/workflow-engine.js';
-import { logAction } from '../core/audit-log.js';
-import agentRegistry from '../agents/agent-registry.js';
+const agentRegistry = require('../agents/agent-registry.js');
+const workflowEngine = require('../core/workflow-engine.js');
+const { logAction } = require('../core/audit-log.js');
+
+// Helper to get agents from registry
+const { ConflictDetectionAgent } = require('../agents/conflict-detection-agent.js');
+const AuditAgent = require('../agents/audit-agent.js');
+const PolicyAgent = require('../agents/policy-agent.js');
+const NegotiationAgent = require('../agents/negotiation-agent.js');
+const ContextAgent = require('../agents/context-agent.js');
 
 // In-memory storage for activities and overrides (replace with database later)
 const agentActivities = [];

@@ -5,11 +5,11 @@
  * Provides intelligent workflow routing based on enterprise-agency relationships
  */
 
-import EventBus from './event-bus.js';
-import agentRegistry from '../agents/agent-registry.js';
-import pool from '../database/connection.js';
-import TrustTransparencyLayer from './trust-transparency-layer.js';
-import AgencyEnterpriseBridge from './agency-enterprise-bridge.js';
+const EventBus = require('./event-bus.js');
+const agentRegistry = require('../agents/agent-registry.js');
+const pool = require('../database/connection.js');
+const TrustTransparencyLayer = require('./trust-transparency-layer.js');
+const AgencyEnterpriseBridge = require('./agency-enterprise-bridge.js');
 
 // Enhanced workflow configurations
 const WORKFLOWS = {
@@ -683,4 +683,4 @@ class EnhancedOrchestrationEngine {
   }
 }
 
-export default EnhancedOrchestrationEngine; 
+module.exports = EnhancedOrchestrationEngine;

@@ -116,7 +116,7 @@ function buildHumanRationale(decision, policyId, tool, dataClass, actor) {
  * @param {string} [input.requestType] - Type of request (generation, analysis, etc.)
  * @returns {{ human: string, structured: Object }} Rationale pair
  */
-export function generateRationale(input) {
+function generateRationale(input) {
   const {
     decision,
     policyId,
@@ -167,7 +167,7 @@ export function generateRationale(input) {
  * @param {Object} context - Additional context
  * @returns {{ human: string, structured: Object }} Rationale pair
  */
-export function generateRationaleFromPolicyResult(policyResult, context = {}) {
+function generateRationaleFromPolicyResult(policyResult, context = {}) {
   // Handle evaluatePolicy() result format
   if (policyResult.decision && typeof policyResult.decision === 'string') {
     return generateRationale({
@@ -214,7 +214,7 @@ export function generateRationaleFromPolicyResult(policyResult, context = {}) {
  * @param {Object} rationale - Rationale object { human, structured }
  * @returns {{ valid: boolean, errors: string[] }}
  */
-export function validateRationale(rationale) {
+function validateRationale(rationale) {
   const errors = [];
 
   if (!rationale.human) {
@@ -243,8 +243,7 @@ export function validateRationale(rationale) {
   };
 }
 
-// Default export for CommonJS compatibility (if needed by agents/)
-export default {
+module.exports = {
   generateRationale,
   generateRationaleFromPolicyResult,
   validateRationale,
@@ -252,11 +251,3 @@ export default {
   DECISION_VERBS,
   DATA_CLASS_LABELS
 };
-
-
-
-
-
-
-
-

@@ -51,6 +51,11 @@ class RiskProfileTaxonomyAgent extends AgentBase {
     this.assessmentHistory = new Map();
   }
 
+  log(message, level = 'info') {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] [RISK-AGENT] [${level.toUpperCase()}] ${message}`);
+  }
+
   /**
    * Main assessment method - evaluates a tool across all dimensions
    * @param {Object} toolMetadata - Tool information (name, vendor, capabilities)

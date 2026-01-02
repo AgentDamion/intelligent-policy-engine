@@ -1,9 +1,6 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+const fs = require('fs');
+const path = require('path');
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 const logDir = path.join(__dirname, '../logs');
 const logFile = path.join(logDir, 'audit.log');
 
@@ -19,4 +16,5 @@ function logAction(action, data) {
   };
   fs.appendFileSync(logFile, JSON.stringify(entry) + '\n');
 }
-export { logAction }; 
+
+module.exports = { logAction };

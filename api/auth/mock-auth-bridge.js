@@ -11,7 +11,7 @@ const mockOrganizations = new Map();
 const mockAccessRequests = new Map();
 
 // Mock JWT secret
-const JWT_SECRET = 'test-jwt-secret-12345';
+const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret';
 
 // ===== AUTHENTICATION ENDPOINTS =====
 

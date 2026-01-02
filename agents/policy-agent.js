@@ -464,8 +464,3 @@ class PolicyAgent {
   }
   
   module.exports = { PolicyAgent, ContextAgent, AuditAgent };
-  
-  // Export standalone if needed
-  if (typeof module !== 'undefined' && module.exports && !module.parent) {
-    module.exports = PolicyAgent;
-  }

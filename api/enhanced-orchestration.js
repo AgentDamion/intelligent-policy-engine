@@ -7,13 +7,15 @@
 
 import express from 'express';
 const router = express.Router();
-import pool from '../database/connection.js';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+
 import { checkJwt, requirePermission, requireOrganizationAccess } from './auth/auth0-middleware.js';
 
-// Import the enhanced orchestration engine
-import EnhancedOrchestrationEngine from '../core/enhanced-orchestration-engine.js';
-import TrustTransparencyLayer from '../core/trust-transparency-layer.js';
-import AgencyEnterpriseBridge from '../core/agency-enterprise-bridge.js';
+// Import core modules using CommonJS bridge for robustness
+const EnhancedOrchestrationEngine = require('../core/enhanced-orchestration-engine.js');
+const TrustTransparencyLayer = require('../core/trust-transparency-layer.js');
+const AgencyEnterpriseBridge = require('../core/agency-enterprise-bridge.js');
 
 // Initialize the orchestration engine
 const orchestrationEngine = new EnhancedOrchestrationEngine();
@@ -505,9 +507,9 @@ router.get('/status', checkJwt, requireOrganizationAccess, async (req, res) => {
       orchestrationEngine: 'operational',
       trustTransparencyLayer: 'operational',
       agencyEnterpriseBridge: 'operational',
-      activeSessions: orchestrationEngine.activeWorkflows.size,
-      activeConnections: agencyEnterpriseBridge.activeConnections.size,
-      distributionQueue: agencyEnterpriseBridge.distributionQueue.length,
+      activeSessions: orchestrationEngine.activeWorkflows ? orchestrationEngine.activeWorkflows.size : 0,
+      activeConnections: agencyEnterpriseBridge.activeConnections ? agencyEnterpriseBridge.activeConnections.size : 0,
+      distributionQueue: agencyEnterpriseBridge.distributionQueue ? agencyEnterpriseBridge.distributionQueue.length : 0,
       timestamp: new Date().toISOString()
     };
 
@@ -525,4 +527,4 @@ router.get('/status', checkJwt, requireOrganizationAccess, async (req, res) => {
   }
 });
 
-export default router; 
+export default router;
