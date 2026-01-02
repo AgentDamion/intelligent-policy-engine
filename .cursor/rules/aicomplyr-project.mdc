@@ -1,0 +1,35 @@
+---
+description: Core context for the AICOMPLYR platform
+globs: *
+alwaysApply: true
+---
+
+# AICOMPLYR Project Context
+
+## What We're Building
+AICOMPLYR is the governance layer at the enterprise-partner boundary. We govern AI tool usage between regulated enterprises (pharma first) and their external partners, providing shared compliance that works for both sides.
+
+## Tech Stack
+- **Frontend:** React 18 + TypeScript + Vite, Tailwind CSS, Radix UI
+- **Backend:** Supabase (PostgreSQL + Edge Functions in Deno/TypeScript)
+- **API Layer:** Express.js on Railway
+- **Monorepo:** pnpm workspaces
+
+## Key Architecture Concepts
+- Multi-tenant: Enterprise → Workspace → User context
+- RLS (Row-Level Security) for tenant isolation
+- 17+ AI agents for governance orchestration
+- Proof bundles with cryptographic verification
+
+## Current Phase
+Pre-beta launch. Focus on:
+1. Security hardening (RLS policies)
+2. Database cleanup
+3. End-to-end testing
+
+## Approved Terminology
+- "Enterprise" = Client organization (pharma company)
+- "Partner" = Agency/vendor working for the enterprise
+- "Proof Bundle" = Cryptographic compliance evidence package
+- "The Forge" = Policy Studio editor
+- "Evidence Vault" = Audit trail viewer

@@ -1,0 +1,31 @@
+---
+description: TypeScript conventions for the platform
+globs: ["*.ts", "*.tsx"]
+alwaysApply: false
+---
+
+# TypeScript Rules
+
+## Style
+- Use TypeScript strict mode
+- Prefer `interface` over `type` for object shapes
+- Use Zod for runtime validation
+- Export types from dedicated `types.ts` files
+
+## React Conventions
+- Functional components only
+- Use React Query for server state
+- Use Radix UI primitives for accessibility
+- Tailwind for styling (no CSS modules)
+
+## File Organization
+- Components: `components/domain/ComponentName.tsx`
+- Services: `services/serviceName.ts`
+- Types: `types/domain.ts`
+
+## Imports Order
+1. React/external libraries
+2. Internal packages (@aicomplyr/*)
+3. Components
+4. Services/utils
+5. Types

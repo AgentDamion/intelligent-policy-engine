@@ -1,0 +1,38 @@
+---
+description: Rules for Supabase/PostgreSQL SQL files
+globs: ["*.sql", "supabase/migrations/**"]
+alwaysApply: false
+---
+
+# Supabase SQL Rules
+
+## Database Engine
+PostgreSQL 15 via Supabase
+
+## Migration Conventions
+- Filename format: `YYYYMMDDHHMMSS_description.sql`
+- Always include rollback comments where feasible
+- Use `CREATE TABLE IF NOT EXISTS` for safety
+
+## RLS Requirements (CRITICAL)
+- Every tenant-facing table MUST have RLS enabled
+- Pattern: `ALTER TABLE tablename ENABLE ROW LEVEL SECURITY;`
+- Create policies using `auth.uid()` for user context
+- Use helper functions for complex tenant checks
+
+## Key Tables
+- `enterprises` - Top-level tenant
+- `workspaces` - Scoped work contexts
+- `user_roles` - RBAC assignments
+- `policies` - Governance rules
+- `audit_events` - Immutable logs
+
+## Naming Conventions
+- Tables: lowercase_snake_case (plural)
+- Columns: lowercase_snake_case
+- Indexes: idx_tablename_columnname
+- Policies: policy_tablename_action
+
+## Commands
+- Run migration: `supabase db push`
+- Generate types: `supabase gen types typescript --local > types/supabase.ts`
