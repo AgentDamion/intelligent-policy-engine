@@ -31,7 +31,9 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^3.0.2",
     "@supabase/supabase-js": "^2.80.0",
+    "ai": "^6.0.5",
     "axios": "^1.13.2",
     "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.3",
@@ -45,8 +47,10 @@
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
     "jwks-rsa": "^3.2.0",
+    "openai": "^4.104.0",
     "pg": "^8.16.3",
     "uuid": "^13.0.0",
-    "ws": "^8.18.3"
+    "ws": "^8.18.3",
+    "zod": "^3.23.8"
   }
 }

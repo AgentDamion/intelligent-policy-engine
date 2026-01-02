@@ -7,6 +7,9 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 import { WebSocketServer } from 'ws';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+
 import apiRoutes from './api/routes.js';
 import { authRouter } from './api/auth.js';
 import modernAuthBridge from './api/auth/mock-auth-bridge.js';
@@ -17,8 +20,11 @@ import enhancedOrchestrationRouter from './api/enhanced-orchestration.js';
 import inviteRoutes from './api/invite.js';
 import toolSubmissionRoutes from './api/tool-submission.js';
 import aiGatewayRoutes from './api/routes/ai-gateway.js';
-import './core/feedback-loop.js';
-import EventBus from './core/event-bus.js';
+import boundaryRoutes from './api/routes/boundary.js';
+
+// Load legacy CommonJS core modules
+require('./core/feedback-loop.js');
+const EventBus = require('./core/event-bus.js');
 
 // Security middleware imports
 import { securityHeadersMiddleware } from './api/middleware/security-headers.js';
@@ -398,6 +404,8 @@ app.use('/api/invite', inviteRoutes);
 app.use('/api/tool-submission', toolSubmissionRoutes);
 // AI Gateway (budget + PII guardrails)
 app.use('/api', aiGatewayRoutes);
+// Boundary Governance (Decision Tokens, Partner Confirmations, Execution Receipts)
+app.use('/api/boundary', boundaryRoutes);
 // Hierarchical Multi-Tenant API (disabled for testing)
 // app.use('/api', hierarchicalRoutes);
 // Enhanced Orchestration

@@ -11,7 +11,7 @@ url = os.getenv("SUPABASE_URL")
 key = os.getenv("SUPABASE_SERVICE_KEY")
 
 if not url or not key:
-    print("❌ Error: Missing SUPABASE_URL or SUPABASE_SERVICE_KEY in .env")
+    print("Error: Missing SUPABASE_URL or SUPABASE_SERVICE_KEY in .env")
     print("Make sure you copied the 'service_role' key, not the anon key!")
     exit(1)
 
@@ -20,7 +20,7 @@ supabase: Client = create_client(url, key)
 TABLE_NAME = "agent_task_requests"
 
 def process_task(task):
-    print(f"\n⚡ Found Task {task['id']}!")
+    print(f"\nFound Task {task['id']}!")
     print(f"   User asking: {task['request_payload'].get('prompt')}")
     
     # A. Mark as 'processing'
@@ -29,7 +29,7 @@ def process_task(task):
     }).eq("id", task['id']).execute()
     
     try:
-        # --- 🧠 THIS IS THE AGENT BRAIN ---
+        # --- THIS IS THE AGENT BRAIN ---
         # (This is where you will eventually put LangChain/Phidata code)
         
         # Simulating heavy "thinking" work
@@ -48,10 +48,10 @@ def process_task(task):
             # updated_at is handled by the trigger we created!
         }).eq("id", task['id']).execute()
         
-        print(f"✅ Task {task['id']} Completed successfully.")
+        print(f"Task {task['id']} Completed successfully.")
         
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"Error: {e}")
         supabase.table(TABLE_NAME).update({
             "status": "failed",
             "response_payload": {"error": str(e)}
@@ -59,9 +59,9 @@ def process_task(task):
 
 def main():
     import datetime
-    print(f"🟢 Agent Worker is ONLINE.")
-    print(f"👀 Watching table '{TABLE_NAME}' for 'pending' tasks...")
-    print(f"⏰ Started at: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"Agent Worker is ONLINE.")
+    print(f"Watching table '{TABLE_NAME}' for 'pending' tasks...")
+    print(f"Started at: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("-" * 60)
     
     poll_count = 0
@@ -72,7 +72,7 @@ def main():
             tasks = response.data
             
             if tasks:
-                print(f"\n📦 Found {len(tasks)} pending task(s) at {datetime.datetime.now().strftime('%H:%M:%S')}")
+                print(f"\nFound {len(tasks)} pending task(s) at {datetime.datetime.now().strftime('%H:%M:%S')}")
             
             for task in tasks:
                 process_task(task)
@@ -80,12 +80,12 @@ def main():
             # Sleep to prevent spamming the database
             poll_count += 1
             if poll_count % 15 == 0:  # Print heartbeat every 30 seconds (15 polls * 2 seconds)
-                print(f"💓 Worker heartbeat: {datetime.datetime.now().strftime('%H:%M:%S')} - Still watching for tasks...")
+                print(f"Worker heartbeat: {datetime.datetime.now().strftime('%H:%M:%S')} - Still watching for tasks...")
             
             time.sleep(2)
             
         except Exception as e:
-            print(f"⚠️ Connection Error at {datetime.datetime.now().strftime('%H:%M:%S')}: {e}")
+            print(f"Connection Error at {datetime.datetime.now().strftime('%H:%M:%S')}: {e}")
             import traceback
             traceback.print_exc()
             time.sleep(5)
