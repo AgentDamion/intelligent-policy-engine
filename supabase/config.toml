@@ -48,6 +48,8 @@ verify_jwt = true
 [functions.distribute_policy]
 verify_jwt = true
 
+# Webhook uses HMAC signature verification instead of JWT
+# External services (Veeva, Stripe) cannot send our JWT
 [functions.platform-webhook]
 verify_jwt = false
 
