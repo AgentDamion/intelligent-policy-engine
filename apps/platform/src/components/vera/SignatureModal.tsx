@@ -169,7 +169,7 @@ export const SignatureModal = memo(({
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all">
+              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-none bg-white shadow-2xl transition-all">
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
                   <div className="flex items-center gap-3">
@@ -187,7 +187,7 @@ export const SignatureModal = memo(({
                   </div>
                   <button
                     onClick={handleClose}
-                    className="p-2 hover:bg-slate-200 rounded-lg transition-colors"
+                    className="p-2 hover:bg-slate-200 rounded-none transition-colors"
                   >
                     <X className="w-5 h-5 text-slate-500" />
                   </button>
@@ -233,7 +233,7 @@ export const SignatureModal = memo(({
                 {/* Content */}
                 <div className="px-6 py-4">
                   {/* Action Summary */}
-                  <div className="mb-4 p-3 bg-slate-50 rounded-lg">
+                  <div className="mb-4 p-3 bg-slate-50 rounded-none">
                     <p className="text-sm text-slate-600">
                       <span className="font-medium">Action: </span>
                       {actionType}
@@ -245,7 +245,7 @@ export const SignatureModal = memo(({
                   </div>
 
                   {error && (
-                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-none flex items-center gap-2">
                       <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />
                       <p className="text-sm text-red-700">{error}</p>
                     </div>
@@ -260,7 +260,7 @@ export const SignatureModal = memo(({
                         <select
                           value={reason}
                           onChange={(e) => handleReasonChange(e.target.value as SignatureReason)}
-                          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          className="w-full px-3 py-2 border border-slate-300 rounded-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                         >
                           {SIGNATURE_REASONS.map(r => (
                             <option key={r.value} value={r.value}>
@@ -278,7 +278,7 @@ export const SignatureModal = memo(({
                           {applicableMeanings.map(m => (
                             <label 
                               key={m.value}
-                              className={`flex items-start gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
+                              className={`flex items-start gap-3 p-3 border rounded-none cursor-pointer transition-colors ${
                                 meaning === m.value
                                   ? 'border-indigo-500 bg-indigo-50'
                                   : 'border-slate-200 hover:border-slate-300'
@@ -316,7 +316,7 @@ export const SignatureModal = memo(({
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             placeholder="Enter your password"
-                            className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                             autoFocus
                           />
                         </div>
@@ -326,7 +326,7 @@ export const SignatureModal = memo(({
 
                   {step === 'confirm' && (
                     <div className="space-y-4">
-                      <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                      <div className="p-4 bg-amber-50 border border-amber-200 rounded-none">
                         <div className="flex items-center gap-2 text-amber-800 font-medium mb-2">
                           <Shield className="w-4 h-4" />
                           Legal Acknowledgment
@@ -338,7 +338,7 @@ export const SignatureModal = memo(({
                         </p>
                       </div>
 
-                      <div className="p-3 bg-slate-50 rounded-lg space-y-2">
+                      <div className="p-3 bg-slate-50 rounded-none space-y-2">
                         <p className="text-sm">
                           <span className="font-medium text-slate-700">Reason: </span>
                           <span className="text-slate-600">
@@ -374,7 +374,7 @@ export const SignatureModal = memo(({
                       else handleSubmit()
                     }}
                     disabled={isLoading || (step === 'authenticate' && !password.trim())}
-                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-none hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isLoading ? (
                       <>

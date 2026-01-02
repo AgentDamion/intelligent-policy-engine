@@ -142,7 +142,7 @@ export default function RegulatoryFrameworkSelector({
           <select
             value={filterJurisdiction}
             onChange={(e) => setFilterJurisdiction(e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 border border-slate-300 rounded-none text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">All Jurisdictions</option>
             {jurisdictions.map(j => (
@@ -153,7 +153,7 @@ export default function RegulatoryFrameworkSelector({
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 border border-slate-300 rounded-none text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">All Types</option>
             {types.map(t => (
@@ -165,7 +165,7 @@ export default function RegulatoryFrameworkSelector({
 
       {/* Selected Summary */}
       {selectedFrameworkIds.length > 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="bg-blue-50 border border-blue-200 rounded-none p-4">
           <div className="flex items-center gap-2">
             <Check className="h-5 w-5 text-blue-600" />
             <span className="font-medium text-blue-900">
@@ -190,7 +190,7 @@ export default function RegulatoryFrameworkSelector({
                 key={framework.id}
                 onClick={() => toggleFramework(framework.id)}
                 className={`
-                  border rounded-lg p-4 cursor-pointer transition-all
+                  border rounded-none p-4 cursor-pointer transition-all
                   ${isSelected 
                     ? 'border-blue-500 bg-blue-50 shadow-sm' 
                     : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'

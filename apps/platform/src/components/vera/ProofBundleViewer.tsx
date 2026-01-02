@@ -112,7 +112,7 @@ function CollapsibleSection({ title, icon, defaultOpen = true, children }: Colla
   const [isOpen, setIsOpen] = useState(defaultOpen)
 
   return (
-    <div className="border border-slate-200 rounded-xl overflow-hidden">
+    <div className="border border-slate-200 rounded-none overflow-hidden">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-full px-4 py-3 bg-slate-50 flex items-center justify-between hover:bg-slate-100 transition-colors"
@@ -242,7 +242,7 @@ export function ProofBundleViewer({
 
   if (isLoading) {
     return (
-      <div className={`bg-white rounded-2xl border border-slate-200 shadow-lg p-8 ${className}`}>
+      <div className={`bg-white rounded-none border border-slate-200 shadow-lg p-8 ${className}`}>
         <div className="flex flex-col items-center justify-center">
           <Loader2 className="w-8 h-8 text-purple-600 animate-spin mb-4" />
           <p className="text-slate-600">Loading proof bundle...</p>
@@ -253,7 +253,7 @@ export function ProofBundleViewer({
 
   if (!bundle) {
     return (
-      <div className={`bg-white rounded-2xl border border-slate-200 shadow-lg p-8 ${className}`}>
+      <div className={`bg-white rounded-none border border-slate-200 shadow-lg p-8 ${className}`}>
         <div className="flex flex-col items-center justify-center text-center">
           <ShieldOff className="w-12 h-12 text-slate-300 mb-4" />
           <h3 className="text-lg font-semibold text-slate-900 mb-2">Proof Bundle Not Found</h3>
@@ -274,12 +274,12 @@ export function ProofBundleViewer({
   const qrData = generateQRCodeData(bundle)
 
   return (
-    <div className={`bg-white rounded-2xl border border-slate-200 shadow-lg overflow-hidden ${className}`}>
+    <div className={`bg-white rounded-none border border-slate-200 shadow-lg overflow-hidden ${className}`}>
       {/* Header */}
       <div className="px-6 py-4 bg-gradient-to-r from-purple-50 to-violet-50 border-b border-purple-100">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-xl bg-${statusInfo.color}-100 text-${statusInfo.color}-600`}>
+            <div className={`p-2 rounded-none bg-${statusInfo.color}-100 text-${statusInfo.color}-600`}>
               <Shield className="w-6 h-6" />
             </div>
             <div>
@@ -300,7 +300,7 @@ export function ProofBundleViewer({
       <div className="p-6 space-y-4">
         {/* Decision Summary */}
         {decisionInfo && (
-          <div className={`p-4 rounded-xl bg-${decisionInfo.color}-50 border border-${decisionInfo.color}-200`}>
+          <div className={`p-4 rounded-none bg-${decisionInfo.color}-50 border border-${decisionInfo.color}-200`}>
             <div className="flex items-center gap-3 mb-2">
               <div className={`text-${decisionInfo.color}-600`}>
                 {decisionInfo.icon}
@@ -317,7 +317,7 @@ export function ProofBundleViewer({
 
         {/* Justification Section - Audit Compliance */}
         {(bundle.rationaleHuman || bundle.justification?.human_readable) && (
-          <div className="p-4 rounded-xl bg-slate-900 text-white border border-slate-800">
+          <div className="p-4 rounded-none bg-slate-900 text-white border border-slate-800">
             <div className="flex items-center gap-2 mb-3">
               <Fingerprint className="w-4 h-4 text-indigo-400" />
               <span className="text-sm font-bold text-indigo-400 uppercase tracking-wider">
@@ -326,7 +326,7 @@ export function ProofBundleViewer({
             </div>
             
             {/* Human-readable rationale - prominently displayed */}
-            <div className="px-3 py-2 bg-slate-800 rounded-lg font-mono text-sm text-slate-200 mb-3">
+            <div className="px-3 py-2 bg-slate-800 rounded-none font-mono text-sm text-slate-200 mb-3">
               {bundle.rationaleHuman || bundle.justification?.human_readable}
             </div>
             
@@ -479,7 +479,7 @@ export function ProofBundleViewer({
             </Button>
 
             {verificationResult && (
-              <div className={`mt-3 p-3 rounded-lg ${
+              <div className={`mt-3 p-3 rounded-none ${
                 verificationResult.valid 
                   ? 'bg-emerald-50 border border-emerald-200' 
                   : 'bg-rose-50 border border-rose-200'

@@ -32,7 +32,7 @@ const DashboardPage: React.FC = () => {
   }) => (
     <div className="card-hover">
       <div className="flex items-center">
-        <div className={`p-3 rounded-lg ${color}`}>
+        <div className={`p-3 rounded-none ${color}`}>
           {icon}
         </div>
         <div className="ml-4">
@@ -114,7 +114,7 @@ const DashboardPage: React.FC = () => {
             </div>
             
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-none">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Enterprise Name</p>
                   <p className="text-lg font-semibold text-gray-900">{currentEnterprise?.name}</p>
@@ -128,11 +128,11 @@ const DashboardPage: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="text-center p-4 bg-primary-50 rounded-lg">
+                <div className="text-center p-4 bg-primary-50 rounded-none">
                   <p className="text-2xl font-bold text-primary-600">{workspaces.length}</p>
                   <p className="text-sm text-primary-700">Workspaces</p>
                 </div>
-                <div className="text-center p-4 bg-success-50 rounded-lg">
+                <div className="text-center p-4 bg-success-50 rounded-none">
                   <p className="text-2xl font-bold text-success-600">{enterpriseMembers.length}</p>
                   <p className="text-sm text-success-700">Team Members</p>
                 </div>
@@ -163,7 +163,7 @@ const DashboardPage: React.FC = () => {
       <div className="card">
         <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button className="flex items-center p-4 border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors">
+          <button className="flex items-center p-4 border border-gray-200 rounded-none hover:border-primary-300 hover:bg-primary-50 transition-colors">
             <FileText className="h-5 w-5 text-primary-600 mr-3" />
             <div className="text-left">
               <p className="font-medium text-gray-900">Create Policy</p>
@@ -171,7 +171,7 @@ const DashboardPage: React.FC = () => {
             </div>
           </button>
           
-          <button className="flex items-center p-4 border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors">
+          <button className="flex items-center p-4 border border-gray-200 rounded-none hover:border-primary-300 hover:bg-primary-50 transition-colors">
             <Users className="h-5 w-5 text-primary-600 mr-3" />
             <div className="text-left">
               <p className="font-medium text-gray-900">Invite Team</p>
@@ -179,7 +179,7 @@ const DashboardPage: React.FC = () => {
             </div>
           </button>
           
-          <button className="flex items-center p-4 border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors">
+          <button className="flex items-center p-4 border border-gray-200 rounded-none hover:border-primary-300 hover:bg-primary-50 transition-colors">
             <Briefcase className="h-5 w-5 text-primary-600 mr-3" />
             <div className="text-left">
               <p className="font-medium text-gray-900">New Workspace</p>

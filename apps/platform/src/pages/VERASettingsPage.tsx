@@ -58,10 +58,10 @@ interface SettingsSectionProps {
 
 function SettingsSection({ title, description, icon, children }: SettingsSectionProps) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-none border border-slate-200 shadow-sm overflow-hidden">
       <div className="px-6 py-4 border-b border-slate-100 bg-slate-50">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-white shadow-sm border border-slate-200">
+          <div className="p-2 rounded-none bg-white shadow-sm border border-slate-200">
             {icon}
           </div>
           <div>
@@ -127,7 +127,7 @@ function NumberInput({ value, onChange, min, max, step = 1, prefix, suffix, disa
         max={max}
         step={step}
         disabled={disabled}
-        className="w-32 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50 disabled:bg-slate-50"
+        className="w-32 px-3 py-2 border border-slate-300 rounded-none text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50 disabled:bg-slate-50"
       />
       {suffix && <span className="text-sm text-slate-500">{suffix}</span>}
     </div>
@@ -215,7 +215,7 @@ function PolicyActivationSection({ enterpriseId }: { enterpriseId: string }) {
     >
       <div className="space-y-6">
         {/* Current Active Policy */}
-        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
+        <div className="p-4 rounded-none bg-slate-50 border border-slate-200">
           <h4 className="text-sm font-semibold text-slate-700 mb-3">Current Active Policy</h4>
           {policy ? (
             <div className="space-y-3">
@@ -242,7 +242,7 @@ function PolicyActivationSection({ enterpriseId }: { enterpriseId: string }) {
               <select
                 value={selectedArtifactId || ''}
                 onChange={(e) => setSelectedArtifactId(e.target.value || null)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-slate-300 rounded-none text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               >
                 <option value="">Select a policy artifact...</option>
                 {artifacts.map((artifact) => (
@@ -259,7 +259,7 @@ function PolicyActivationSection({ enterpriseId }: { enterpriseId: string }) {
               <select
                 value={activationReason}
                 onChange={(e) => setActivationReason(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-slate-300 rounded-none text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               >
                 <option value="initial_deployment">Initial Deployment</option>
                 <option value="policy_update">Policy Update</option>
@@ -278,7 +278,7 @@ function PolicyActivationSection({ enterpriseId }: { enterpriseId: string }) {
                 onChange={(e) => setActivationNotes(e.target.value)}
                 placeholder="Add notes about this activation..."
                 rows={2}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                className="w-full px-3 py-2 border border-slate-300 rounded-none text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
               />
             </div>
 
@@ -304,7 +304,7 @@ function PolicyActivationSection({ enterpriseId }: { enterpriseId: string }) {
         )}
 
         {artifacts.length === 0 && (
-          <div className="p-4 rounded-lg bg-amber-50 border border-amber-200">
+          <div className="p-4 rounded-none bg-amber-50 border border-amber-200">
             <p className="text-sm text-amber-700">
               No policy artifacts available. Create a policy in Policy Studio first, 
               then publish it as an artifact.
@@ -320,7 +320,7 @@ function PolicyActivationSection({ enterpriseId }: { enterpriseId: string }) {
               {history.slice(0, 5).map((activation: any) => (
                 <div
                   key={activation.activation_id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-200 text-sm"
+                  className="flex items-center justify-between p-3 rounded-none bg-slate-50 border border-slate-200 text-sm"
                 >
                   <div className="flex items-center gap-3">
                     <div className={`w-2 h-2 rounded-full ${activation.is_active ? 'bg-emerald-500' : 'bg-slate-300'}`} />
@@ -540,7 +540,7 @@ export default function VERASettingsPage() {
         <div className="max-w-5xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-2xl bg-gradient-to-br from-purple-500 to-violet-600 shadow-lg">
+              <div className="p-3 rounded-none bg-gradient-to-br from-purple-500 to-violet-600 shadow-lg">
                 <Settings className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -839,7 +839,7 @@ export default function VERASettingsPage() {
               />
             </div>
 
-            <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
+            <div className="p-3 rounded-none bg-slate-50 border border-slate-200">
               <p className="text-xs text-slate-500">
                 <strong>Note:</strong> Data retention settings comply with enterprise data governance policies. 
                 Some data may be retained longer for regulatory compliance.
@@ -862,9 +862,9 @@ export default function VERASettingsPage() {
             </p>
 
             <div className="flex items-center gap-4">
-              <div className="flex-1 p-4 rounded-lg bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200">
+              <div className="flex-1 p-4 rounded-none bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-amber-100">
+                  <div className="p-2 rounded-none bg-amber-100">
                     <FileText className="w-5 h-5 text-amber-600" />
                   </div>
                   <div>
@@ -894,7 +894,7 @@ export default function VERASettingsPage() {
       {/* Certificate Modal */}
       {showCertificate && enterpriseId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl">
+          <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-white rounded-none shadow-2xl">
             <button
               onClick={() => setShowCertificate(false)}
               className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/90 hover:bg-white shadow-md transition-colors no-print"

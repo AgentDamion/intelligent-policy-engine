@@ -1,4 +1,4 @@
-﻿import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { useAuth } from './AuthContext'
 import { supabase } from '@/lib/supabase'
 import { Database } from '@/lib/supabase'

@@ -89,7 +89,7 @@ const SettingsPage: React.FC = () => {
           return (
             <div key={section.title} className="card">
               <div className="flex items-center mb-4">
-                <div className="p-2 bg-primary-100 rounded-lg">
+                <div className="p-2 bg-primary-100 rounded-none">
                   <Icon className="h-5 w-5 text-primary-600" />
                 </div>
                 <div className="ml-3">
@@ -102,7 +102,7 @@ const SettingsPage: React.FC = () => {
                 {section.items.map((item) => (
                   <button
                     key={item.name}
-                    className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="w-full text-left p-3 rounded-none hover:bg-gray-50 transition-colors"
                   >
                     <div className="flex items-center justify-between">
                       <div>
@@ -123,7 +123,7 @@ const SettingsPage: React.FC = () => {
       <div className="card">
         <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button className="flex items-center p-4 border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors">
+          <button className="flex items-center p-4 border border-gray-200 rounded-none hover:border-primary-300 hover:bg-primary-50 transition-colors">
             <User className="h-5 w-5 text-primary-600 mr-3" />
             <div className="text-left">
               <p className="font-medium text-gray-900">Update Profile</p>
@@ -131,7 +131,7 @@ const SettingsPage: React.FC = () => {
             </div>
           </button>
           
-          <button className="flex items-center p-4 border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors">
+          <button className="flex items-center p-4 border border-gray-200 rounded-none hover:border-primary-300 hover:bg-primary-50 transition-colors">
             <Shield className="h-5 w-5 text-primary-600 mr-3" />
             <div className="text-left">
               <p className="font-medium text-gray-900">Security Settings</p>
@@ -139,7 +139,7 @@ const SettingsPage: React.FC = () => {
             </div>
           </button>
           
-          <button className="flex items-center p-4 border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors">
+          <button className="flex items-center p-4 border border-gray-200 rounded-none hover:border-primary-300 hover:bg-primary-50 transition-colors">
             <Bell className="h-5 w-5 text-primary-600 mr-3" />
             <div className="text-left">
               <p className="font-medium text-gray-900">Notifications</p>
@@ -152,7 +152,7 @@ const SettingsPage: React.FC = () => {
       {/* Danger Zone */}
       <div className="card border-red-200 bg-red-50">
         <div className="flex items-center mb-4">
-          <div className="p-2 bg-red-100 rounded-lg">
+          <div className="p-2 bg-red-100 rounded-none">
             <Settings className="h-5 w-5 text-red-600" />
           </div>
           <div className="ml-3">
@@ -162,7 +162,7 @@ const SettingsPage: React.FC = () => {
         </div>
         
         <div className="space-y-3">
-          <button className="w-full text-left p-3 rounded-lg hover:bg-red-100 transition-colors">
+          <button className="w-full text-left p-3 rounded-none hover:bg-red-100 transition-colors">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-red-900">Delete Account</p>

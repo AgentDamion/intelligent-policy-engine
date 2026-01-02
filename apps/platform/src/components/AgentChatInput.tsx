@@ -48,7 +48,7 @@ export function AgentChatInput({ enterpriseId, onResponse }: AgentChatInputProps
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask the agent a question..."
-          className="flex-1 px-4 py-2 border rounded-lg"
+          className="flex-1 px-4 py-2 border rounded-none"
           disabled={isSubmitting || isProcessing}
         />
         <Button 
@@ -72,7 +72,7 @@ export function AgentChatInput({ enterpriseId, onResponse }: AgentChatInputProps
       )}
 
       {currentTask?.status === 'completed' && currentTask.response_payload && (
-        <div className="mt-4 p-4 bg-green-50 rounded-lg">
+        <div className="mt-4 p-4 bg-green-50 rounded-none">
           <div className="text-sm font-semibold text-green-800 mb-2">
             ✅ Agent Response:
           </div>

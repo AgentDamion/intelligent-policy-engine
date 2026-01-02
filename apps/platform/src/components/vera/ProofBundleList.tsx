@@ -146,7 +146,7 @@ export function ProofBundleList({
                            searchTerm.length > 0
 
   return (
-    <div className={`bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden ${className}`}>
+    <div className={`bg-white rounded-none border border-slate-200 shadow-sm overflow-hidden ${className}`}>
       {/* Header */}
       <div className="px-6 py-4 border-b border-slate-100 bg-slate-50">
         <div className="flex items-center justify-between">
@@ -187,7 +187,7 @@ export function ProofBundleList({
               setPage(0)
             }}
             placeholder="Search by tool name or ID..."
-            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-none text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
           />
         </div>
 
@@ -204,7 +204,7 @@ export function ProofBundleList({
                       key={status}
                       onClick={() => toggleStatusFilter(status)}
                       className={`
-                        flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all
+                        flex items-center gap-1.5 px-3 py-1.5 rounded-none text-xs font-medium transition-all
                         ${filters.status?.includes(status)
                           ? `bg-${statusColors[status]}-100 text-${statusColors[status]}-700 border border-${statusColors[status]}-200`
                           : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300'
@@ -227,7 +227,7 @@ export function ProofBundleList({
                       key={decision}
                       onClick={() => toggleDecisionFilter(decision)}
                       className={`
-                        flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all
+                        flex items-center gap-1.5 px-3 py-1.5 rounded-none text-xs font-medium transition-all
                         ${filters.decision?.includes(decision)
                           ? `bg-${decisionColors[decision]}-100 text-${decisionColors[decision]}-700 border border-${decisionColors[decision]}-200`
                           : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300'
@@ -279,7 +279,7 @@ export function ProofBundleList({
               >
                 <div className="flex items-center gap-4">
                   {/* Status Icon */}
-                  <div className={`p-2 rounded-xl bg-${statusColor}-100 text-${statusColor}-600`}>
+                  <div className={`p-2 rounded-none bg-${statusColor}-100 text-${statusColor}-600`}>
                     {statusIcons[bundle.status]}
                   </div>
                   
@@ -317,7 +317,7 @@ export function ProofBundleList({
 
                   {/* Decision Badge */}
                   {bundle.decision && (
-                    <div className={`flex items-center gap-1 px-2 py-1 rounded-lg bg-${decisionColor}-100 text-${decisionColor}-700`}>
+                    <div className={`flex items-center gap-1 px-2 py-1 rounded-none bg-${decisionColor}-100 text-${decisionColor}-700`}>
                       {decisionIcons[bundle.decision]}
                       <span className="text-xs font-medium capitalize">
                         {bundle.decision.replace('_', ' ')}

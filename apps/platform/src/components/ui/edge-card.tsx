@@ -22,7 +22,7 @@ export const EdgeCard: React.FC<EdgeCardProps> = ({
 }) => (
   <div
     className={cn(
-      'bg-white border-l-4 transition-colors',
+      'bg-white border-l-structural transition-colors rounded-none shadow-none',
       variantClasses[variant],
       className
     )}

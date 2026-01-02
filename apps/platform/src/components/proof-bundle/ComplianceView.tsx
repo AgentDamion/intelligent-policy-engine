@@ -218,7 +218,7 @@ export default function ComplianceView({ bundleId }: ComplianceViewProps) {
     <div className="space-y-6">
       {/* Verification Status */}
       {verification && (
-        <div className={`border rounded-lg p-4 ${
+        <div className={`border rounded-none p-4 ${
           verification.verified
             ? 'bg-green-50 border-green-200'
             : 'bg-red-50 border-red-200'
@@ -271,7 +271,7 @@ export default function ComplianceView({ bundleId }: ComplianceViewProps) {
       </div>
 
       {!assessment || assessment.assessments.length === 0 ? (
-        <div className="text-center py-12 border border-slate-200 rounded-lg bg-slate-50">
+        <div className="text-center py-12 border border-slate-200 rounded-none bg-slate-50">
           <AlertCircle className="h-12 w-12 mx-auto mb-4 text-slate-400" />
           <p className="text-slate-600 mb-4">No compliance assessment available</p>
           <Button onClick={handleAssess} disabled={assessing}>
@@ -282,7 +282,7 @@ export default function ComplianceView({ bundleId }: ComplianceViewProps) {
       ) : (
         <div className="space-y-4">
           {assessment.assessments.map((fwAssessment) => (
-            <div key={fwAssessment.framework.id} className="border border-slate-200 rounded-lg">
+            <div key={fwAssessment.framework.id} className="border border-slate-200 rounded-none">
               <div className="p-6 bg-slate-50 border-b border-slate-200">
                 <div className="flex items-center justify-between">
                   <div>
@@ -331,7 +331,7 @@ export default function ComplianceView({ bundleId }: ComplianceViewProps) {
 
                 {/* Evidence Summary */}
                 {fwAssessment.evidence_summary && (
-                  <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-none">
                     <h4 className="font-medium text-slate-900 mb-3">Evidence Collected</h4>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       {fwAssessment.evidence_summary.audit_trail_events !== undefined && (
@@ -378,7 +378,7 @@ export default function ComplianceView({ bundleId }: ComplianceViewProps) {
                       {fwAssessment.gaps.map((gap, index) => (
                         <div
                           key={index}
-                          className="border border-red-200 rounded-lg p-4 bg-red-50"
+                          className="border border-red-200 rounded-none p-4 bg-red-50"
                         >
                           <div className="flex items-start gap-3">
                             <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />

@@ -34,7 +34,7 @@ export function Drawer({
         <div className="flex items-center justify-between border-b p-4">
           <h2 className="text-sm font-semibold text-slate-800">{title}</h2>
           <button
-            className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+            className="rounded-none p-1.5 text-slate-500 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
             onClick={onClose}
             aria-label="Close"
           >

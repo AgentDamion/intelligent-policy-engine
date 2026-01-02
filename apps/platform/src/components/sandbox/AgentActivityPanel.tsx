@@ -108,7 +108,7 @@ export const AgentActivityPanel: React.FC<AgentActivityPanelProps> = ({
 
       {/* Progress Summary */}
       {totalCount > 0 && (
-        <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+        <div className="mb-4 p-3 bg-gray-50 rounded-none">
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-600">Progress</span>
             <span className="font-medium">
@@ -148,7 +148,7 @@ export const AgentActivityPanel: React.FC<AgentActivityPanelProps> = ({
                 <div className="absolute left-[18px] top-[36px] w-0.5 h-6 bg-gray-200" />
               )}
 
-              <div className="flex items-start gap-3 p-3 bg-white border rounded-lg hover:shadow-sm transition-shadow">
+              <div className="flex items-start gap-3 p-3 bg-white border rounded-none hover:shadow-sm transition-shadow">
                 {/* Agent Icon */}
                 <div className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center ${getAgentColor(activity.agentName)}`}>
                   {getAgentIcon(activity.agentName)}

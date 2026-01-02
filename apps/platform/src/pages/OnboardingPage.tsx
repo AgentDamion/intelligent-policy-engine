@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react'
+import React, { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useEnterprise } from '../contexts/EnterpriseContext'
 import { supabase } from '../lib/supabase'
@@ -178,9 +178,9 @@ const OnboardingPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-4xl">
-          <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+          <div className="bg-white py-8 px-4 shadow sm:rounded-none sm:px-10">
             {error && (
-              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-none">
                 <p className="text-sm text-red-600">{error}</p>
               </div>
             )}
@@ -215,13 +215,13 @@ const OnboardingPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-2xl">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+        <div className="bg-white py-8 px-4 shadow sm:rounded-none sm:px-10">
           <h1 className="text-2xl font-bold text-center text-gray-900 mb-8">
             Welcome to AICOMPLYR
           </h1>
           
           {error && (
-            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-none">
               <p className="text-sm text-red-600">{error}</p>
             </div>
           )}
@@ -237,7 +237,7 @@ const OnboardingPage: React.FC = () => {
                 value={onboardingData.enterpriseName}
                 onChange={(e) => handleInputChange('enterpriseName', e.target.value)}
                 placeholder="e.g., Ogilvy Health, Pfizer, Mayo Clinic"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full px-4 py-3 border border-gray-300 rounded-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 required
               />
             </div>
@@ -252,7 +252,7 @@ const OnboardingPage: React.FC = () => {
                 value={onboardingData.workspaceName}
                 onChange={(e) => handleInputChange('workspaceName', e.target.value)}
                 placeholder="e.g., Marketing Team, Clinical Operations"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full px-4 py-3 border border-gray-300 rounded-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 required
               />
             </div>
@@ -262,7 +262,7 @@ const OnboardingPage: React.FC = () => {
             <button
               onClick={handleSubmit}
               disabled={loading || !onboardingData.enterpriseName || !onboardingData.workspaceName}
-              className="w-full px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+              className="w-full px-6 py-3 bg-primary-600 text-white rounded-none hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
             >
               {loading ? (
                 <>

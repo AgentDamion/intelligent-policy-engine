@@ -68,12 +68,12 @@ export default function VeraDrawer({ open, onClose }: VeraDrawerProps) {
       {/* Header */}
       <div className="h-14 px-4 sm:px-6 border-b border-slate-200 flex items-center justify-between">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center">
+          <div className="h-8 w-8 rounded-none bg-indigo-600 flex items-center justify-center">
             <Sparkles className="h-4 w-4 text-white" />
           </div>
           <div className="min-w-0">
-            <div className="text-sm font-bold text-slate-900 truncate">VERA</div>
-            <div className="text-[11px] text-slate-500 truncate">
+            <div className="text-sm font-bold text-aicomplyr-black truncate uppercase tracking-wider">VERA</div>
+            <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest truncate">
               Navigator · Recommendations · Audit context
             </div>
           </div>
@@ -81,7 +81,7 @@ export default function VeraDrawer({ open, onClose }: VeraDrawerProps) {
         <button
           type="button"
           onClick={onClose}
-          className="p-2 rounded-md text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition-colors"
+          className="p-2 rounded-none text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition-colors"
           aria-label="Close VERA"
         >
           <X className="h-4 w-4" />
@@ -94,10 +94,10 @@ export default function VeraDrawer({ open, onClose }: VeraDrawerProps) {
           <button
             type="button"
             onClick={() => setTab('summary')}
-            className={`px-3 py-2 rounded-lg text-xs font-semibold border transition-colors ${
+            className={`px-3 py-2 rounded-none text-[10px] font-bold uppercase tracking-widest border transition-colors ${
               tab === 'summary'
-                ? 'bg-slate-900 text-white border-slate-900'
-                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                ? 'bg-aicomplyr-black text-white border-aicomplyr-black'
+                : 'bg-white text-neutral-700 border-neutral-200 hover:bg-neutral-50'
             }`}
           >
             Summary
@@ -105,10 +105,10 @@ export default function VeraDrawer({ open, onClose }: VeraDrawerProps) {
           <button
             type="button"
             onClick={() => setTab('recommendations')}
-            className={`px-3 py-2 rounded-lg text-xs font-semibold border transition-colors ${
+            className={`px-3 py-2 rounded-none text-[10px] font-bold uppercase tracking-widest border transition-colors ${
               tab === 'recommendations'
-                ? 'bg-slate-900 text-white border-slate-900'
-                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                ? 'bg-aicomplyr-black text-white border-aicomplyr-black'
+                : 'bg-white text-neutral-700 border-neutral-200 hover:bg-neutral-50'
             }`}
           >
             Recs
@@ -116,10 +116,10 @@ export default function VeraDrawer({ open, onClose }: VeraDrawerProps) {
           <button
             type="button"
             onClick={() => setTab('history')}
-            className={`px-3 py-2 rounded-lg text-xs font-semibold border transition-colors ${
+            className={`px-3 py-2 rounded-none text-[10px] font-bold uppercase tracking-widest border transition-colors ${
               tab === 'history'
-                ? 'bg-slate-900 text-white border-slate-900'
-                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                ? 'bg-aicomplyr-black text-white border-aicomplyr-black'
+                : 'bg-white text-neutral-700 border-neutral-200 hover:bg-neutral-50'
             }`}
           >
             History
@@ -131,27 +131,27 @@ export default function VeraDrawer({ open, onClose }: VeraDrawerProps) {
       <div className="px-4 sm:px-6 py-4 overflow-y-auto h-[calc(100vh-56px-64px)]">
         {tab === 'summary' && (
           <div className="space-y-4">
-            <div className="p-4 rounded-xl border border-slate-200 bg-slate-50">
-              <div className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-2">
+            <div className="p-4 rounded-none border-l-structural border-l-aicomplyr-black bg-neutral-50 border border-neutral-200">
+              <div className="text-[10px] font-bold text-aicomplyr-black uppercase tracking-widest mb-2">
                 What changed
               </div>
-              <ul className="text-sm text-slate-700 space-y-2">
+              <ul className="text-sm text-neutral-700 space-y-2">
                 <li className="flex items-start gap-2">
-                  <span className="mt-1 h-1.5 w-1.5 rounded-full bg-indigo-500 flex-shrink-0" />
+                  <span className="mt-1 h-1.5 w-1.5 bg-aicomplyr-yellow flex-shrink-0" />
                   New requests arrived in Triage that require routing.
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="mt-1 h-1.5 w-1.5 rounded-full bg-indigo-500 flex-shrink-0" />
+                  <span className="mt-1 h-1.5 w-1.5 bg-aicomplyr-yellow flex-shrink-0" />
                   At least one decision is ready for signature on Decisions surface.
                 </li>
               </ul>
             </div>
 
-            <div className="p-4 rounded-xl border border-slate-200 bg-white">
-              <div className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-2">
+            <div className="p-4 rounded-none border border-neutral-200 bg-white">
+              <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-2">
                 Guardrails
               </div>
-              <div className="text-sm text-slate-700 space-y-1">
+              <div className="text-sm text-neutral-700 space-y-1">
                 <p>Signatures only happen on <span className="font-semibold">Decisions</span>.</p>
                 <p>Exports are logged from <span className="font-semibold">Evidence Vault</span>.</p>
               </div>
@@ -162,14 +162,14 @@ export default function VeraDrawer({ open, onClose }: VeraDrawerProps) {
         {tab === 'recommendations' && (
           <div className="space-y-3">
             {recommendations.map((rec) => (
-              <div key={rec.id} className="p-4 rounded-xl border border-slate-200 bg-white">
+              <div key={rec.id} className="p-4 rounded-none border-l-structural border-l-aicomplyr-black border border-neutral-200 bg-white">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="text-sm font-bold text-slate-900">{rec.title}</div>
-                    <div className="text-sm text-slate-600 mt-1">{rec.why}</div>
+                    <div className="text-sm font-bold text-aicomplyr-black">{rec.title}</div>
+                    <div className="text-xs text-neutral-600 mt-1 leading-relaxed">{rec.why}</div>
                   </div>
                   <div className="flex-shrink-0">
-                    <ListChecks className="h-4 w-4 text-indigo-600" />
+                    <ListChecks className="h-4 w-4 text-aicomplyr-black" />
                   </div>
                 </div>
 
@@ -177,10 +177,10 @@ export default function VeraDrawer({ open, onClose }: VeraDrawerProps) {
                   <Link
                     to={buildSurfaceLink(rec.surface, rec.targetId, rec.query)}
                     onClick={onClose}
-                    className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-700 hover:text-indigo-800"
+                    className="inline-flex items-center gap-2 text-xs font-bold text-aicomplyr-black uppercase tracking-wider hover:underline"
                   >
                     Jump
-                    <ArrowRight className="h-4 w-4" />
+                    <ArrowRight className="h-3 w-3" />
                   </Link>
                 </div>
               </div>
@@ -190,24 +190,24 @@ export default function VeraDrawer({ open, onClose }: VeraDrawerProps) {
 
         {tab === 'history' && (
           <div className="space-y-4">
-            <div className="p-4 rounded-xl border border-slate-200 bg-slate-50">
+            <div className="p-4 rounded-none border-l-structural border-l-neutral-400 bg-neutral-50 border border-neutral-200">
               <div className="flex items-center gap-2 mb-2">
-                <History className="h-4 w-4 text-slate-600" />
-                <div className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                <History className="h-4 w-4 text-neutral-600" />
+                <div className="text-[10px] font-bold text-aicomplyr-black uppercase tracking-widest">
                   VERA History (stub)
                 </div>
               </div>
-              <p className="text-sm text-slate-700">
+              <p className="text-xs text-neutral-700 leading-relaxed">
                 This will show your recent VERA prompts, recommendations, and surface handoffs with trace IDs.
               </p>
               <div className="mt-3">
                 <Link
                   to="/vera-plus"
                   onClick={onClose}
-                  className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-700 hover:text-indigo-800"
+                  className="inline-flex items-center gap-2 text-xs font-bold text-aicomplyr-black uppercase tracking-wider hover:underline"
                 >
                   Open VERA+ hub
-                  <ArrowRight className="h-4 w-4" />
+                  <ArrowRight className="h-3 w-3" />
                 </Link>
               </div>
             </div>

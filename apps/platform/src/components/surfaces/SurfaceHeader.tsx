@@ -22,6 +22,7 @@ export interface SurfaceHeaderProps {
   primaryActions?: React.ReactNode
   secondaryActions?: React.ReactNode
   meta?: React.ReactNode
+  confidence?: number // 0-100
 }
 
 function toneStyles(tone: GuardrailTone) {
@@ -60,52 +61,66 @@ export default function SurfaceHeader({
   primaryActions,
   secondaryActions,
   meta,
+  confidence,
 }: SurfaceHeaderProps) {
   const styles = guardrail ? toneStyles(guardrail.tone) : toneStyles('neutral')
 
   return (
-    <header className="border-b border-slate-200 bg-white">
+    <header className="border-b border-neutral-200 bg-white">
       <div className="px-6 py-4">
         {breadcrumbs && breadcrumbs.length > 0 && (
-          <nav className="mb-2 text-[11px] text-slate-500">
-            <ol className="flex items-center gap-1 flex-wrap">
-              {breadcrumbs.map((b, idx) => (
-                <li key={`${b.label}-${idx}`} className="flex items-center gap-1">
-                  {idx > 0 && <span className="text-slate-300">/</span>}
-                  {b.href ? (
-                    <a href={b.href} className="hover:text-slate-700">
-                      {b.label}
-                    </a>
-                  ) : (
-                    <span>{b.label}</span>
-                  )}
-                </li>
-              ))}
+          <nav className="mb-3 text-[11px] uppercase tracking-wider">
+            <ol className="flex items-center gap-2 flex-wrap">
+              {breadcrumbs.map((b, idx) => {
+                const isLast = idx === breadcrumbs.length - 1
+                return (
+                  <li key={`${b.label}-${idx}`} className="flex items-center gap-2">
+                    {idx > 0 && <span className="text-neutral-300">/</span>}
+                    {b.href && !isLast ? (
+                      <a href={b.href} className="text-neutral-500 font-semibold hover:text-aicomplyr-black transition-colors">
+                        {b.label}
+                      </a>
+                    ) : (
+                      <span className={isLast ? 'text-aicomplyr-black font-black' : 'text-neutral-500 font-semibold'}>
+                        {b.label}
+                      </span>
+                    )}
+                  </li>
+                )
+              })}
             </ol>
           </nav>
         )}
 
-        <div className="flex items-start justify-between gap-6">
+        <div className="flex items-center justify-between gap-6">
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-slate-900 truncate">{title}</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-xl font-bold text-aicomplyr-black truncate">{title}</h1>
               {guardrail && (
                 <span
-                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border ${styles.bg} ${styles.border} ${styles.text} text-[10px] font-bold uppercase tracking-wider`}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 border ${styles.bg} ${styles.border} ${styles.text} text-[10px] font-bold uppercase tracking-wider rounded-none`}
                 >
                   {guardrail.icon ?? defaultGuardrailIcon(guardrail.tone)}
                   {guardrail.label}
                 </span>
               )}
+              {confidence !== undefined && (
+                <div className="flex items-center gap-2 px-2.5 py-1 bg-neutral-50 border border-neutral-200">
+                  <div className="w-2 h-2 bg-status-approved" />
+                  <span className="text-[10px] font-mono font-bold text-neutral-600">
+                    {confidence}% CONFIDENCE
+                  </span>
+                </div>
+              )}
             </div>
 
-            {subtitle && <p className="text-sm text-slate-500 mt-1">{subtitle}</p>}
+            {subtitle && <p className="text-xs text-neutral-500 font-medium mt-1 uppercase tracking-wide">{subtitle}</p>}
 
             {meta && <div className="mt-2">{meta}</div>}
           </div>
 
           {(primaryActions || secondaryActions) && (
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-3 flex-shrink-0">
               {secondaryActions}
               {primaryActions}
             </div>
@@ -115,6 +130,9 @@ export default function SurfaceHeader({
     </header>
   )
 }
+
+
+
 
 
 

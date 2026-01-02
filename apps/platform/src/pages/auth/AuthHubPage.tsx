@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { Card } from '@/components/ui/card'
@@ -38,7 +38,7 @@ export default function AuthHubPage() {
       {/* Left / Brand Panel */}
       <aside className="hidden lg:flex flex-col gap-8 p-12 border-r border-[#E7E9F2] bg-white">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold">
+          <div className="h-10 w-10 rounded-none bg-blue-600 text-white flex items-center justify-center font-bold">
             AI
           </div>
           <span className="text-lg font-semibold">aicomplyr.io</span>
@@ -50,7 +50,7 @@ export default function AuthHubPage() {
 
         <TeaserCard
           title="Security posture check (preview)"
-          body="Weâ€™ll evaluate auth + org setup and suggest hardening steps."
+          body="We’ll evaluate auth + org setup and suggest hardening steps."
           status="neutral"
         />
 

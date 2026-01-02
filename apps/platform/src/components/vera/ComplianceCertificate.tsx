@@ -141,7 +141,7 @@ function QRCodePlaceholder({ data: _data }: { data: string }) {
   // For now, we'll show a placeholder that represents the QR code
   // The _data parameter would be used to generate the actual QR code
   return (
-    <div className="w-24 h-24 bg-white border-2 border-slate-900 rounded-lg p-1 flex items-center justify-center">
+    <div className="w-24 h-24 bg-white border-2 border-slate-900 rounded-none p-1 flex items-center justify-center">
       <div className="w-full h-full bg-slate-900 rounded grid grid-cols-5 gap-0.5 p-1">
         {Array.from({ length: 25 }).map((_, i) => (
           <div
@@ -315,7 +315,7 @@ export function ComplianceCertificate({
 
   if (isLoading) {
     return (
-      <div className={`bg-white rounded-2xl border border-slate-200 shadow-lg p-8 ${className}`}>
+      <div className={`bg-white rounded-none border border-slate-200 shadow-lg p-8 ${className}`}>
         <div className="flex flex-col items-center justify-center py-12">
           <Loader2 className="w-10 h-10 text-purple-600 animate-spin mb-4" />
           <p className="text-slate-600 font-medium">Generating certificate...</p>
@@ -327,7 +327,7 @@ export function ComplianceCertificate({
 
   if (!certificateData) {
     return (
-      <div className={`bg-white rounded-2xl border border-slate-200 shadow-lg p-8 ${className}`}>
+      <div className={`bg-white rounded-none border border-slate-200 shadow-lg p-8 ${className}`}>
         <div className="flex flex-col items-center justify-center py-12">
           <Shield className="w-12 h-12 text-slate-300 mb-4" />
           <h3 className="text-lg font-semibold text-slate-900 mb-2">Unable to Generate Certificate</h3>
@@ -419,12 +419,12 @@ export function ComplianceCertificate({
           className="bg-white border-x border-b border-slate-200 rounded-b-2xl overflow-hidden"
         >
           {/* Certificate Header with Border */}
-          <div className={`border-8 ${colors.border} m-4 rounded-lg overflow-hidden`}>
+          <div className={`border-8 ${colors.border} m-4 rounded-none overflow-hidden`}>
             {/* Header Banner */}
             <div className={`bg-gradient-to-r ${colors.gradient} py-6 px-8`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                  <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-none flex items-center justify-center">
                     <Shield className="w-10 h-10 text-white" />
                   </div>
                   <div>
@@ -475,19 +475,19 @@ export function ComplianceCertificate({
 
               {/* Score Breakdown */}
               <div className="grid grid-cols-3 gap-4 mb-8 print-break-inside-avoid">
-                <div className={`text-center p-4 rounded-xl ${colors.bg} ${colors.border} border`}>
+                <div className={`text-center p-4 rounded-none ${colors.bg} ${colors.border} border`}>
                   <p className="text-3xl font-bold text-slate-900">
                     {certificateData.complianceScore.policyAdherence}%
                   </p>
                   <p className="text-sm text-slate-600 mt-1">Policy Adherence</p>
                 </div>
-                <div className={`text-center p-4 rounded-xl ${colors.bg} ${colors.border} border`}>
+                <div className={`text-center p-4 rounded-none ${colors.bg} ${colors.border} border`}>
                   <p className="text-3xl font-bold text-slate-900">
                     {certificateData.complianceScore.auditCompleteness}%
                   </p>
                   <p className="text-sm text-slate-600 mt-1">Audit Completeness</p>
                 </div>
-                <div className={`text-center p-4 rounded-xl ${colors.bg} ${colors.border} border`}>
+                <div className={`text-center p-4 rounded-none ${colors.bg} ${colors.border} border`}>
                   <p className="text-3xl font-bold text-slate-900">
                     {certificateData.complianceScore.toolApprovalRate}%
                   </p>
@@ -552,7 +552,7 @@ export function ComplianceCertificate({
               </div>
 
               {/* Verification Hash */}
-              <div className="bg-slate-100 rounded-lg p-4 print-break-inside-avoid">
+              <div className="bg-slate-100 rounded-none p-4 print-break-inside-avoid">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">
@@ -564,7 +564,7 @@ export function ComplianceCertificate({
                   </div>
                   <button 
                     onClick={handleCopyHash}
-                    className="no-print p-2 hover:bg-slate-200 rounded-lg transition-colors"
+                    className="no-print p-2 hover:bg-slate-200 rounded-none transition-colors"
                     title="Copy hash"
                   >
                     <Copy className="w-4 h-4 text-slate-500" />
@@ -586,7 +586,7 @@ export function ComplianceCertificate({
                       <p className="text-xs text-slate-400">Powered by</p>
                       <p className="text-sm font-semibold text-slate-700">AIComplyr.io</p>
                     </div>
-                    <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-violet-600 rounded-lg flex items-center justify-center">
+                    <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-violet-600 rounded-none flex items-center justify-center">
                       <Shield className="w-6 h-6 text-white" />
                     </div>
                   </div>

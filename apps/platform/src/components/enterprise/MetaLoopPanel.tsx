@@ -18,12 +18,12 @@ export function MetaLoopPanel({
   }
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="rounded-none border border-slate-200 bg-white p-4 shadow-sm">
       <h3 className="mb-3 text-sm font-medium text-slate-700">MetaLoop Intelligence</h3>
       
       <div className="space-y-3">
         {/* Current Phase */}
-        <div className="rounded-lg bg-slate-50 p-3">
+        <div className="rounded-none bg-slate-50 p-3">
           <div className="text-xs text-slate-600">Current Phase</div>
           <div className="mt-1 flex items-center gap-2">
             <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${phaseColors[phase as keyof typeof phaseColors] || 'bg-gray-50 text-gray-700'}`}>
@@ -34,7 +34,7 @@ export function MetaLoopPanel({
 
         {/* Recommendation */}
         {rec && (
-          <div className="rounded-lg bg-teal-50 border border-teal-200 p-3">
+          <div className="rounded-none bg-teal-50 border border-teal-200 p-3">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="text-xs text-teal-700 font-medium">AI Recommendation</div>
@@ -51,7 +51,7 @@ export function MetaLoopPanel({
             </div>
             <button
               onClick={() => onRouteToReview(rec.id)}
-              className="mt-3 w-full rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-teal-700 transition-colors"
+              className="mt-3 w-full rounded-none bg-teal-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-teal-700 transition-colors"
             >
               Route to Review
             </button>
@@ -59,7 +59,7 @@ export function MetaLoopPanel({
         )}
 
         {/* Phase Progress */}
-        <div className="rounded-lg bg-slate-50 p-3">
+        <div className="rounded-none bg-slate-50 p-3">
           <div className="text-xs text-slate-600 mb-2">Phase Progress</div>
           <div className="flex items-center gap-1">
             {['observe', 'document', 'analyze', 'recommend'].map((p, i) => (

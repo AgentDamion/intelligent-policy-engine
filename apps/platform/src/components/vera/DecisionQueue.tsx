@@ -82,7 +82,7 @@ function DecisionQueueItem({
   return (
     <div
       className={`
-        group relative p-4 rounded-xl border transition-all duration-200 cursor-pointer
+        group relative p-4 rounded-none border transition-all duration-200 cursor-pointer
         ${isHovered ? 'bg-slate-50 border-slate-300 shadow-md' : 'bg-white border-slate-200'}
         ${isOverdue ? 'ring-2 ring-rose-200' : isUrgent ? 'ring-2 ring-amber-200' : ''}
       `}
@@ -143,7 +143,7 @@ function DecisionQueueItem({
 
       {/* Days open indicator */}
       <div className={`
-        flex items-center gap-2 px-3 py-2 rounded-lg text-xs
+        flex items-center gap-2 px-3 py-2 rounded-none text-xs
         ${isOverdue ? 'bg-rose-50 text-rose-700' : 
           isUrgent ? 'bg-amber-50 text-amber-700' : 
           'bg-slate-50 text-slate-600'}
@@ -171,7 +171,7 @@ function DecisionQueueItem({
                 e.stopPropagation()
                 onReject(item)
               }}
-              className="p-1.5 rounded-lg bg-rose-100 text-rose-600 hover:bg-rose-200 transition-colors"
+              className="p-1.5 rounded-none bg-rose-100 text-rose-600 hover:bg-rose-200 transition-colors"
               title="Reject"
             >
               <XCircle className="w-4 h-4" />
@@ -183,7 +183,7 @@ function DecisionQueueItem({
                 e.stopPropagation()
                 onApprove(item)
               }}
-              className="p-1.5 rounded-lg bg-emerald-100 text-emerald-600 hover:bg-emerald-200 transition-colors"
+              className="p-1.5 rounded-none bg-emerald-100 text-emerald-600 hover:bg-emerald-200 transition-colors"
               title="Approve"
             >
               <CheckCircle className="w-4 h-4" />
@@ -220,12 +220,12 @@ export function DecisionQueue({
   const escalatedCount = items.filter(i => i.decisionType === 'escalated').length
 
   return (
-    <div className={`bg-white rounded-2xl border border-slate-200 shadow-sm ${className}`}>
+    <div className={`bg-white rounded-none border border-slate-200 shadow-sm ${className}`}>
       {/* Header */}
       <div className="px-6 py-4 border-b border-slate-100">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-purple-50 ring-4 ring-purple-500/10">
+            <div className="p-2 rounded-none bg-purple-50 ring-4 ring-purple-500/10">
               <Inbox className="w-5 h-5 text-purple-600" />
             </div>
             <div>
@@ -250,7 +250,7 @@ export function DecisionQueue({
               <button
                 onClick={onRefresh}
                 disabled={isLoading}
-                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-50"
+                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-none transition-colors disabled:opacity-50"
                 title="Refresh queue"
               >
                 <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -265,7 +265,7 @@ export function DecisionQueue({
         {isLoading ? (
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-28 rounded-xl bg-slate-100 animate-pulse" />
+              <div key={i} className="h-28 rounded-none bg-slate-100 animate-pulse" />
             ))}
           </div>
         ) : items.length === 0 ? (
@@ -292,7 +292,7 @@ export function DecisionQueue({
 
         {/* View all link */}
         {remainingCount > 0 && (
-          <button className="w-full mt-4 py-2 text-sm font-medium text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors">
+          <button className="w-full mt-4 py-2 text-sm font-medium text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-none transition-colors">
             View {remainingCount} more →
           </button>
         )}

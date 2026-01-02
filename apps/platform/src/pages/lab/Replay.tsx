@@ -14,19 +14,19 @@ export default function SimulationLab() {
       title="Simulation Lab"
       subtitle="Run replays and what-if scenarios against policy drafts"
       actions={
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
+        <div className="flex items-center gap-3">
+          <Button variant="secondary-light" size="sm">
             <RotateCcw className="h-4 w-4 mr-2" />
             Reset
           </Button>
-          <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white">
+          <Button variant="primary-yellow" size="sm">
             <Play className="h-4 w-4 mr-2 fill-current" />
             Start Scenario
           </Button>
         </div>
       }
     >
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-6">
+      <div className="bg-white rounded-none border border-slate-200 shadow-sm overflow-hidden p-6">
         <SandboxDashboard enterpriseId={currentEnterprise?.id || ''} />
       </div>
     </SurfaceLayout>

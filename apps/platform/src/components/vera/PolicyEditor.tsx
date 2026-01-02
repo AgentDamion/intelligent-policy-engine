@@ -112,7 +112,7 @@ function RuleBuilder({
   return (
     <div className="space-y-3">
       {rules.length === 0 ? (
-        <div className="text-center py-8 bg-slate-50 rounded-lg border-2 border-dashed border-slate-200">
+        <div className="text-center py-8 bg-slate-50 rounded-none border-2 border-dashed border-slate-200">
           <Shield className="w-8 h-8 text-slate-300 mx-auto mb-2" />
           <p className="text-sm text-slate-500">No custom rules defined</p>
           <p className="text-xs text-slate-400 mt-1">Add rules to customize policy behavior</p>
@@ -121,7 +121,7 @@ function RuleBuilder({
         rules.map((rule, index) => (
           <div 
             key={rule.id}
-            className="border border-slate-200 rounded-lg overflow-hidden"
+            className="border border-slate-200 rounded-none overflow-hidden"
           >
             {/* Rule Header */}
             <div 
@@ -154,7 +154,7 @@ function RuleBuilder({
                     value={rule.name}
                     onChange={(e) => updateRule(rule.id, { name: e.target.value })}
                     placeholder="e.g., Block PHI data processing"
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-none text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
 
@@ -167,7 +167,7 @@ function RuleBuilder({
                     onChange={(e) => updateRule(rule.id, { condition: e.target.value })}
                     placeholder="e.g., data_type == 'PHI' AND jurisdiction == 'US'"
                     rows={2}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-none text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                   <p className="text-xs text-slate-400 mt-1">
                     Use logical operators: AND, OR, NOT. Variables: data_type, tool_category, jurisdiction, risk_level
@@ -182,7 +182,7 @@ function RuleBuilder({
                     <select
                       value={rule.action}
                       onChange={(e) => updateRule(rule.id, { action: e.target.value as RuleItem['action'] })}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-none text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
                       <option value="allow">Allow</option>
                       <option value="flag">Flag for Review</option>
@@ -199,7 +199,7 @@ function RuleBuilder({
                       value={rule.priority}
                       onChange={(e) => updateRule(rule.id, { priority: parseInt(e.target.value) || 0 })}
                       min={0}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-none text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
                 </div>
@@ -221,7 +221,7 @@ function RuleBuilder({
 
       <button
         onClick={addRule}
-        className="w-full py-2 border-2 border-dashed border-slate-200 rounded-lg text-sm text-slate-500 hover:border-indigo-300 hover:text-indigo-600 transition-colors flex items-center justify-center gap-2"
+        className="w-full py-2 border-2 border-dashed border-slate-200 rounded-none text-sm text-slate-500 hover:border-indigo-300 hover:text-indigo-600 transition-colors flex items-center justify-center gap-2"
       >
         <Plus className="w-4 h-4" />
         Add Custom Rule
@@ -297,11 +297,11 @@ function ToolCategoriesSection({
             onChange={(e) => setNewAllowed(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && addItem('allowed', newAllowed, setNewAllowed)}
             placeholder="e.g., text-generation"
-            className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="flex-1 px-3 py-2 border border-slate-200 rounded-none text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
           <button
             onClick={() => addItem('allowed', newAllowed, setNewAllowed)}
-            className="px-3 py-2 bg-emerald-100 text-emerald-700 rounded-lg text-sm hover:bg-emerald-200"
+            className="px-3 py-2 bg-emerald-100 text-emerald-700 rounded-none text-sm hover:bg-emerald-200"
           >
             Add
           </button>
@@ -322,11 +322,11 @@ function ToolCategoriesSection({
             onChange={(e) => setNewApproval(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && addItem('requires_approval', newApproval, setNewApproval)}
             placeholder="e.g., code-generation"
-            className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="flex-1 px-3 py-2 border border-slate-200 rounded-none text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
           <button
             onClick={() => addItem('requires_approval', newApproval, setNewApproval)}
-            className="px-3 py-2 bg-amber-100 text-amber-700 rounded-lg text-sm hover:bg-amber-200"
+            className="px-3 py-2 bg-amber-100 text-amber-700 rounded-none text-sm hover:bg-amber-200"
           >
             Add
           </button>
@@ -347,11 +347,11 @@ function ToolCategoriesSection({
             onChange={(e) => setNewBlocked(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && addItem('blocked', newBlocked, setNewBlocked)}
             placeholder="e.g., image-generation"
-            className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="flex-1 px-3 py-2 border border-slate-200 rounded-none text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
           <button
             onClick={() => addItem('blocked', newBlocked, setNewBlocked)}
-            className="px-3 py-2 bg-red-100 text-red-700 rounded-lg text-sm hover:bg-red-200"
+            className="px-3 py-2 bg-red-100 text-red-700 rounded-none text-sm hover:bg-red-200"
           >
             Add
           </button>
@@ -541,7 +541,7 @@ export function PolicyEditor({
             <button
               onClick={handlePublish}
               disabled={publishing}
-              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-none text-sm font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50"
             >
               <Send className="w-4 h-4" />
               {publishing ? 'Publishing...' : 'Publish'}
@@ -550,14 +550,14 @@ export function PolicyEditor({
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-none text-sm font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
             {saving ? 'Saving...' : 'Save Draft'}
           </button>
           <button
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100"
+            className="p-2 text-slate-400 hover:text-slate-600 rounded-none hover:bg-slate-100"
           >
             <X className="w-5 h-5" />
           </button>
@@ -574,7 +574,7 @@ export function PolicyEditor({
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key as typeof activeTab)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-none text-sm font-medium transition-colors ${
               activeTab === tab.key
                 ? 'bg-white text-indigo-600 shadow-sm'
                 : 'text-slate-600 hover:text-slate-900'
@@ -600,7 +600,7 @@ export function PolicyEditor({
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g., Enterprise AI Governance Policy"
-                className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-4 py-3 border border-slate-200 rounded-none focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
 
@@ -613,7 +613,7 @@ export function PolicyEditor({
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Describe the purpose and scope of this policy..."
                 rows={4}
-                className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-4 py-3 border border-slate-200 rounded-none focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
 
@@ -627,13 +627,13 @@ export function PolicyEditor({
                 value={jurisdictions.join(', ')}
                 onChange={(e) => setJurisdictions(e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
                 placeholder="e.g., US, EU, APAC"
-                className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-4 py-3 border border-slate-200 rounded-none focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
               <p className="text-xs text-slate-400 mt-1">Comma-separated list of applicable jurisdictions</p>
             </div>
 
             {currentVersion && (
-              <div className="p-4 bg-slate-50 rounded-lg">
+              <div className="p-4 bg-slate-50 rounded-none">
                 <h4 className="text-sm font-medium text-slate-700 mb-2">Version Info</h4>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
@@ -690,7 +690,7 @@ export function PolicyEditor({
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as PolicyStatus)}
-                className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-4 py-3 border border-slate-200 rounded-none focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="draft">Draft</option>
                 <option value="review">In Review</option>
@@ -699,7 +699,7 @@ export function PolicyEditor({
               </select>
             </div>
 
-            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-none">
               <h4 className="text-sm font-medium text-amber-800 flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4" />
                 Advanced Settings

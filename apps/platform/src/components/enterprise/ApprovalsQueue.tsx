@@ -21,7 +21,13 @@ export function ApprovalsQueue({
   // Enhance approvals with workflow context
   React.useEffect(() => {
     if (rows && rows.length > 0) {
-      enhanceApprovalsWithWorkflow(rows).then(setEnhancedRows)
+      enhanceApprovalsWithWorkflow(rows)
+        .then(setEnhancedRows)
+        .catch((error) => {
+          console.error('Failed to enhance approvals with workflow context:', error)
+          // Fallback to original rows if enhancement fails
+          setEnhancedRows(rows)
+        })
     } else {
       setEnhancedRows(rows)
     }

@@ -182,7 +182,7 @@ const ComplianceReportCard: React.FC<ComplianceReportCardProps> = ({ projectId, 
             <button
               type="button"
               onClick={fetchComplianceReport}
-              className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center rounded-none border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
               disabled={loading}
             >
               <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
@@ -190,7 +190,7 @@ const ComplianceReportCard: React.FC<ComplianceReportCardProps> = ({ projectId, 
             </button>
             <button
               type="button"
-              className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center rounded-none border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
               disabled={!report || loading}
             >
               <Download className="mr-2 h-4 w-4" />
@@ -200,13 +200,13 @@ const ComplianceReportCard: React.FC<ComplianceReportCardProps> = ({ projectId, 
         </div>
 
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <div className="rounded-none border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             <div className="flex items-center justify-between">
               <span>Error loading compliance report: {error}</span>
               <button
                 type="button"
                 onClick={fetchComplianceReport}
-                className="inline-flex items-center rounded-md border border-red-300 px-3 py-1 text-xs font-medium text-red-700 transition hover:bg-red-100"
+                className="inline-flex items-center rounded-none border border-red-300 px-3 py-1 text-xs font-medium text-red-700 transition hover:bg-red-100"
               >
                 <RefreshCw className="mr-2 h-3 w-3" />
                 Retry
@@ -216,25 +216,25 @@ const ComplianceReportCard: React.FC<ComplianceReportCardProps> = ({ projectId, 
         )}
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-          <div className="rounded-lg bg-primary-50 p-4 text-center">
+          <div className="rounded-none bg-primary-50 p-4 text-center">
             <div className="text-3xl font-bold text-primary-600">
               {report?.compliance_score ?? '—'}{typeof report?.compliance_score === 'number' ? '%' : ''}
             </div>
             <div className="text-sm text-primary-700">Compliance Score</div>
           </div>
-          <div className="rounded-lg bg-green-50 p-4 text-center">
+          <div className="rounded-none bg-green-50 p-4 text-center">
             <div className="text-3xl font-bold text-green-600">
               {report?.tools_summary.approved_tools ?? '—'}
             </div>
             <div className="text-sm text-green-700">Approved Tools</div>
           </div>
-          <div className="rounded-lg bg-yellow-50 p-4 text-center">
+          <div className="rounded-none bg-yellow-50 p-4 text-center">
             <div className="text-3xl font-bold text-yellow-600">
               {report?.tools_summary.needs_review_tools ?? '—'}
             </div>
             <div className="text-sm text-yellow-700">Need Review</div>
           </div>
-          <div className="rounded-lg bg-red-50 p-4 text-center">
+          <div className="rounded-none bg-red-50 p-4 text-center">
             <div className="text-3xl font-bold text-red-600">
               {report?.tools_summary.rejected_tools ?? '—'}
             </div>
@@ -292,7 +292,7 @@ const ComplianceReportCard: React.FC<ComplianceReportCardProps> = ({ projectId, 
           {report?.tools?.map((tool, index) => (
             <div
               key={index}
-              className="flex flex-col gap-3 rounded-lg border border-gray-200 p-3 md:flex-row md:items-start md:justify-between"
+              className="flex flex-col gap-3 rounded-none border border-gray-200 p-3 md:flex-row md:items-start md:justify-between"
             >
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
@@ -329,7 +329,7 @@ const ComplianceReportCard: React.FC<ComplianceReportCardProps> = ({ projectId, 
           <h4 className="text-lg font-semibold text-gray-900">Recommendations</h4>
           <div className="space-y-3">
             {report?.recommendations?.map((rec, index) => (
-              <div key={index} className="rounded-lg border border-gray-200 p-3">
+              <div key={index} className="rounded-none border border-gray-200 p-3">
                 <div className="flex items-start gap-3">
                   <span className={getPriorityClasses(rec.priority)}>{rec.priority}</span>
                   <div className="space-y-1">
@@ -350,7 +350,7 @@ const ComplianceReportCard: React.FC<ComplianceReportCardProps> = ({ projectId, 
           <h4 className="text-lg font-semibold text-red-600">Policy Violations</h4>
           <div className="space-y-3">
             {report?.policy_violations?.map((violation, index) => (
-              <div key={index} className="rounded-lg border border-red-200 bg-red-50 p-3">
+              <div key={index} className="rounded-none border border-red-200 bg-red-50 p-3">
                 <div className="flex items-start gap-3">
                   <XCircle className="mt-0.5 h-5 w-5 text-red-500" />
                   <div className="space-y-1">

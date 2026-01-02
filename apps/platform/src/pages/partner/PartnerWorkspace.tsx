@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Search } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useEnterprise } from '../../contexts/EnterpriseContext'
 import { useBoundaryContext } from '../../hooks/useBoundaryContext'
@@ -12,6 +13,7 @@ import { MyWorkspace } from '../../components/partner/MyWorkspace'
 import { ProductionDashboard } from '../../components/partner/ProductionDashboard'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
 import { EdgeCard } from '../../components/ui/edge-card'
+import { AICOMPLYRButton } from '../../components/ui/aicomplyr-button'
 
 export default function PartnerWorkspacePage() {
   const { user } = useAuth()
@@ -139,7 +141,17 @@ export default function PartnerWorkspacePage() {
                 : 'Your personal workspace'}
             </p>
           </div>
-          <ContextSwitcher />
+          <div className="flex items-center gap-3">
+            <AICOMPLYRButton
+              variant="secondary-light"
+              onClick={() => navigate('/tool-lookup-demo')}
+              className="flex items-center gap-2"
+            >
+              <Search className="h-4 w-4" />
+              Check Tool Eligibility
+            </AICOMPLYRButton>
+            <ContextSwitcher />
+          </div>
         </div>
 
         {renderRoleView()}

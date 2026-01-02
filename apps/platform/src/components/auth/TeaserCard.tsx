@@ -55,7 +55,7 @@ export const TeaserCard: React.FC<TeaserCardProps> = ({
   icon,
 }) => {
   return (
-    <div className={`rounded-lg border p-4 ${statusStyles[status]}`}>
+    <div className={`rounded-none border p-4 ${statusStyles[status]}`}>
       <div className="flex">
         <div className="flex-shrink-0">{icon || defaultIcons[status]}</div>
         <div className="ml-3 flex-1">

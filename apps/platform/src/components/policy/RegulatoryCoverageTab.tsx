@@ -108,7 +108,7 @@ export default function RegulatoryCoverageTab({ policyId }: RegulatoryCoverageTa
       </div>
 
       {complianceData.framework_coverage.map((framework) => (
-        <div key={framework.framework.id} className="border border-slate-200 rounded-lg">
+        <div key={framework.framework.id} className="border border-slate-200 rounded-none">
           <div className="p-4 bg-slate-50 border-b border-slate-200">
             <div className="flex items-center justify-between">
               <div>
@@ -127,7 +127,7 @@ export default function RegulatoryCoverageTab({ policyId }: RegulatoryCoverageTa
                   {framework.requirements_addressed.map((req, index) => (
                     <div
                       key={req.requirement_id || index}
-                      className="border border-slate-200 rounded-lg p-4 bg-white"
+                      className="border border-slate-200 rounded-none p-4 bg-white"
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
@@ -173,7 +173,7 @@ export default function RegulatoryCoverageTab({ policyId }: RegulatoryCoverageTa
                   {framework.requirements_not_addressed.map((req, index) => (
                     <div
                       key={req.requirement_id || index}
-                      className="border border-red-200 rounded-lg p-4 bg-red-50"
+                      className="border border-red-200 rounded-none p-4 bg-red-50"
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">

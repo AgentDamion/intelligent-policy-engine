@@ -21,7 +21,7 @@ export default {
           escalated: '#F59E0B',
           pending: '#6B7280',
         },
-        // Neutral Scale
+        // Neutral Scale (v2.0 Spec)
         neutral: {
           50: '#FAFAFA',
           100: '#F5F5F5',
@@ -38,7 +38,7 @@ export default {
       fontFamily: {
         display: ['Archivo Black', 'system-ui', 'sans-serif'],
         sans: ['Inter', 'system-ui', 'sans-serif'],
-        mono: ['SF Mono', 'Menlo', 'monospace'],
+        mono: ['SF Mono', 'Monaco', 'monospace'],
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',
@@ -79,7 +79,7 @@ export default {
         xl: '0px',
         '2xl': '0px',
         '3xl': '0px',
-        full: '0px',
+        full: '9999px', // Keep full for actual circles
       },
       borderWidth: {
         structural: '4px',

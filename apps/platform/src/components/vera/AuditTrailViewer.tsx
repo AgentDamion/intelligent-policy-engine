@@ -187,7 +187,7 @@ const StateDiff = memo(({ before, after }: { before: Record<string, unknown> | n
         <span>State Changes ({changes.filter((c) => c.type !== 'unchanged').length})</span>
       </button>
       {expanded && (
-        <div className="mt-2 p-2 bg-slate-50 rounded-lg text-xs font-mono space-y-1">
+        <div className="mt-2 p-2 bg-slate-50 rounded-none text-xs font-mono space-y-1">
           {changes
             .filter((c) => c.type !== 'unchanged')
             .map((change) => (
@@ -245,7 +245,7 @@ const AuditEventRow = memo(({ event }: { event: AuditEvent }) => {
           </div>
 
           {event.denied && event.denialReason && (
-            <div className="mt-2 p-2 bg-red-100 border border-red-200 rounded-lg text-sm text-red-700">
+            <div className="mt-2 p-2 bg-red-100 border border-red-200 rounded-none text-sm text-red-700">
               <strong>Reason:</strong> {event.denialReason}
             </div>
           )}
@@ -310,7 +310,7 @@ export const AuditTrailViewer = memo(({ threadId, onClose }: AuditTrailViewerPro
   const deniedCount = events.filter((e) => e.denied).length
 
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+    <div className="bg-white rounded-none shadow-lg border border-slate-200 overflow-hidden">
       {/* Header */}
       <div className="bg-gradient-to-r from-slate-900 to-slate-800 px-6 py-4 flex items-center justify-between">
         <div>
@@ -325,14 +325,14 @@ export const AuditTrailViewer = memo(({ threadId, onClose }: AuditTrailViewerPro
         <div className="flex items-center gap-2">
           <button
             onClick={() => void fetchEvents()}
-            className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
+            className="p-2 text-slate-400 hover:text-white rounded-none hover:bg-white/10 transition-colors"
             disabled={isLoading}
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
           </button>
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`p-2 rounded-lg transition-colors ${
+            className={`p-2 rounded-none transition-colors ${
               showFilters ? 'bg-white/20 text-white' : 'text-slate-400 hover:text-white hover:bg-white/10'
             }`}
           >
@@ -341,7 +341,7 @@ export const AuditTrailViewer = memo(({ threadId, onClose }: AuditTrailViewerPro
           {onClose && (
             <button
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
+              className="p-2 text-slate-400 hover:text-white rounded-none hover:bg-white/10 transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -357,7 +357,7 @@ export const AuditTrailViewer = memo(({ threadId, onClose }: AuditTrailViewerPro
             <select
               value={filters.actorType}
               onChange={(e) => setFilters({ ...filters, actorType: e.target.value as FilterState['actorType'] })}
-              className="text-xs border border-slate-300 rounded-lg px-2 py-1 focus:ring-2 focus:ring-indigo-500"
+              className="text-xs border border-slate-300 rounded-none px-2 py-1 focus:ring-2 focus:ring-indigo-500"
             >
               <option value="all">All</option>
               <option value="human">Human</option>
@@ -370,7 +370,7 @@ export const AuditTrailViewer = memo(({ threadId, onClose }: AuditTrailViewerPro
             <select
               value={filters.surface}
               onChange={(e) => setFilters({ ...filters, surface: e.target.value as FilterState['surface'] })}
-              className="text-xs border border-slate-300 rounded-lg px-2 py-1 focus:ring-2 focus:ring-indigo-500"
+              className="text-xs border border-slate-300 rounded-none px-2 py-1 focus:ring-2 focus:ring-indigo-500"
             >
               <option value="all">All</option>
               <option value="Inbox">Inbox</option>

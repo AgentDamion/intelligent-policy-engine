@@ -8,6 +8,7 @@ import * as Sentry from '@sentry/react'
 import App from './App.tsx'
 import { EnterpriseProvider } from './contexts/EnterpriseContext.tsx'
 import { AuthProvider } from './contexts/AuthContext.tsx'
+import { WorkspaceProvider } from './contexts/WorkspaceContext.tsx'
 
 import './index.css'
 
@@ -44,17 +45,20 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <AuthProvider>
           <EnterpriseProvider>
-            <App />
-            <Toaster 
-              position="top-right"
-              toastOptions={{
-                duration: 4000,
-                style: {
-                  background: '#363636',
-                  color: '#fff',
-                },
-              }}
-            />
+            <WorkspaceProvider>
+              <App />
+              <Toaster 
+                position="bottom-right"
+                toastOptions={{
+                  duration: 4000,
+                  style: {
+                    background: '#FFFFFF',
+                    color: '#000000',
+                    borderLeft: '4px solid #000000',
+                  },
+                }}
+              />
+            </WorkspaceProvider>
           </EnterpriseProvider>
         </AuthProvider>
       </BrowserRouter>

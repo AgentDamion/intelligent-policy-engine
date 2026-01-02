@@ -26,7 +26,7 @@ export default function Triage() {
         </div>
       }
     >
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-none border border-slate-200 shadow-sm overflow-hidden">
         <InboxView enterpriseId={currentEnterprise?.id || ''} />
       </div>
     </SurfaceLayout>

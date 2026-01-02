@@ -27,7 +27,7 @@ export default function EmptyState({
   return (
     <div className={`flex flex-col items-center justify-center text-center p-10 ${className}`}>
       {icon && (
-        <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
+        <div className="w-14 h-14 rounded-none bg-slate-100 flex items-center justify-center mb-4">
           {icon}
         </div>
       )}
@@ -38,7 +38,7 @@ export default function EmptyState({
         <div className="mt-5 flex flex-wrap gap-2 justify-center">
           {actions.map((a, idx) => {
             const base =
-              'inline-flex items-center justify-center rounded-md font-semibold text-sm px-4 py-2 transition-colors'
+              'inline-flex items-center justify-center rounded-none font-semibold text-sm px-4 py-2 transition-colors'
             const variant = a.variant || 'outline'
             const variantClass =
               variant === 'primary'
@@ -77,6 +77,9 @@ export default function EmptyState({
     </div>
   )
 }
+
+
+
 
 
 

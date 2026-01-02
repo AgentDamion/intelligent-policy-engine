@@ -209,7 +209,7 @@ const ActionTimeline = memo(({ actions }: { actions: GovernanceAction[] }) => {
               )}
             </div>
             {action.rationale && (
-              <p className="text-sm text-slate-600 bg-slate-50 rounded-lg p-2 mt-1">
+              <p className="text-sm text-slate-600 bg-slate-50 rounded-none p-2 mt-1">
                 "{action.rationale}"
               </p>
             )}
@@ -408,7 +408,7 @@ const DecisionDialog = memo(({ isOpen, onClose, actionType, thread, onConfirm }:
             leaveFrom="opacity-100 scale-100"
             leaveTo="opacity-0 scale-95"
           >
-            <DialogPanel className="w-full max-w-lg bg-white rounded-xl shadow-xl">
+            <DialogPanel className="w-full max-w-lg bg-white rounded-none shadow-xl">
               <form onSubmit={handleSubmit}>
                 <div className="p-6">
                   {!showSignature ? (
@@ -448,7 +448,7 @@ const DecisionDialog = memo(({ isOpen, onClose, actionType, thread, onConfirm }:
                       </div>
 
                       {thread && (
-                        <div className="mt-4 p-3 bg-slate-50 rounded-lg border border-slate-100">
+                        <div className="mt-4 p-3 bg-slate-50 rounded-none border border-slate-100">
                           <p className="text-sm font-medium text-slate-800">{thread.title || 'Untitled Thread'}</p>
                           <div className="flex items-center gap-2 mt-1">
                             <StatusBadge status={thread.status} />
@@ -465,7 +465,7 @@ const DecisionDialog = memo(({ isOpen, onClose, actionType, thread, onConfirm }:
                           value={rationale}
                           onChange={(e) => setRationale(e.target.value)}
                           placeholder="Explain your decision (required for accountability)..."
-                          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                          className="w-full px-3 py-2 border border-slate-300 rounded-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
                           rows={3}
                           required
                         />
@@ -488,7 +488,7 @@ const DecisionDialog = memo(({ isOpen, onClose, actionType, thread, onConfirm }:
                                   value={condition}
                                   onChange={(e) => handleConditionChange(idx, e.target.value)}
                                   placeholder={`Condition ${idx + 1}`}
-                                  className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                                  className="flex-1 px-3 py-2 border border-slate-300 rounded-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
                                 />
                                 {conditions.length > 1 && (
                                   <button
@@ -519,7 +519,7 @@ const DecisionDialog = memo(({ isOpen, onClose, actionType, thread, onConfirm }:
                         <h2 className="text-xl font-bold">Regulatory Signature Required</h2>
                       </div>
                       
-                      <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg">
+                      <div className="bg-amber-50 border border-amber-200 p-4 rounded-none">
                         <p className="text-sm text-amber-800">
                           <strong>GxP Compliance:</strong> You are about to sign a final decision for thread <strong>#{thread?.id.slice(0, 8)}</strong>. 
                           This action will be recorded in an immutable ledger with your identity and timestamp.
@@ -535,7 +535,7 @@ const DecisionDialog = memo(({ isOpen, onClose, actionType, thread, onConfirm }:
                           value={signatureToken}
                           onChange={(e) => setSignatureToken(e.target.value)}
                           placeholder="Enter your verification code or password"
-                          className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          className="w-full px-4 py-3 border border-slate-300 rounded-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                           autoFocus
                         />
                         <p className="text-xs text-slate-400 italic">
@@ -550,7 +550,7 @@ const DecisionDialog = memo(({ isOpen, onClose, actionType, thread, onConfirm }:
                   <button
                     type="button"
                     onClick={showSignature ? () => setShowSignature(false) : onClose}
-                    className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200 rounded-lg transition-colors"
+                    className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200 rounded-none transition-colors"
                     disabled={isSubmitting}
                   >
                     {showSignature ? 'Back' : 'Cancel'}
@@ -558,7 +558,7 @@ const DecisionDialog = memo(({ isOpen, onClose, actionType, thread, onConfirm }:
                   <button
                     type="submit"
                     disabled={isSubmitting || !rationale.trim() || !isActionAllowed}
-                    className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50 ${config?.buttonClass || 'bg-indigo-600 hover:bg-indigo-700'}`}
+                    className={`px-4 py-2 text-sm font-medium text-white rounded-none transition-colors disabled:opacity-50 ${config?.buttonClass || 'bg-indigo-600 hover:bg-indigo-700'}`}
                   >
                     {isSubmitting ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -734,7 +734,7 @@ const DecisionsViewInner = memo(({ enterpriseId }: DecisionsViewProps) => {
               )}
               <button
                 onClick={() => void fetchThreads()}
-                className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors"
+                className="p-2 text-slate-400 hover:text-slate-600 rounded-none hover:bg-slate-100 transition-colors"
                 disabled={isLoading}
               >
                 <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -743,10 +743,10 @@ const DecisionsViewInner = memo(({ enterpriseId }: DecisionsViewProps) => {
           </div>
 
           {/* Tabs */}
-          <div className="flex p-1 bg-slate-100 rounded-lg">
+          <div className="flex p-1 bg-slate-100 rounded-none">
             <button
               onClick={() => setActiveTab('pending')}
-              className={`flex-1 flex items-center justify-center py-1.5 text-xs font-medium rounded-md transition-colors ${
+              className={`flex-1 flex items-center justify-center py-1.5 text-xs font-medium rounded-none transition-colors ${
                 activeTab === 'pending'
                   ? 'bg-white text-indigo-700 shadow-sm'
                   : 'text-slate-500 hover:text-slate-700'
@@ -756,7 +756,7 @@ const DecisionsViewInner = memo(({ enterpriseId }: DecisionsViewProps) => {
             </button>
             <button
               onClick={() => setActiveTab('resolved')}
-              className={`flex-1 flex items-center justify-center py-1.5 text-xs font-medium rounded-md transition-colors ${
+              className={`flex-1 flex items-center justify-center py-1.5 text-xs font-medium rounded-none transition-colors ${
                 activeTab === 'resolved'
                   ? 'bg-white text-indigo-700 shadow-sm'
                   : 'text-slate-500 hover:text-slate-700'
@@ -790,7 +790,7 @@ const DecisionsViewInner = memo(({ enterpriseId }: DecisionsViewProps) => {
               <div
                 key={thread.id}
                 onClick={() => setSelectedThread(thread)}
-                className={`group p-4 rounded-xl border cursor-pointer transition-all duration-200 ${
+                className={`group p-4 rounded-none border cursor-pointer transition-all duration-200 ${
                   selectedThread?.id === thread.id
                     ? 'bg-indigo-50 border-indigo-200 shadow-sm ring-1 ring-indigo-200'
                     : 'bg-white border-slate-100 hover:border-indigo-100 hover:shadow-md'
@@ -862,31 +862,31 @@ const DecisionsViewInner = memo(({ enterpriseId }: DecisionsViewProps) => {
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={() => handleDecisionClick('HumanRequestChanges')}
-                    className="flex items-center px-3 py-2 text-sm font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
+                    className="flex items-center px-3 py-2 text-sm font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-none hover:bg-amber-100 transition-colors"
                   >
                     <MessageSquare className="w-4 h-4 mr-1.5" /> Request Changes
                   </button>
                   <button
                     onClick={() => handleDecisionClick('HumanEscalate')}
-                    className="flex items-center px-3 py-2 text-sm font-medium text-orange-700 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 transition-colors"
+                    className="flex items-center px-3 py-2 text-sm font-medium text-orange-700 bg-orange-50 border border-orange-200 rounded-none hover:bg-orange-100 transition-colors"
                   >
                     <AlertTriangle className="w-4 h-4 mr-1.5" /> Escalate
                   </button>
                   <button
                     onClick={() => handleDecisionClick('HumanBlockDecision')}
-                    className="flex items-center px-3 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+                    className="flex items-center px-3 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-none hover:bg-red-100 transition-colors"
                   >
                     <XCircle className="w-4 h-4 mr-1.5" /> Block
                   </button>
                   <button
                     onClick={() => handleDecisionClick('HumanApproveWithConditions')}
-                    className="flex items-center px-3 py-2 text-sm font-medium text-teal-700 bg-teal-50 border border-teal-200 rounded-lg hover:bg-teal-100 transition-colors"
+                    className="flex items-center px-3 py-2 text-sm font-medium text-teal-700 bg-teal-50 border border-teal-200 rounded-none hover:bg-teal-100 transition-colors"
                   >
                     <Shield className="w-4 h-4 mr-1.5" /> Conditional
                   </button>
                   <button
                     onClick={() => handleDecisionClick('HumanApproveDecision')}
-                    className="flex items-center px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg shadow-sm hover:bg-emerald-700 transition-colors"
+                    className="flex items-center px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-none shadow-sm hover:bg-emerald-700 transition-colors"
                   >
                     <ShieldCheck className="w-4 h-4 mr-1.5" /> Approve
                   </button>
@@ -897,7 +897,7 @@ const DecisionsViewInner = memo(({ enterpriseId }: DecisionsViewProps) => {
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-6 md:p-10 space-y-6">
               {/* Thread Info Card */}
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+              <div className="bg-white rounded-none shadow-sm border border-slate-200 overflow-hidden">
                 <div className="bg-gradient-to-r from-indigo-50 to-white px-6 py-3 border-b border-indigo-100">
                   <span className="text-xs font-bold text-indigo-900 tracking-wider uppercase">
                     Thread Details
@@ -950,7 +950,7 @@ const DecisionsViewInner = memo(({ enterpriseId }: DecisionsViewProps) => {
 
               {/* Decision Rationale Section - Show for resolved threads */}
               {['resolved', 'approved', 'blocked', 'approved_with_conditions'].includes(selectedThread.status) && (
-                <div className="bg-slate-900 rounded-xl shadow-sm overflow-hidden text-white">
+                <div className="bg-slate-900 rounded-none shadow-sm overflow-hidden text-white">
                   <div className="px-6 py-3 border-b border-slate-800 flex items-center gap-2">
                     <PenTool className="w-4 h-4 text-indigo-400" />
                     <span className="text-sm font-bold text-indigo-400 uppercase tracking-wider">
@@ -987,7 +987,7 @@ const DecisionsViewInner = memo(({ enterpriseId }: DecisionsViewProps) => {
               )}
 
               {/* Action History */}
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+              <div className="bg-white rounded-none shadow-sm border border-slate-200 overflow-hidden">
                 <div className="px-6 py-3 border-b border-slate-100 flex items-center justify-between">
                   <span className="text-sm font-semibold text-slate-900">Decision History</span>
                   <span className="text-xs text-slate-400">{actions.length} actions</span>
@@ -1004,7 +1004,7 @@ const DecisionsViewInner = memo(({ enterpriseId }: DecisionsViewProps) => {
               </div>
 
               {/* Add Comment Section */}
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+              <div className="bg-white rounded-none shadow-sm border border-slate-200 overflow-hidden">
                 <div className="px-6 py-3 border-b border-slate-100">
                   <span className="text-sm font-semibold text-slate-900">Add Comment</span>
                 </div>
@@ -1074,12 +1074,12 @@ const CommentForm = memo(({ onSubmit }: { onSubmit: (comment: string) => Promise
         value={comment}
         onChange={(e) => setComment(e.target.value)}
         placeholder="Add a comment..."
-        className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+        className="flex-1 px-3 py-2 border border-slate-300 rounded-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
       />
       <button
         type="submit"
         disabled={isSubmitting || !comment.trim()}
-        className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+        className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-none hover:bg-indigo-700 disabled:opacity-50 transition-colors"
       >
         {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
       </button>

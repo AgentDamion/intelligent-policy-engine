@@ -138,7 +138,7 @@ function MetricCard({
   return (
     <div 
       className={`
-        relative overflow-hidden rounded-2xl bg-white border border-slate-200 shadow-sm
+        relative overflow-hidden rounded-none bg-white border border-slate-200 shadow-sm
         transition-all duration-500 ease-out
         hover:shadow-lg hover:scale-[1.02] hover:border-slate-300
         ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
@@ -188,7 +188,7 @@ function MetricCard({
             )}
           </div>
 
-          <div className={`p-3 rounded-xl ${colors.light} ${colors.ring} ring-4`}>
+          <div className={`p-3 rounded-none ${colors.light} ${colors.ring} ring-4`}>
             <div className={colors.text}>
               {icon}
             </div>
@@ -217,7 +217,7 @@ export function VelocityMetrics({
           <button
             onClick={onRefresh}
             disabled={isLoading}
-            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-50"
+            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-none transition-colors disabled:opacity-50"
             title="Refresh metrics"
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />

@@ -192,7 +192,7 @@ export const SandboxDashboard: React.FC<SandboxDashboardProps> = ({
             <h2 className="text-xl font-semibold mb-4">1. Select Policy</h2>
             
             <select
-              className="w-full px-4 py-3 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-4 py-3 border rounded-none bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               value={selectedPolicy || ''}
               onChange={(e) => setSelectedPolicy(e.target.value)}
               disabled={isProcessing}
@@ -206,7 +206,7 @@ export const SandboxDashboard: React.FC<SandboxDashboardProps> = ({
             </select>
 
             {selectedPolicyData && (
-              <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-none">
                 <div className="text-sm text-blue-900">
                   <strong>Selected:</strong> {selectedPolicyData.name || selectedPolicyData.title}
                 </div>
@@ -241,7 +241,7 @@ export const SandboxDashboard: React.FC<SandboxDashboardProps> = ({
                     <button
                       key={scenario.id}
                       onClick={() => setSelectedScenario(scenario)}
-                      className={`text-left p-3 rounded-lg border transition-all ${
+                      className={`text-left p-3 rounded-none border transition-all ${
                         selectedScenario?.id === scenario.id
                           ? 'border-blue-500 bg-blue-50'
                           : 'border-gray-200 bg-white hover:border-blue-300'
@@ -269,7 +269,7 @@ export const SandboxDashboard: React.FC<SandboxDashboardProps> = ({
                 Or enter scenario manually (JSON or plain text):
               </label>
               <textarea
-                className="w-full px-3 py-2 border rounded-lg font-mono text-sm"
+                className="w-full px-3 py-2 border rounded-none font-mono text-sm"
                 rows={6}
                 placeholder={`{
   "tool": "GPT-4",
@@ -326,17 +326,17 @@ export const SandboxDashboard: React.FC<SandboxDashboardProps> = ({
               </div>
 
               <div className="grid grid-cols-3 gap-4 mb-4">
-                <div className="bg-white p-4 rounded-lg">
+                <div className="bg-white p-4 rounded-none">
                   <div className="text-sm text-gray-600">Validation</div>
                   <div className="text-2xl font-bold mt-1">
                     {simulationResult.validation_status ? '✅ Pass' : '❌ Fail'}
                   </div>
                 </div>
-                <div className="bg-white p-4 rounded-lg">
+                <div className="bg-white p-4 rounded-none">
                   <div className="text-sm text-gray-600">Compliance Score</div>
                   <div className="text-2xl font-bold mt-1">{compliancePercent}%</div>
                 </div>
-                <div className="bg-white p-4 rounded-lg">
+                <div className="bg-white p-4 rounded-none">
                   <div className="text-sm text-gray-600">Risk Flags</div>
                   <div className="text-2xl font-bold mt-1">{simulationResult.risk_flags?.length || 0}</div>
                 </div>
@@ -387,7 +387,7 @@ export const SandboxDashboard: React.FC<SandboxDashboardProps> = ({
                 {agentActivities.map((activity) => (
                   <div
                     key={activity.id}
-                    className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg"
+                    className="flex items-start gap-3 p-3 bg-gray-50 rounded-none"
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
@@ -425,7 +425,7 @@ export const SandboxDashboard: React.FC<SandboxDashboardProps> = ({
             ) : (
               <div className="space-y-2">
                 {simulationHistory.slice(0, 5).map((run) => (
-                  <div key={run.id} className="p-3 bg-gray-50 rounded-lg">
+                  <div key={run.id} className="p-3 bg-gray-50 rounded-none">
                     <div className="font-medium text-sm">{run.scenario_name}</div>
                     <div className="flex items-center gap-2 mt-1">
                       <Badge 

@@ -16,7 +16,7 @@ export default function TopBar({ onOpenSidebar, onOpenVera }: TopBarProps) {
         {/* Mobile: open sidebar */}
         <button
           onClick={onOpenSidebar}
-          className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
+          className="lg:hidden p-2 rounded-none text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
           aria-label="Open navigation"
           type="button"
         >

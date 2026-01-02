@@ -6,26 +6,33 @@
 
 @layer base {
   html {
-    font-family: 'Inter', system-ui, sans-serif;
+    @apply font-sans antialiased;
   }
   
   body {
     @apply bg-neutral-100 text-aicomplyr-black;
   }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tight;
+  }
 }
 
 @layer components {
   /* Edge-defined containers */
-  .edge-defined {
-    @apply border-l-4 border-l-aicomplyr-black bg-white transition-colors;
+  .edge-card {
+    @apply border-l-[4px] border-l-aicomplyr-black bg-white transition-colors;
+    border-radius: 0 !important;
   }
 
-  .edge-defined.selected {
-    @apply border-l-aicomplyr-yellow;
+  .edge-card-selected {
+    @apply border-l-[4px] border-l-aicomplyr-yellow bg-white;
+    border-radius: 0 !important;
   }
 
-  .edge-defined.attention {
-    @apply border-l-status-escalated;
+  .edge-card-attention {
+    @apply border-l-[4px] border-l-status-escalated bg-white;
+    border-radius: 0 !important;
   }
 
   /* Navigation active state */
@@ -40,7 +47,20 @@
 
   /* Monospace IDs */
   .mono-id {
-    @apply font-mono text-xs text-neutral-500;
+    @apply font-mono text-xs text-neutral-500 uppercase;
+  }
+
+  /* Status Banners */
+  .status-banner {
+    @apply py-3 px-6 font-display text-base uppercase tracking-[2px] text-center;
+  }
+
+  .status-banner-approved {
+    @apply status-banner bg-status-approved text-white;
+  }
+
+  .status-banner-conditional {
+    @apply status-banner bg-status-conditional text-aicomplyr-black;
   }
 }
 

@@ -150,7 +150,7 @@ function MetricRow({ label, value, icon, color }: MetricRowProps) {
   return (
     <div className="flex items-center justify-between py-3">
       <div className="flex items-center gap-3">
-        <div className={`p-1.5 rounded-lg ${color}`}>
+        <div className={`p-1.5 rounded-none ${color}`}>
           {icon}
         </div>
         <span className="text-sm text-slate-600">{label}</span>
@@ -213,12 +213,12 @@ export function ComplianceScoreCard({
   const scoreLabel = score ? getScoreLabel(score.overall) : null
 
   return (
-    <div className={`bg-white rounded-2xl border border-slate-200 shadow-sm ${className}`}>
+    <div className={`bg-white rounded-none border border-slate-200 shadow-sm ${className}`}>
       {/* Header */}
       <div className="px-6 py-4 border-b border-slate-100">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-violet-50 ring-4 ring-violet-500/10">
+            <div className="p-2 rounded-none bg-violet-50 ring-4 ring-violet-500/10">
               <Shield className="w-5 h-5 text-violet-600" />
             </div>
             <div>
@@ -230,7 +230,7 @@ export function ComplianceScoreCard({
             <button
               onClick={onRefresh}
               disabled={isLoading}
-              className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-50"
+              className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-none transition-colors disabled:opacity-50"
               title="Refresh score"
             >
               <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -298,7 +298,7 @@ export function ComplianceScoreCard({
 
             {/* Alert if score is low */}
             {score.overall < 75 && (
-              <div className="mt-4 p-3 rounded-lg bg-amber-50 border border-amber-200">
+              <div className="mt-4 p-3 rounded-none bg-amber-50 border border-amber-200">
                 <div className="flex items-start gap-2">
                   <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
                   <div className="text-xs text-amber-700">

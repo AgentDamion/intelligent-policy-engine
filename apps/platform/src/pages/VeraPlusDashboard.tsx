@@ -37,7 +37,7 @@ export interface AgentActivityLog {
 
 const LiveLogViewer = memo(({ logs }: { logs: AgentActivityLog[] }) => {
   return (
-    <div className="bg-slate-900 rounded-xl overflow-hidden font-mono text-xs text-slate-300 h-[520px] flex flex-col shadow-2xl">
+    <div className="bg-slate-900 rounded-none overflow-hidden font-mono text-xs text-slate-300 h-[520px] flex flex-col shadow-2xl">
       <div className="px-4 py-3 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
         <span className="font-bold text-slate-100 flex items-center">
           <Terminal className="w-4 h-4 mr-2" /> Live Agent Activity Stream
@@ -106,7 +106,7 @@ const AuditMetricsCard = memo(({ enterpriseId }: { enterpriseId?: string }) => {
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <div className="bg-white rounded-none shadow-sm border border-slate-200 p-6">
         <div className="animate-pulse space-y-4">
           <div className="h-4 bg-slate-200 rounded w-1/3"></div>
           <div className="grid grid-cols-4 gap-4">
@@ -129,7 +129,7 @@ const AuditMetricsCard = memo(({ enterpriseId }: { enterpriseId?: string }) => {
   ]
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+    <div className="bg-white rounded-none shadow-sm border border-slate-200 overflow-hidden">
       <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
         <h3 className="font-bold text-slate-900 flex items-center gap-2">
           <History className="w-5 h-5 text-indigo-600" />
@@ -149,7 +149,7 @@ const AuditMetricsCard = memo(({ enterpriseId }: { enterpriseId?: string }) => {
             }
             return (
               <div key={metric.label} className="text-center">
-                <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl mb-2 ${colorClasses[metric.color as keyof typeof colorClasses]}`}>
+                <div className={`inline-flex items-center justify-center w-12 h-12 rounded-none mb-2 ${colorClasses[metric.color as keyof typeof colorClasses]}`}>
                   <Icon className="w-6 h-6" />
                 </div>
                 <div className="text-2xl font-bold text-slate-900">{metric.value}</div>
@@ -161,7 +161,7 @@ const AuditMetricsCard = memo(({ enterpriseId }: { enterpriseId?: string }) => {
         
         {/* Security Alert - Denied Actions */}
         {stats.deniedActions > 0 && (
-          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-none flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
               <AlertTriangle className="w-5 h-5 text-red-600" />
             </div>
@@ -392,7 +392,7 @@ const PolicyStudioView = memo(({ enterpriseId }: { enterpriseId: string }) => {
                 <div className="flex items-center justify-end gap-2 px-6 py-2 bg-slate-100 border-b border-slate-200">
                   <button
                     onClick={handleViewHistory}
-                    className="flex items-center gap-1 px-3 py-1.5 text-sm text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                    className="flex items-center gap-1 px-3 py-1.5 text-sm text-indigo-600 hover:bg-indigo-50 rounded-none transition-colors"
                   >
                     <FileText className="w-4 h-4" />
                     Version History
@@ -498,7 +498,7 @@ export default function VeraPlusDashboard() {
         {/* Left rail */}
         <aside className="w-20 lg:w-64 bg-slate-900 flex flex-col py-6 text-slate-300 flex-shrink-0">
           <div className="px-4 lg:px-6 mb-10 flex items-center justify-center lg:justify-start">
-            <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold shadow-lg">
+            <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-none flex items-center justify-center text-white font-bold shadow-lg">
               V
             </div>
             <span className="hidden lg:block ml-3 font-bold text-white tracking-wide">VERA+</span>
@@ -508,7 +508,7 @@ export default function VeraPlusDashboard() {
             {/* Triage Inbox */}
             <button
               onClick={() => setView('inbox')}
-              className={`w-full flex items-center justify-between p-3 rounded-xl transition-all ${
+              className={`w-full flex items-center justify-between p-3 rounded-none transition-all ${
                 view === 'inbox' ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-slate-800'
               }`}
             >
@@ -524,7 +524,7 @@ export default function VeraPlusDashboard() {
             {/* Decisions (Final Actions) */}
             <button
               onClick={() => setView('decisions')}
-              className={`w-full flex items-center justify-between p-3 rounded-xl transition-all ${
+              className={`w-full flex items-center justify-between p-3 rounded-none transition-all ${
                 view === 'decisions' ? 'bg-emerald-600 text-white shadow-md' : 'hover:bg-slate-800'
               }`}
             >
@@ -539,7 +539,7 @@ export default function VeraPlusDashboard() {
 
             <button
               onClick={() => setView('policy')}
-              className={`w-full flex items-center justify-between p-3 rounded-xl transition-all ${
+              className={`w-full flex items-center justify-between p-3 rounded-none transition-all ${
                 view === 'policy' ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-slate-800'
               }`}
             >
@@ -551,7 +551,7 @@ export default function VeraPlusDashboard() {
 
             <button
               onClick={() => setView('mission')}
-              className={`w-full flex items-center justify-between p-3 rounded-xl transition-all ${
+              className={`w-full flex items-center justify-between p-3 rounded-none transition-all ${
                 view === 'mission' ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-slate-800'
               }`}
             >
@@ -563,7 +563,7 @@ export default function VeraPlusDashboard() {
 
             <button
               onClick={() => setView('proofs')}
-              className={`w-full flex items-center justify-between p-3 rounded-xl transition-all ${
+              className={`w-full flex items-center justify-between p-3 rounded-none transition-all ${
                 view === 'proofs' ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-slate-800'
               }`}
             >
@@ -576,7 +576,7 @@ export default function VeraPlusDashboard() {
             {/* Settings Link */}
             <Link
               to="/vera-settings"
-              className="w-full flex items-center p-3 rounded-xl transition-all hover:bg-slate-800"
+              className="w-full flex items-center p-3 rounded-none transition-all hover:bg-slate-800"
             >
               <Settings className="h-5 w-5 mr-0 lg:mr-3" />
               <span className="hidden lg:block text-sm font-medium">Settings</span>

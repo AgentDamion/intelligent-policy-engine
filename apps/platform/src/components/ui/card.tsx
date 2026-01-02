@@ -7,7 +7,7 @@ interface CardProps {
 
 export const Card: React.FC<CardProps> = ({ children, className = '' }) => {
   return (
-    <div className={`rounded-lg border border-gray-200 bg-white shadow-sm ${className}`}>
+    <div className={`rounded-none border border-neutral-200 border-l-[4px] border-l-aicomplyr-black bg-white shadow-none ${className}`}>
       {children}
     </div>
   )
@@ -15,7 +15,7 @@ export const Card: React.FC<CardProps> = ({ children, className = '' }) => {
 
 export const CardHeader: React.FC<CardProps> = ({ children, className = '' }) => {
   return (
-    <div className={`px-6 py-4 border-b border-gray-200 ${className}`}>
+    <div className={`px-6 py-4 border-b border-neutral-200 ${className}`}>
       {children}
     </div>
   )
@@ -23,7 +23,7 @@ export const CardHeader: React.FC<CardProps> = ({ children, className = '' }) =>
 
 export const CardTitle: React.FC<CardProps> = ({ children, className = '' }) => {
   return (
-    <h3 className={`text-lg font-semibold text-gray-900 ${className}`}>
+    <h3 className={`text-[12px] font-semibold text-neutral-500 uppercase tracking-widest ${className}`}>
       {children}
     </h3>
   )
@@ -39,7 +39,7 @@ export const CardContent: React.FC<CardProps> = ({ children, className = '' }) =
 
 export const CardFooter: React.FC<CardProps> = ({ children, className = '' }) => {
   return (
-    <div className={`px-6 py-4 border-t border-gray-200 ${className}`}>
+    <div className={`px-6 py-4 border-t border-neutral-200 bg-neutral-100 ${className}`}>
       {children}
     </div>
   )

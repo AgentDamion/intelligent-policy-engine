@@ -149,11 +149,11 @@ function ConfirmationDialog({
       />
       
       {/* Dialog */}
-      <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+      <div className="relative bg-white rounded-none shadow-2xl max-w-md w-full mx-4 overflow-hidden">
         {/* Header */}
         <div className={`px-6 py-4 ${toOption?.color.bg} border-b ${toOption?.color.border}`}>
           <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-xl ${toOption?.color.activeBg} ${toOption?.color.text}`}>
+            <div className={`p-2 rounded-none ${toOption?.color.activeBg} ${toOption?.color.text}`}>
               {toOption?.icon}
             </div>
             <div>
@@ -173,7 +173,7 @@ function ConfirmationDialog({
         <div className="p-6">
           {/* Warning for enforcement mode */}
           {toMode === 'enforcement' && (
-            <div className="mb-4 p-3 rounded-lg bg-amber-50 border border-amber-200">
+            <div className="mb-4 p-3 rounded-none bg-amber-50 border border-amber-200">
               <div className="flex items-start gap-2">
                 <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
                 <div className="text-sm text-amber-700">
@@ -188,7 +188,7 @@ function ConfirmationDialog({
 
           {/* Warning for disabled mode */}
           {toMode === 'disabled' && (
-            <div className="mb-4 p-3 rounded-lg bg-rose-50 border border-rose-200">
+            <div className="mb-4 p-3 rounded-none bg-rose-50 border border-rose-200">
               <div className="flex items-start gap-2">
                 <AlertTriangle className="w-4 h-4 text-rose-600 mt-0.5 flex-shrink-0" />
                 <div className="text-sm text-rose-700">
@@ -210,7 +210,7 @@ function ConfirmationDialog({
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="e.g., Testing new policies before enforcement..."
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+              className="w-full px-3 py-2 border border-slate-300 rounded-none text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
               rows={2}
             />
           </div>
@@ -309,7 +309,7 @@ export function VERAModeToggle({
       {/* Current Mode Display */}
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-2">
-          <div className={`p-2 rounded-xl ${currentOption?.color.bg} ${currentOption?.color.ring} ring-4`}>
+          <div className={`p-2 rounded-none ${currentOption?.color.bg} ${currentOption?.color.ring} ring-4`}>
             <div className={currentOption?.color.text}>
               {currentOption?.icon}
             </div>
@@ -340,7 +340,7 @@ export function VERAModeToggle({
               onClick={() => handleModeSelect(option.mode)}
               disabled={disabled || isLoading || isSelected}
               className={`
-                w-full p-4 rounded-xl border-2 text-left transition-all duration-200
+                w-full p-4 rounded-none border-2 text-left transition-all duration-200
                 ${isSelected 
                   ? `${option.color.activeBg} ${option.color.border} ring-2 ${option.color.ring}` 
                   : `bg-white border-slate-200 hover:border-slate-300 hover:shadow-md`
@@ -351,7 +351,7 @@ export function VERAModeToggle({
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${option.color.bg} ${option.color.text}`}>
+                  <div className={`p-2 rounded-none ${option.color.bg} ${option.color.text}`}>
                     {option.icon}
                   </div>
                   <div>
@@ -408,7 +408,7 @@ export function VERAModeToggle({
               return (
                 <div 
                   key={transition.id}
-                  className="flex items-center justify-between p-2 rounded-lg bg-slate-50 text-sm"
+                  className="flex items-center justify-between p-2 rounded-none bg-slate-50 text-sm"
                 >
                   <div className="flex items-center gap-2">
                     <div className={`p-1 rounded ${toOption?.color.bg} ${toOption?.color.text}`}>

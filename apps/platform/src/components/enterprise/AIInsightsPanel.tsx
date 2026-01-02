@@ -10,19 +10,19 @@ export function AIInsightsPanel({
   onRouteToReview?: (id: string) => void
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="rounded-none border border-slate-200 bg-white p-4 shadow-sm">
       <h3 className="mb-3 text-sm font-medium text-slate-700">AI Intelligence Hub</h3>
       
       <div className="space-y-3">
         {/* MetaLoop Status */}
-        <div className="rounded-lg bg-slate-50 p-3">
+        <div className="rounded-none bg-slate-50 p-3">
           <div className="text-xs text-slate-600">MetaLoop Phase</div>
           <div className="mt-1 text-sm font-medium text-slate-800 capitalize">{phase}</div>
         </div>
 
         {/* AI Confidence Meter */}
         {aiDecisions.length > 0 && (
-          <div className="rounded-lg bg-slate-50 p-3">
+          <div className="rounded-none bg-slate-50 p-3">
             <div className="text-xs text-slate-600">AI Confidence</div>
             <div className="mt-1">
               <div className="flex items-center gap-2">
@@ -48,7 +48,7 @@ export function AIInsightsPanel({
 
         {/* AI Recommendation */}
         {recommendation && (
-          <div className="rounded-lg bg-teal-50 border border-teal-200 p-3">
+          <div className="rounded-none bg-teal-50 border border-teal-200 p-3">
             <div className="text-xs text-teal-700 font-medium">AI Recommendation</div>
             <p className="mt-1 text-sm text-teal-800">{recommendation.title}</p>
             {onRouteToReview && (

@@ -124,7 +124,7 @@ export default function PartnerCompliancePortal() {
     <SurfaceLayout surface="compliance" title="Partner Compliance Portal">
       <div className="space-y-6">
         {/* Applicable Frameworks */}
-        <div className="bg-white border border-slate-200 rounded-lg">
+        <div className="bg-white border border-slate-200 rounded-none">
           <div className="p-6 border-b border-slate-200">
             <h2 className="text-lg font-semibold text-slate-900">Applicable Frameworks</h2>
             <p className="text-sm text-slate-600 mt-1">
@@ -158,7 +158,7 @@ export default function PartnerCompliancePortal() {
         </div>
 
         {/* Compliance Status */}
-        <div className="bg-white border border-slate-200 rounded-lg">
+        <div className="bg-white border border-slate-200 rounded-none">
           <div className="p-6 border-b border-slate-200">
             <h2 className="text-lg font-semibold text-slate-900">Compliance Status</h2>
             <p className="text-sm text-slate-600 mt-1">
@@ -202,7 +202,7 @@ export default function PartnerCompliancePortal() {
         </div>
 
         {/* Submit Attestation */}
-        <div className="bg-white border border-slate-200 rounded-lg">
+        <div className="bg-white border border-slate-200 rounded-none">
           <div className="p-6 border-b border-slate-200">
             <h2 className="text-lg font-semibold text-slate-900">Submit Attestation</h2>
             <p className="text-sm text-slate-600 mt-1">
@@ -217,7 +217,7 @@ export default function PartnerCompliancePortal() {
               <select
                 value={attestationForm.attestation_type}
                 onChange={(e) => setAttestationForm({ ...attestationForm, attestation_type: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-none focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               >
                 <option value="tool_usage">Tool Usage</option>
@@ -252,7 +252,7 @@ export default function PartnerCompliancePortal() {
                     // Invalid JSON, ignore
                   }
                 }}
-                className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                className="w-full px-3 py-2 border border-slate-300 rounded-none focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
                 rows={6}
                 required
               />

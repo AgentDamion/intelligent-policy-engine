@@ -86,19 +86,19 @@ function StatsSummary({ stats }: { stats: PolicyStats | null }) {
 
   return (
     <div className="grid grid-cols-4 gap-3 mb-4">
-      <div className="bg-white rounded-lg border border-slate-200 p-3">
+      <div className="bg-white rounded-none border border-slate-200 p-3">
         <div className="text-2xl font-bold text-slate-900">{stats.total}</div>
         <div className="text-xs text-slate-500">Total Policies</div>
       </div>
-      <div className="bg-emerald-50 rounded-lg border border-emerald-200 p-3">
+      <div className="bg-emerald-50 rounded-none border border-emerald-200 p-3">
         <div className="text-2xl font-bold text-emerald-700">{stats.byStatus.published}</div>
         <div className="text-xs text-emerald-600">Published</div>
       </div>
-      <div className="bg-amber-50 rounded-lg border border-amber-200 p-3">
+      <div className="bg-amber-50 rounded-none border border-amber-200 p-3">
         <div className="text-2xl font-bold text-amber-700">{stats.byStatus.draft + stats.byStatus.review}</div>
         <div className="text-xs text-amber-600">In Progress</div>
       </div>
-      <div className="bg-blue-50 rounded-lg border border-blue-200 p-3">
+      <div className="bg-blue-50 rounded-none border border-blue-200 p-3">
         <div className="text-2xl font-bold text-blue-700">{stats.recentlyUpdated}</div>
         <div className="text-xs text-blue-600">Updated This Week</div>
       </div>
@@ -128,13 +128,13 @@ function FilterTabs({
   ]
 
   return (
-    <div className="flex gap-1 p-1 bg-slate-100 rounded-lg">
+    <div className="flex gap-1 p-1 bg-slate-100 rounded-none">
       {tabs.map(tab => (
         <button
           key={tab.value}
           onClick={() => onFilterChange(tab.value)}
           className={`
-            px-3 py-1.5 rounded-md text-sm font-medium transition-all
+            px-3 py-1.5 rounded-none text-sm font-medium transition-all
             ${activeFilter === tab.value 
               ? 'bg-white text-slate-900 shadow-sm' 
               : 'text-slate-600 hover:text-slate-900'
@@ -228,7 +228,7 @@ function PolicyRow({
                 e.stopPropagation()
                 setShowMenu(!showMenu)
               }}
-              className="p-1.5 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-600"
+              className="p-1.5 rounded-none hover:bg-slate-200 text-slate-400 hover:text-slate-600"
             >
               <MoreVertical className="w-4 h-4" />
             </button>
@@ -242,7 +242,7 @@ function PolicyRow({
                     setShowMenu(false)
                   }} 
                 />
-                <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-20">
+                <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-none shadow-lg border border-slate-200 py-1 z-20">
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
@@ -361,7 +361,7 @@ export function PolicyList({
           <h2 className="text-lg font-semibold text-slate-900">Policies</h2>
           <button
             onClick={onCreatePolicy}
-            className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white rounded-none text-sm font-medium hover:bg-indigo-700 transition-colors"
           >
             <Plus className="w-4 h-4" />
             New Policy
@@ -379,7 +379,7 @@ export function PolicyList({
             placeholder="Search policies..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-none text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
           />
         </div>
 
@@ -410,7 +410,7 @@ export function PolicyList({
             {!searchQuery && statusFilter === 'all' && (
               <button
                 onClick={onCreatePolicy}
-                className="mt-4 flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
+                className="mt-4 flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-none text-sm font-medium hover:bg-indigo-700 transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 Create Policy

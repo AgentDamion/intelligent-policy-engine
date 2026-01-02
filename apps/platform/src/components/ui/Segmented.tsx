@@ -40,7 +40,7 @@ export const Segmented: React.FC<SegmentedProps> = ({ items, value, onChange, ar
   return (
     <div
       ref={containerRef}
-      className={`inline-flex rounded-lg bg-gray-100 p-1 ${className}`}
+      className={`inline-flex rounded-none bg-gray-100 p-1 ${className}`}
       role="tablist"
       aria-label={ariaLabel}
     >
@@ -51,7 +51,7 @@ export const Segmented: React.FC<SegmentedProps> = ({ items, value, onChange, ar
             key={item.key}
             onClick={() => onChange(item.key)}
             className={`
-              relative inline-flex items-center justify-center rounded-md px-3 py-1.5
+              relative inline-flex items-center justify-center rounded-none px-3 py-1.5
               text-sm font-medium transition-all focus:outline-none focus:ring-2
               focus:ring-offset-2 focus:ring-blue-500
               ${isActive ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'}

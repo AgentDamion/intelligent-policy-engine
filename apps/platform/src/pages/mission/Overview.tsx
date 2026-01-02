@@ -19,10 +19,10 @@ export default function MissionControl() {
         <div className="flex items-start justify-between gap-6">
           <div className="min-w-0">
             <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-2xl font-bold text-slate-900">Mission Control</h1>
+              <h1 className="text-2xl font-bold text-aicomplyr-black">Mission Control</h1>
               <Badge
                 variant="outline"
-                className="text-[10px] font-bold uppercase tracking-widest border-slate-300 text-slate-700"
+                className="text-[10px] font-bold uppercase tracking-widest border-neutral-300 text-neutral-700"
               >
                 GUARDRAILS: VIEW ONLY
               </Badge>
@@ -39,16 +39,20 @@ export default function MissionControl() {
 
           <div className="flex items-center gap-2 flex-shrink-0">
             <Button
-              variant="outline"
+              variant="secondary-light"
               size="sm"
               onClick={refresh}
               disabled={isLoading}
-              className="h-9 px-3 border-slate-200 text-slate-700 hover:bg-slate-50"
+              className="h-9 px-3"
             >
               <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
               Sync
             </Button>
-            <Button size="sm" className="h-9 px-3 bg-slate-900 text-white hover:bg-slate-800 focus:ring-slate-900">
+            <Button 
+              variant="secondary-light" 
+              size="sm" 
+              className="h-9 px-3"
+            >
               <Download className="h-4 w-4 mr-2" />
               Export Dashboard
             </Button>
@@ -71,7 +75,7 @@ export default function MissionControl() {
                 <CardTitle className="text-sm font-semibold text-slate-900">Risk Trends</CardTitle>
               </CardHeader>
               <CardContent className="px-6 pt-4 pb-6">
-                <div className="min-h-[320px] rounded-lg border border-dashed border-slate-200 bg-white flex items-center justify-center text-sm text-slate-400">
+                <div className="min-h-[320px] rounded-none border border-dashed border-slate-200 bg-white flex items-center justify-center text-sm text-slate-400">
                   [Chart: Risk distribution over time]
                 </div>
               </CardContent>

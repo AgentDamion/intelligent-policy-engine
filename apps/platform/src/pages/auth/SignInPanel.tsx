@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/button'
 import { Divider } from '@/components/ui/Divider'
@@ -119,7 +119,7 @@ export function SignInPanel() {
           <Input
             type="password"
             label="Password"
-            placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+            placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             error={err && password.length < 8 ? 'Minimum 8 characters' : undefined}
@@ -148,7 +148,7 @@ export function SignInPanel() {
 
         <div className="flex items-center gap-3">
           <Button type="submit" variant="primary" disabled={loading} className="w-full">
-            {loading ? 'Signing inâ€¦' : 'Sign in'}
+            {loading ? 'Signing in…' : 'Sign in'}
           </Button>
           <Button type="button" variant="secondary" disabled={loading} className="w-full" onClick={() => setUseMagicLink((s) => !s)}>
             {useMagicLink ? 'Use password' : 'Use magic link'}

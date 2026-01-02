@@ -153,7 +153,7 @@ export default function ComplianceDashboard() {
       <div className="space-y-6">
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white border border-slate-200 rounded-lg p-6">
+          <div className="bg-white border border-slate-200 rounded-none p-6">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-medium text-slate-600">Overall Score</h3>
               <TrendingUp className="h-5 w-5 text-blue-600" />
@@ -171,7 +171,7 @@ export default function ComplianceDashboard() {
             </div>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-lg p-6">
+          <div className="bg-white border border-slate-200 rounded-none p-6">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-medium text-slate-600">Requirements</h3>
             </div>
@@ -183,7 +183,7 @@ export default function ComplianceDashboard() {
             </div>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-lg p-6">
+          <div className="bg-white border border-slate-200 rounded-none p-6">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-medium text-slate-600">Critical Gaps</h3>
               <AlertTriangle className="h-5 w-5 text-red-600" />
@@ -196,7 +196,7 @@ export default function ComplianceDashboard() {
         </div>
 
         {/* Framework Coverage */}
-        <div className="bg-white border border-slate-200 rounded-lg">
+        <div className="bg-white border border-slate-200 rounded-none">
           <div className="p-6 border-b border-slate-200">
             <h2 className="text-lg font-semibold text-slate-900">Framework Coverage</h2>
           </div>
@@ -264,7 +264,7 @@ export default function ComplianceDashboard() {
 
         {/* Top Gaps */}
         {complianceData.top_gaps.length > 0 && (
-          <div className="bg-white border border-slate-200 rounded-lg">
+          <div className="bg-white border border-slate-200 rounded-none">
             <div className="p-6 border-b border-slate-200">
               <h2 className="text-lg font-semibold text-slate-900">Top Gaps</h2>
             </div>

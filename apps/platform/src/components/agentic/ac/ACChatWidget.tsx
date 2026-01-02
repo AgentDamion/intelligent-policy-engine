@@ -66,7 +66,7 @@ export function ACChatWidget({ enterpriseId }: ACChatWidgetProps) {
   }
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-lg shadow-lg border border-gray-200">
+    <div className="flex flex-col h-full bg-white rounded-none shadow-lg border border-gray-200">
       {/* Header */}
       <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 rounded-t-lg">
         <h3 className="text-lg font-semibold text-gray-800">Agent Chat</h3>
@@ -91,7 +91,7 @@ export function ACChatWidget({ enterpriseId }: ACChatWidgetProps) {
               className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                className={`max-w-[80%] rounded-none px-4 py-2 ${
                   message.type === 'user'
                     ? 'bg-blue-500 text-white'
                     : 'bg-gray-100 text-gray-800'
@@ -112,7 +112,7 @@ export function ACChatWidget({ enterpriseId }: ACChatWidgetProps) {
         {currentTask?.status === 'completed' && currentTask.response_payload && 
          !messages.some(m => m.id === currentTask.id) && (
           <div className="flex justify-start">
-            <div className="max-w-[80%] rounded-lg px-4 py-2 bg-gray-100 text-gray-800">
+            <div className="max-w-[80%] rounded-none px-4 py-2 bg-gray-100 text-gray-800">
               <div className="text-sm">{currentTask.response_payload.answer}</div>
               {currentTask.response_payload.steps && (
                 <div className="text-xs mt-2 text-gray-500">
@@ -141,7 +141,7 @@ export function ACChatWidget({ enterpriseId }: ACChatWidgetProps) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type your message..."
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-blue-500"
             disabled={isSubmitting || isProcessing}
           />
           <Button 

@@ -110,7 +110,7 @@ export function PolicyBadge({
         </button>
         
         {/* Tooltip */}
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-slate-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-slate-900 text-white text-xs rounded-none opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
           <div className="font-semibold mb-1">Active Policy</div>
           <div className="font-mono">{formatDigest(policy.digest)}</div>
           <div className="text-slate-400 text-[10px] mt-1">Click to copy</div>
@@ -123,7 +123,7 @@ export function PolicyBadge({
   // Detailed variant - shows more information
   if (variant === 'detailed') {
     return (
-      <div className={`bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden ${className}`}>
+      <div className={`bg-white rounded-none border border-slate-200 shadow-sm overflow-hidden ${className}`}>
         <div className="px-4 py-3 bg-emerald-50 border-b border-emerald-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Shield className="w-5 h-5 text-emerald-600" />
@@ -131,7 +131,7 @@ export function PolicyBadge({
           </div>
           <button
             onClick={handleCopy}
-            className="p-1.5 hover:bg-emerald-100 rounded-lg transition-colors"
+            className="p-1.5 hover:bg-emerald-100 rounded-none transition-colors"
             title="Copy digest"
           >
             {copied ? (
@@ -200,7 +200,7 @@ export function PolicyBadge({
       </button>
 
       {/* Tooltip with full details */}
-      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 px-4 py-3 bg-slate-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 px-4 py-3 bg-slate-900 text-white text-xs rounded-none opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
         <div className="font-semibold mb-2">Active Policy Digest</div>
         <div className="font-mono text-[11px] break-all text-emerald-300 mb-2">
           {policy.fullReference}

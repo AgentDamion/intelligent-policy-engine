@@ -1,17 +1,52 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { SurfaceLayout } from '../../components/SurfaceLayout';
 import { ProofBundleList } from '../../components/vera';
 import { ProofBundleDetailViewer } from '../../components/proof-bundle/ProofBundleDetailViewer';
+import { ProofBundleBatchViewer } from '../../components/proof-bundle/ProofBundleBatchViewer';
 import { Share2, FileDown } from 'lucide-react';
 import { AICOMPLYRButton as Button } from '../../components/ui/aicomplyr-button';
 import { useEnterprise } from '../../contexts/EnterpriseContext';
 import SplitView from '../../components/layout/SplitView';
 import EmptyState from '../../components/ui/EmptyState';
 import ProofBundleCard from '@/components/proof-bundle/ProofBundleCard';
+import { supabase } from '@/lib/supabase';
 
 export default function EvidenceVault() {
   const { currentEnterprise } = useEnterprise();
   const [selectedBundleId, setSelectedBundleId] = useState<string | null>(null);
+  const [bundleType, setBundleType] = useState<'single' | 'batch' | null>(null);
+
+  // Fetch bundle type when bundle ID changes
+  useEffect(() => {
+    const fetchBundleType = async () => {
+      if (!selectedBundleId) {
+        setBundleType(null);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('proof_bundles')
+          .select('bundle_type')
+          .eq('id', selectedBundleId)
+          .single();
+
+        if (error) {
+          console.error('Error fetching bundle type:', error);
+          // Default to single if we can't determine
+          setBundleType('single');
+          return;
+        }
+
+        setBundleType((data?.bundle_type as 'single' | 'batch') || 'single');
+      } catch (err) {
+        console.error('Error fetching bundle type:', err);
+        setBundleType('single'); // Default to single
+      }
+    };
+
+    fetchBundleType();
+  }, [selectedBundleId]);
 
   return (
     <SurfaceLayout
@@ -19,7 +54,7 @@ export default function EvidenceVault() {
       title="Evidence Vault"
       subtitle="Immutable audit trails and cryptographic proof bundles"
       actions={
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <Button variant="secondary-light">
             <FileDown className="w-4 h-4" />
             Bulk Export
@@ -66,6 +101,8 @@ export default function EvidenceVault() {
                   decisionId="DEC-2024-0847-EC-AP"
                 />
               </div>
+            ) : bundleType === 'batch' ? (
+              <ProofBundleBatchViewer bundleId={selectedBundleId} className="h-full" />
             ) : (
               <ProofBundleDetailViewer proofBundleId={selectedBundleId} className="h-full" />
             )}

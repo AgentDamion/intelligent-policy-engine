@@ -255,7 +255,7 @@ export function VERAChatWidget({
   ]
 
   return (
-    <div className={`flex flex-col h-full bg-white rounded-lg shadow-lg border border-gray-200 ${className}`}>
+    <div className={`flex flex-col h-full bg-white rounded-none shadow-lg border border-gray-200 ${className}`}>
       {/* Header */}
       <div className="px-4 py-3 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-blue-50 rounded-t-lg">
         <div className="flex items-center justify-between">
@@ -301,7 +301,7 @@ export function VERAChatWidget({
             className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div
-              className={`max-w-[85%] rounded-lg px-4 py-2 ${
+              className={`max-w-[85%] rounded-none px-4 py-2 ${
                 message.type === 'user'
                   ? 'bg-blue-500 text-white'
                   : message.type === 'system'
@@ -378,7 +378,7 @@ export function VERAChatWidget({
           <div className="flex flex-wrap gap-2">
             {context.decisionId && (
               <Button
-                variant="outline"
+                variant="secondary-light"
                 size="sm"
                 onClick={() => handleQuickAction('decision-reasoning')}
                 disabled={isProcessing}
@@ -390,7 +390,7 @@ export function VERAChatWidget({
             )}
             {(context.toolId || context.submissionId) && (
               <Button
-                variant="outline"
+                variant="secondary-light"
                 size="sm"
                 onClick={() => handleQuickAction('explain-policy')}
                 disabled={isProcessing}
@@ -401,7 +401,7 @@ export function VERAChatWidget({
               </Button>
             )}
             <Button
-              variant="outline"
+              variant="secondary-light"
               size="sm"
               onClick={() => handleQuickAction('compliance-help')}
               disabled={isProcessing}
@@ -453,7 +453,7 @@ export function VERAChatWidget({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask VERA about policies, decisions, or compliance..."
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             disabled={isProcessing || !enterpriseId}
           />
           <Button

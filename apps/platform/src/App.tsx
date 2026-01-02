@@ -1,4 +1,4 @@
-﻿import React, { useEffect, Suspense } from 'react'
+import React, { useEffect, Suspense } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { ErrorBoundary } from 'react-error-boundary'
 import { useAuth } from './contexts/AuthContext'
@@ -26,6 +26,7 @@ const WorkflowBuilderPage = React.lazy(() => import('./pages/workflow/WorkflowBu
 const PartnerWorkspacePage = React.lazy(() => import('./pages/partner/PartnerWorkspace'))
 const NewRequestPage = React.lazy(() => import('./pages/partner/NewRequestPage'))
 const VisibilityControlsPage = React.lazy(() => import('./pages/msa/VisibilityControlsPage'))
+const ToolLookupDemo = React.lazy(() => import('./pages/ToolLookupDemo'))
 
 function getSafeRedirectTo(search: string): string | null {
   const raw = new URLSearchParams(search).get('redirectTo')
@@ -120,7 +121,7 @@ function ErrorFallback({ error, resetErrorBoundary }: { error: Error; resetError
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-6">
+      <div className="max-w-md w-full bg-white shadow-lg rounded-none p-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">Something went wrong</h2>
         <p className="text-gray-600 mb-4">
           We encountered an unexpected error. Please try refreshing the page.
@@ -234,7 +235,10 @@ function App() {
         
         <Route path="msa/visibility" element={<Suspense fallback={<LoadingSpinner />}><VisibilityControlsPage /></Suspense>} />
         <Route path="msa/visibility/:agencyId/:clientId" element={<Suspense fallback={<LoadingSpinner />}><VisibilityControlsPage /></Suspense>} />
-        
+
+        {/* Tool Lookup Demo */}
+        <Route path="tool-lookup-demo" element={<Suspense fallback={<LoadingSpinner />}><ToolLookupDemo /></Suspense>} />
+
         {/* Compatibility Redirects */}
         <Route path="dashboard" element={<Navigate to="/mission" replace />} />
         <Route path="vera-plus" element={<Navigate to="/mission" replace />} />

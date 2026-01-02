@@ -16,7 +16,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="w-full">
         {label && (
-          <label htmlFor={inputId} className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor={inputId} className="block text-[12px] font-semibold uppercase tracking-wider text-neutral-500 mb-2">
             {label}
           </label>
         )}
@@ -30,10 +30,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             id={inputId}
             className={`
-              block w-full rounded-md border-gray-300 shadow-sm
-              focus:border-blue-500 focus:ring-blue-500 sm:text-sm
+              block w-full rounded-none border-neutral-300 shadow-none
+              focus:border-aicomplyr-black focus:ring-0 sm:text-sm
               ${leadingIcon ? 'pl-10' : 'pl-3'}
-              ${error ? 'border-red-300 text-red-900 placeholder-red-300 focus:border-red-500 focus:ring-red-500' : ''}
+              ${error ? 'border-status-denied text-status-denied placeholder-status-denied focus:border-status-denied' : ''}
               ${className}
             `}
             aria-describedby={[hintId, errorId].filter(Boolean).join(' ') || undefined}
@@ -42,12 +42,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           />
         </div>
         {hint && !error && (
-          <p id={hintId} className="mt-1 text-sm text-gray-500">
+          <p id={hintId} className="mt-1 text-xs text-neutral-400 font-medium">
             {hint}
           </p>
         )}
         {error && (
-          <p id={errorId} className="mt-1 text-sm text-red-600">
+          <p id={errorId} className="mt-1 text-sm text-status-denied font-medium">
             {error}
           </p>
         )}

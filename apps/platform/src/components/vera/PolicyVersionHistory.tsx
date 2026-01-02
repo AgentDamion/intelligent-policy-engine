@@ -80,7 +80,7 @@ function VersionTimelineItem({
       
       <div 
         className={`
-          relative flex items-start gap-4 p-4 rounded-lg cursor-pointer transition-all
+          relative flex items-start gap-4 p-4 rounded-none cursor-pointer transition-all
           ${isSelected 
             ? 'bg-indigo-50 border-2 border-indigo-300' 
             : 'hover:bg-slate-50 border-2 border-transparent'
@@ -172,7 +172,7 @@ function DiffViewer({ diffs }: { diffs: VersionDiff[] }) {
         return (
           <div 
             key={index}
-            className={`p-4 rounded-lg border ${config.bg} border-opacity-50`}
+            className={`p-4 rounded-none border ${config.bg} border-opacity-50`}
           >
             <div className="flex items-center gap-2 mb-2">
               <config.icon className={`w-4 h-4 ${config.color}`} />
@@ -239,7 +239,7 @@ function VersionDetailPanel({ version }: { version: PolicyVersion }) {
 
       <div>
         <h4 className="text-sm font-medium text-slate-700 mb-2">Rules Configuration</h4>
-        <pre className="p-4 bg-slate-900 text-slate-100 rounded-lg text-xs overflow-auto max-h-64">
+        <pre className="p-4 bg-slate-900 text-slate-100 rounded-none text-xs overflow-auto max-h-64">
           {JSON.stringify(version.rules, null, 2)}
         </pre>
       </div>
@@ -308,7 +308,7 @@ function ComparisonMode({
           <select
             value={version1Id}
             onChange={(e) => setVersion1Id(e.target.value)}
-            className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="flex-1 px-3 py-2 border border-slate-200 rounded-none text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
             <option value="">Select base version...</option>
             {versions.map(v => (
@@ -323,7 +323,7 @@ function ComparisonMode({
           <select
             value={version2Id}
             onChange={(e) => setVersion2Id(e.target.value)}
-            className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="flex-1 px-3 py-2 border border-slate-200 rounded-none text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
             <option value="">Select compare version...</option>
             {versions.map(v => (
@@ -336,7 +336,7 @@ function ComparisonMode({
           <button
             onClick={handleCompare}
             disabled={!version1Id || !version2Id || loading}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-indigo-600 text-white rounded-none text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Comparing...' : 'Compare'}
           </button>
@@ -415,7 +415,7 @@ export function PolicyVersionHistory({ policyId }: PolicyVersionHistoryProps) {
         </h2>
         <button
           onClick={() => setShowComparison(true)}
-          className="flex items-center gap-2 px-3 py-1.5 text-sm text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+          className="flex items-center gap-2 px-3 py-1.5 text-sm text-indigo-600 hover:bg-indigo-50 rounded-none transition-colors"
         >
           <GitBranch className="w-4 h-4" />
           Compare Versions

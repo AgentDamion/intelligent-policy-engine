@@ -83,7 +83,7 @@ const PrecedentCard = memo(({
   return (
     <div 
       className={`
-        border rounded-lg overflow-hidden transition-all
+        border rounded-none overflow-hidden transition-all
         ${isSelected ? 'border-indigo-400 bg-indigo-50/50' : 'border-slate-200 hover:border-slate-300'}
       `}
     >
@@ -240,7 +240,7 @@ export const SimilarDecisionsPanel = memo(({
     return (
       <button
         onClick={() => setIsExpanded(true)}
-        className="flex items-center gap-2 px-3 py-2 bg-indigo-50 rounded-lg text-indigo-700 hover:bg-indigo-100 transition-colors"
+        className="flex items-center gap-2 px-3 py-2 bg-indigo-50 rounded-none text-indigo-700 hover:bg-indigo-100 transition-colors"
       >
         <GitBranch className="w-4 h-4" />
         <span className="text-sm font-medium">View Precedents</span>
@@ -254,7 +254,7 @@ export const SimilarDecisionsPanel = memo(({
   }
 
   return (
-    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+    <div className="bg-white border border-slate-200 rounded-none overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-200">
         <div className="flex items-center gap-2">
@@ -329,7 +329,7 @@ export const SimilarDecisionsPanel = memo(({
                 <button
                   onClick={handleLinkPrecedents}
                   disabled={isLinking}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-none hover:bg-indigo-700 transition-colors disabled:opacity-50"
                 >
                   {isLinking ? (
                     <>

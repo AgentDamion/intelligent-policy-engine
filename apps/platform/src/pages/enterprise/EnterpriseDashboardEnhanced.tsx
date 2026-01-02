@@ -65,7 +65,7 @@ export default function EnterpriseDashboardEnhanced() {
             )}
             <button
               onClick={() => openStream()}
-              className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm"
+              className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white rounded-none hover:bg-indigo-700 transition-colors text-sm"
             >
               <Activity size={16} />
               Live Stream
@@ -94,7 +94,7 @@ export default function EnterpriseDashboardEnhanced() {
           ) : (
             <>
               {[...Array(5)].map((_, i) => (
-                <div key={i} className="h-28 w-full animate-pulse rounded-lg bg-slate-100" />
+                <div key={i} className="h-28 w-full animate-pulse rounded-none bg-slate-100" />
               ))}
             </>
           )}
@@ -142,7 +142,7 @@ export default function EnterpriseDashboardEnhanced() {
         </div>
 
         {M.err && (
-          <div className="rounded-lg bg-red-50 border border-red-200 text-red-700 p-4">
+          <div className="rounded-none bg-red-50 border border-red-200 text-red-700 p-4">
             <div className="font-medium">Error</div>
             <div className="text-sm">{M.err}</div>
             <button onClick={M.reload} className="mt-2 text-sm underline hover:no-underline">Try again</button>
@@ -162,7 +162,7 @@ export default function EnterpriseDashboardEnhanced() {
               <p className="text-sm text-slate-600">Enhanced with AI analysis capabilities.</p>
             </div>
             <div className="pt-4 border-t">
-              <button className="w-full bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors" onClick={handleDrawerClose}>
+              <button className="w-full bg-teal-600 text-white px-4 py-2 rounded-none hover:bg-teal-700 transition-colors" onClick={handleDrawerClose}>
                 Close Details
               </button>
             </div>

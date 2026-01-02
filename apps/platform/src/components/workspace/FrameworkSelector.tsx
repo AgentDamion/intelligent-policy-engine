@@ -199,7 +199,7 @@ export default function FrameworkSelector({
         if (visibleFrameworks.length === 0) return null
 
         return (
-          <div key={jurisdiction} className="border border-slate-200 rounded-lg p-4">
+          <div key={jurisdiction} className="border border-slate-200 rounded-none p-4">
             <h3 className="text-lg font-semibold text-slate-900 mb-4">{jurisdiction}</h3>
             <div className="space-y-3">
               {visibleFrameworks.map((framework) => {
@@ -212,7 +212,7 @@ export default function FrameworkSelector({
                 return (
                   <div
                     key={framework.id}
-                    className={`border rounded-lg transition-all ${
+                    className={`border rounded-none transition-all ${
                       isSelected
                         ? 'border-blue-500 bg-blue-50'
                         : 'border-slate-200 bg-white hover:border-slate-300'
@@ -344,7 +344,7 @@ export default function FrameworkSelector({
 
       {/* Selection Summary */}
       {selectedFrameworks.filter(f => f.enabled).length > 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="bg-blue-50 border border-blue-200 rounded-none p-4">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Check className="h-5 w-5 text-blue-600" />

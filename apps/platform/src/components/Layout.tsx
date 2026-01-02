@@ -22,9 +22,7 @@ import LoadingSpinner from './ui/LoadingSpinner'
 import VeraDrawer from './vera/VeraDrawer'
 import { Input } from './ui/Input'
 import { Button } from './ui/button'
-import BoundaryContextIndicator from './boundary/BoundaryContextIndicator'
-import { ContextSwitcher } from './vera/ContextSwitcher'
-import { useBoundaryContext } from '@/hooks/useBoundaryContext'
+import { ContextSwitcher } from './context-switcher/ContextSwitcher'
 
 const Layout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -34,18 +32,27 @@ const Layout: React.FC = () => {
   const location = useLocation()
   const navigate = useNavigate()
   const [veraOpen, setVeraOpen] = useState(false)
-  const boundaryContext = useBoundaryContext()
 
-  const navigation = [
-    { name: 'Mission Control', href: '/mission', icon: Home },
-    { name: 'Triage', href: '/inbox', icon: Users },
-    { name: 'Decisions', href: '/decisions', icon: Shield },
-    { name: 'The Forge', href: '/forge', icon: Zap },
-    { name: 'Evidence Vault', href: '/proof', icon: FileText },
-    { name: 'Simulation Lab', href: '/lab', icon: FlaskConical },
-    { name: 'Workflows', href: '/workflows', icon: GitBranch, adminOnly: true },
-    { name: 'Partner Workspace', href: '/partner', icon: Briefcase, partnerOnly: true },
-    { name: 'Settings', href: '/settings', icon: Settings },
+  const navigationGroups = [
+    {
+      title: 'Overview',
+      items: [
+        { name: 'Mission Control', href: '/mission', icon: Home },
+        { name: 'Triage', href: '/inbox', icon: Users },
+        { name: 'Decisions', href: '/decisions', icon: Shield },
+      ]
+    },
+    {
+      title: 'Governance',
+      items: [
+        { name: 'The Forge', href: '/forge', icon: Zap },
+        { name: 'Evidence Vault', href: '/proof', icon: FileText },
+        { name: 'Simulation Lab', href: '/lab', icon: FlaskConical },
+        { name: 'Workflows', href: '/workflows', icon: GitBranch, adminOnly: true },
+        { name: 'Partner Workspace', href: '/partner', icon: Briefcase, partnerOnly: true },
+        { name: 'Settings', href: '/settings', icon: Settings },
+      ]
+    }
   ]
 
   const handleSignOut = async () => {
@@ -67,7 +74,7 @@ const Layout: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-100">
+    <div className="min-h-screen bg-neutral-100 lg:flex lg:h-screen lg:overflow-hidden">
         {/* Mobile sidebar overlay */}
         {sidebarOpen && (
           <div 
@@ -80,7 +87,7 @@ const Layout: React.FC = () => {
 
         {/* Sidebar */}
         <div className={`
-          fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-neutral-200 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0
+          fixed inset-y-0 left-0 z-50 w-sidebar bg-white border-r border-neutral-200 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:h-full
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         `}>
           <div className="flex flex-col h-full">
@@ -123,53 +130,55 @@ const Layout: React.FC = () => {
 
             {/* Sidebar brand */}
             <div className="px-6 pt-6 pb-4">
-              <div className="text-lg font-display text-aicomplyr-black">AICOMPLYR</div>
-              <div className="text-[11px] text-neutral-500">Boundary Governed</div>
+              <div className="text-lg font-display text-aicomplyr-black tracking-tight uppercase">AICOMPLYR</div>
+              <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mt-1">Boundary Governed</div>
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 px-3 pb-6 overflow-y-auto">
-              <ul className="space-y-1">
-                {navigation
-                  .filter((item) => {
-                    // Filter admin-only items (for now, show to all - can be enhanced with role check)
-                    if (item.adminOnly) {
-                      // TODO: Check if user has admin role
-                      return true
-                    }
-                    // Filter partner-only items
-                    if (item.partnerOnly) {
-                      // Show if user has partner context
-                      return !!boundaryContext?.partnerName
-                    }
-                    return true
-                  })
-                  .map((item) => {
-                    const Icon = item.icon
-                    const active = isActive(item.href)
-                    return (
-                      <li key={item.name}>
-                        <Link
-                          to={item.href}
-                          className={`
-                            flex items-center gap-3 px-3 py-2.5 text-sm transition-colors border-l-2
-                            ${active ? 'nav-active text-aicomplyr-black' : 'text-neutral-700 hover:bg-neutral-100'}
-                          `}
-                          onClick={() => setSidebarOpen(false)}
-                        >
-                          <Icon className={`h-4 w-4 ${active ? 'text-aicomplyr-black' : 'text-neutral-400'}`} />
-                          <span className="font-medium">{item.name}</span>
-                        </Link>
-                      </li>
-                    )
-                  })}
-              </ul>
+            <nav className="flex-1 px-0 pb-6 overflow-y-auto">
+              {navigationGroups.map((group) => (
+                <div key={group.title} className="mb-4">
+                  <div className="px-6 py-2 text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
+                    {group.title}
+                  </div>
+                  <ul className="space-y-0.5">
+                    {group.items
+                      .filter((item) => {
+                        // Filter admin-only items (for now, show to all - can be enhanced with role check)
+                        if (item.adminOnly) return true
+                        if (item.partnerOnly) return true
+                        return true
+                      })
+                      .map((item) => {
+                        const Icon = item.icon
+                        const active = isActive(item.href)
+                        return (
+                          <li key={item.name}>
+                            <Link
+                              to={item.href}
+                              className={`
+                                flex items-center gap-3 px-6 py-2 text-sm transition-colors border-l-[3px]
+                                ${active 
+                                  ? 'bg-neutral-100 border-l-aicomplyr-yellow text-aicomplyr-black font-bold' 
+                                  : 'border-l-transparent text-neutral-600 hover:bg-neutral-50 hover:text-aicomplyr-black font-medium'}
+                              `}
+                              onClick={() => setSidebarOpen(false)}
+                            >
+                              <Icon className={`h-4 w-4 ${active ? 'text-aicomplyr-black' : 'text-neutral-400'}`} />
+                              <span>{item.name}</span>
+                            </Link>
+                          </li>
+                        )
+                      })}
+                  </ul>
+                </div>
+              ))}
             </nav>
 
             {/* Sidebar footer: version + user profile */}
             <div className="px-6 py-6 border-t border-neutral-200">
-              <div className="text-[10px] text-neutral-400">v1.0.0-alpha</div>
-              <div className="text-[10px] text-neutral-400 mb-4">Enterprise Edition</div>
+              <div className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">v1.0.0-alpha</div>
+              <div className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-4">Enterprise Edition</div>
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 min-w-0">
@@ -200,7 +209,7 @@ const Layout: React.FC = () => {
 
         {/* Main Content */}
         <div
-          className={`lg:pl-64 flex flex-col min-h-screen transition-[padding] duration-200 ease-out ${
+          className={`flex-1 flex flex-col min-h-screen lg:min-h-0 lg:h-full overflow-y-auto transition-[padding] duration-200 ease-out ${
             veraOpen ? 'lg:pr-[380px]' : ''
           }`}
         >
@@ -225,7 +234,7 @@ const Layout: React.FC = () => {
                 <Input
                   placeholder="Search threads, decisions, policies..."
                   leadingIcon={<Search className="h-4 w-4 text-neutral-400" />}
-                  className="bg-white border-neutral-200 focus:border-neutral-300 focus:ring-neutral-200"
+                  className="bg-white border-neutral-200 focus:border-aicomplyr-black focus:ring-0 rounded-none shadow-none"
                 />
               </div>
 
@@ -243,18 +252,9 @@ const Layout: React.FC = () => {
             </div>
           </header>
 
-          {/* Boundary Indicator Bar - sticky below header */}
-          {boundaryContext && (
-            <div className="sticky top-14 z-20">
-              <BoundaryContextIndicator
-                enterpriseName={boundaryContext.enterpriseName}
-                partnerName={boundaryContext.partnerName}
-              />
-            </div>
-          )}
 
-          {/* Page Content (single scroll parent) */}
-          <div className="flex-1 overflow-y-auto bg-white">
+          {/* Page Content */}
+          <div className="flex-1 bg-white">
             <Outlet />
           </div>
         </div>

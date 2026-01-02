@@ -14,19 +14,19 @@ export default function DecisionSurface() {
       title="Decision Surface"
       subtitle="High-fidelity review and human sign-off"
       actions={
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
+        <div className="flex items-center gap-3">
+          <Button variant="secondary-light" size="sm">
             <History className="h-4 w-4 mr-2" />
             Decision History
           </Button>
-          <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700">
+          <Button variant="secondary" size="sm">
             <ShieldCheck className="h-4 w-4 mr-2" />
             Verify Signature
           </Button>
         </div>
       }
     >
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-none border border-slate-200 shadow-sm overflow-hidden">
         <DecisionsView enterpriseId={currentEnterprise?.id || ''} />
       </div>
     </SurfaceLayout>
